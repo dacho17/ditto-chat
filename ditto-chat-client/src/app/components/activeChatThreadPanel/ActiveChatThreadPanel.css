@@ -1,0 +1,51 @@
+.active-chat-thread-panel {
+	--feature-list-container-height: 30%;
+	--files-list-container-height: 55%;
+	--padding-left: 5%;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+
+	box-sizing: border-box;
+	height: 100%;
+	border-left: var(--divider-border-style);
+
+	background-color: var(--dark-panel-color);
+}
+.active-chat-thread-panel-header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+
+	box-sizing: border-box;
+	width: 100%;
+}
+.active-chat-thread-panel-chatter-overview-info-container {
+    width: 100%;
+}
+.active-chat-thread-panel-feature-list-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: flex-start;
+
+	box-sizing: border-box;
+	width: 100%;
+	height: var(--feature-list-container-height);
+	padding-left: var(--padding-left);
+	border-top: var(--divider-border-style);
+}
+.active-chat-thread-panel-shared-files-list-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: flex-start;
+
+	box-sizing: border-box;
+	width: 100%;
+	height: var(--files-list-container-height);
+	padding-left: var(--padding-left);
+	border-top: var(--divider-border-style);
+}

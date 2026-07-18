@@ -1,0 +1,55 @@
+.chatter-overview-info {
+	--chatter-icon-container-width: 20%;
+	--chatter-summary-width: 80%;
+
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: center;
+
+    width: 100%;
+    height: 100%;
+}
+
+.chatter-overview-info-chatter-icon-container {
+    display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+
+	box-sizing: border-box;
+	height: 100%;
+	width: var(--chatter-icon-container-width);
+}
+
+.chatter-overview-info-chatter-summary {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: flex-start;
+
+	height: 100%;
+    width: var(--chatter-summary-width);
+}
+.chatter-overview-info-chatter-online-status {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: center;
+
+	width: 100%;
+}
+
+.online-indicator {
+	height: 9px;
+	width: 9px;
+	border-radius: 9px;
+
+	&.online {
+		background-color: var(--online-color);
+	}
+
+	&.offline {
+		background-color: var(--ditto-pink);
+	}
+}

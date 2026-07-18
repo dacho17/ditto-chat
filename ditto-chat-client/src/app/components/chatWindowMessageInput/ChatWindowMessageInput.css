@@ -1,0 +1,91 @@
+.chat-window-message-input {
+    --border-radius: 12px;
+    --field-width: 75%;
+    --additions-width: 15%;
+    --send-button-container: 10%;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--border-radius);
+
+    background-color: var(--input-background);
+}
+
+.chat-window-message-input-field {
+    box-sizing: border-box;
+    width: var(--field-width);
+    padding-left: 2.5%;
+    padding-right: 2.5%;
+    border: none;
+    /* resize: none; */
+
+    background-color: var(--input-background);
+    
+    font-size: var(--bold-font-size);
+    color: var(--text-main);
+
+    &:focus {
+        outline: none;
+    }
+}
+
+.chat-window-message-input-additions {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    
+    box-sizing: border-box;
+    padding-right: 2%;
+    width: var(--additions-width);
+}
+
+.chat-window-message-input-send-button-container {
+    box-sizing: border-box;
+    height: 100%;
+    width: var(--send-button-container);
+    padding-top: 0.5%;
+    padding-bottom: 0.5%;
+    padding-right: 0.5%;
+}
+
+.chat-window-message-input-addition-button {
+	display: flex;
+    flex-direction: column;
+    justify-content: center;
+	align-items: center;
+
+    width: 40px;
+    height: 40px;
+	
+    border: none;
+	cursor: pointer;
+}
+
+.chat-window-message-input-send-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    height: 100%;
+    width: 100%;
+    border-radius: var(--border-radius);
+    border: none;
+
+    background-color: var(--ditto-purple);
+    color: var(--text-main);
+
+    cursor: pointer;
+
+    &:disabled {
+        background-color: var(--placeholder-text);
+        color: var(--text-faded);
+
+        cursor: not-allowed;
+    }
+}

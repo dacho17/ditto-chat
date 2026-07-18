@@ -1,0 +1,27 @@
+.shared-file-button {
+	--button-size: 108px;
+	--border-radius: 16px;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+
+	box-sizing: border-box;
+	max-width: var(--button-size);
+	max-height: var(--button-size);
+	border-radius: var(--border-radius);
+
+	border: none;
+	cursor: pointer;
+}
+.shared-file-button-thumbnail {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+
+	max-width: var(--button-size);
+	max-height: var(--button-size);
+	border-radius: var(--border-radius);
+}

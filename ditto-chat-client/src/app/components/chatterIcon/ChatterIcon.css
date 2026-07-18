@@ -1,0 +1,51 @@
+.chatter-icon {
+	position: relative;		/* enables positioning child element relative to parent using absolute positioning! */
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+.chatter-icon-image {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+
+	width: 35px;
+	height: 35px;
+	border-radius: 35px;
+}
+
+.online-status-indicator-background {
+    position: absolute; /* Position the indicator absolutely within the chatter-icon */
+    bottom: -3px; /* Adjust vertical position */
+    right: -3px; /* Adjust horizontal position */
+
+	width: 16px;
+	height: 16px;
+	border-radius: 16px;
+	background-color: var(--dark-panel-color);
+
+	z-index: 2;
+}
+
+.online-status-indicator {
+	position: absolute; /* Position the indicator absolutely within the chatter-icon */
+    bottom: 0px; /* Adjust vertical position */
+    right: 0px; /* Adjust horizontal position */
+
+	width: 10px;
+	height: 10px;
+	border-radius: 10px;
+
+	z-index: 3;
+
+	&.online {
+		background-color: var(--online-color);
+	}
+
+	&.offline {
+		background-color: var(--ditto-pink);
+	}
+}

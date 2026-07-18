@@ -1,0 +1,132 @@
+.chat-message-row {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.chat-message {
+    --indicator-width: 5%;
+    --bubble-width: 50%;
+    --horizontal-padding: 10px;
+    --indicator-icon-size: 32px;
+
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+
+    width: 100%;
+
+    &.message-sender {
+        justify-content: flex-end;
+    }
+
+    &.message-receiver {
+        justify-content: flex-start;
+    }
+}
+
+.chat-message-indicator {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+
+    width: var(--indicator-width);
+
+    font-size: var(--regular-font-size);
+
+    &.message-sender {
+        padding-right: var(--horizontal-padding);
+    }
+
+    &.message-receiver {
+        padding-left: var(--horizontal-padding);
+    }
+}
+
+.chat-message-sent-indicator {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    box-sizing: border-box;
+    height: var(--indicator-icon-size);
+    width: var(--indicator-icon-size);
+    border-radius: var(--indicator-icon-size);
+    border: none;
+
+    &.send-failed {
+        background-color: var(--ditto-pink);
+        color: var(--text-main);
+
+        cursor: pointer; 
+    }
+
+    &.sending {
+        background-color: inherit;
+        color: var(--ditto-purple);
+    }
+}
+
+.chat-message-bubble {
+    max-width: 50%;
+    padding: 12px;
+    border-radius: 12px;
+
+    &.message-sender {
+        background-color: var(--ditto-purple);
+        border-top-right-radius: 0px;
+    }
+
+    &.message-receiver {
+        background-color: var(--incoming-message-background);
+        border-top-left-radius: 0px;
+    }
+}
+
+.chat-message-content {
+    overflow-wrap: break-word;
+}
+
+.tooltip:hover .tooltip-text {
+    visibility: visible;
+}
+
+.tooltip-text {
+    visibility: hidden; /* Hidden by default */
+    position: absolute;
+
+    width: 100px;
+    margin-top: -75px;
+    padding: 5px 0;
+    border-radius: 6px;
+
+    background-color: black;
+    color: var(--text-main);
+
+    text-align: center;
+    font-size: var(--regular-font-size);
+
+    z-index: 1; /* Ensure tooltip is displayed above content */
+}
+
+.chat-message-details {
+    margin-top: 4px;
+    margin-bottom: 2px;
+    font-size: var(--regular-font-size);
+    color: var(--text-faded);
+
+    &.message-sender {
+        padding-right: 1%;
+        align-self: flex-end;
+    }
+
+    &.message-receiver {
+        padding-left: 1%;
+        align-self: flex-start;
+    }
+}

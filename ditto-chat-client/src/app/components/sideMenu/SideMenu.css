@@ -1,0 +1,69 @@
+.side-menu {
+	--options-height: 92%;
+
+	display: flex;
+	flex-direction: column;
+
+	box-sizing: border-box;
+	height: 100%;
+    width: 100%;
+	padding-bottom: 30px;
+
+	background-color: var(--sidebar-menu-color);
+}
+
+.side-menu-logo-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.side-menu-options {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: center;
+
+	height: var(--options-height);
+	width: 100%;
+}
+
+.side-menu-features {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+
+	width: 100%;
+}
+
+.side-menu-account {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: center;
+
+	width: 100%;
+}
+
+.ditto-logo {
+    max-height: 36px;
+    background-color: var(--sidebar-menu-color);
+}
+
+.side-menu-feature-button {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+
+	width: 30px;
+	height: 30px;
+	border-radius: 30px;
+    border: none;
+
+	color: var(--text-main);
+
+	cursor: pointer;
+}

@@ -1,0 +1,38 @@
+.chat-threads-panel {
+	--search-container-height: 15%;
+	--buttons-container-height: 85%;
+	--horizontal-padding: 6%;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+
+	box-sizing: border-box;
+	height: 100%;
+    width: 100%;
+	border-left: var(--divider-border-style);
+	border-right: var(--divider-border-style);
+
+	background-color: var(--dark-panel-color);
+}
+.chat-threads-search-container {
+	box-sizing: border-box;
+	width: 100%;
+	/* height: var(--search-container-height); */
+	padding-top: 4%;
+	padding-bottom: 4%;
+	padding-left: var(--horizontal-padding);
+	padding-right: var(--horizontal-padding);
+}
+.chat-thread-buttons-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+
+	box-sizing: border-box;
+	width: 100%;
+	height: var(--buttons-container-height);
+	padding-left: 2%;
+	padding-right: var(--horizontal-padding);
+	border-top: var(--divider-border-style);
+}

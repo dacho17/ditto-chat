@@ -1,0 +1,22 @@
+.home-page-container {
+	--side-menu-container-width: 5%;
+	--chat-thread-panel-container-width: 20%;
+	--chat-window-container-width: 55%;
+	--active-chat-thread-panel-container-width: 20%;
+
+	display: flex;
+	flex-direction: row;
+}
+
+.side-menu-container {
+	width: var(--side-menu-container-width);
+}
+.chat-thread-panel-container {
+	width: var(--chat-thread-panel-container-width);
+}
+.chat-window-container {
+	width: var(--chat-window-container-width);
+}
+.active-chat-thread-panel-container {
+	width: var(--active-chat-thread-panel-container-width);
+}
