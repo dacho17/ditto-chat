@@ -1,6 +1,7 @@
 import { IoNotificationsOutline, IoCalendarNumberOutline, IoSettingsOutline } from "react-icons/io5";
 import ChatterIcon from "../chatterIcon/ChatterIcon";
 import ChatterOverview from "../../interfaces/ChatterOverview";
+import IconButton from "../iconButton/IconButton";
 import CONSTANTS from "../../../Constants";
 import ChatterIconImage from '../../../assets/david-chat-image.jpg';
 import DittoConsultingLogo from '../../../assets/ditto-consulting-logo.png';
@@ -27,15 +28,21 @@ export default function SideMenu() {
             <div className="side-menu-features">
                 <div className="margin-bottom-2" />
                 {SIDE_MENU_FEATURES.map((featureEl => {
-                    return <button className="side-menu-feature-button margin-bottom-2">
-                    {featureEl}
-                </button>
+                    return <div className="margin-bottom-2">
+                        <IconButton
+                            icon={featureEl}
+                            onClick={() => console.log("TODO")}
+                        />
+                    </div>
                 }))}
             </div>
             <div className="side-menu-account">
-                <button className="side-menu-feature-button margin-bottom-2">
-                    <IoSettingsOutline size={ICON_SIZE} />
-                </button>
+                <div className="margin-bottom-2">
+                    <IconButton
+                        icon={<IoSettingsOutline size={ICON_SIZE} />}
+                        onClick={() => console.log("TODO")}
+                    />
+                </div>
                 <div className="side-menu-chatter-icon-container">
                     <ChatterIcon
                         chatterName={DUMMY_ACCOUNT.chatterName}

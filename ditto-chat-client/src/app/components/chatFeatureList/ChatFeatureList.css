@@ -16,3 +16,19 @@
 		align-items: flex-start;
 	}
 }
+
+.mobile-chat-feature-list {
+	display: none;
+}
+
+@media (max-width: 720px) {
+	.chat-feature-list{
+		display: none;
+	}
+
+	.mobile-chat-feature-list {
+		display: flex;
+		
+		width: 100%;
+	}
+}

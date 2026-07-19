@@ -1,8 +1,8 @@
 .chat-window-message-input {
     --border-radius: 12px;
-    --field-width: 75%;
+    --field-width: 70%;
     --additions-width: 15%;
-    --send-button-container: 10%;
+    --send-button-container: 15%;
 
     display: flex;
     flex-direction: row;
@@ -54,19 +54,6 @@
     padding-right: 0.5%;
 }
 
-.chat-window-message-input-addition-button {
-	display: flex;
-    flex-direction: column;
-    justify-content: center;
-	align-items: center;
-
-    width: 40px;
-    height: 40px;
-	
-    border: none;
-	cursor: pointer;
-}
-
 .chat-window-message-input-send-button {
     display: flex;
     justify-content: center;
@@ -87,5 +74,14 @@
         color: var(--text-faded);
 
         cursor: not-allowed;
+    }
+}
+
+
+@media (max-width: 720px) {
+    .chat-window-message-input {
+        --field-width: 60%;
+        --additions-width: 20%;
+        --send-button-container: 20%;
     }
 }

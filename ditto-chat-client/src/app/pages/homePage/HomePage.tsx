@@ -5,7 +5,7 @@ import SideMenu from "../../components/sideMenu/SideMenu";
 import "./HomePage.css";
 
 export default function HomePage() {
-    return <div className="home-page-container full-screen-height">
+    return <div className="home-page full-screen-height">
         <div className="side-menu-container">
             <SideMenu />
         </div>

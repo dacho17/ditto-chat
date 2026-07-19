@@ -1,6 +1,7 @@
 import {  Navigate, Route, Routes } from 'react-router-dom';
 import AuthenticationPage from './app/pages/authenticationPage/AuthenticationPage';
 import HomePage from './app/pages/homePage/HomePage';
+import MobileChatPage from './app/pages/mobileChatPage/MobileChatPage';
 import CONSTANTS from './Constants';
 import './App.css';
 
@@ -12,6 +13,7 @@ export default function App() {
                 <Route path={CONSTANTS.REGISTER_URL} element={<AuthenticationPage />} />
                 <Route path={CONSTANTS.LOGIN_URL} element={<AuthenticationPage />} />
                 <Route path={CONSTANTS.HOME_URL} element={<HomePage />} />
+                <Route path={CONSTANTS.CHAT_URL} element={<MobileChatPage />} />
             </Routes>
         </>
     );

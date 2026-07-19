@@ -1,6 +1,7 @@
 import { IoSearchOutline, IoCallOutline, IoVideocamOutline } from "react-icons/io5";
-import { IoIosMore } from "react-icons/io";
+import { IoIosMore, IoMdMore } from "react-icons/io";
 import ChatFeatureButton from "../chatFeatureButton/ChatFeatureButton";
+import IconButtonDropdown from "../iconButtonDropdown/IconButtonDropdown";
 import { ListType } from "../../enums/ListType";
 import "./ChatFeatureList.css";
 
@@ -40,16 +41,24 @@ export default function ChatFeatureList(props: Props) {
 	}
 
 	const listStyleClassName = getListStyleClassName(props.listType);
-	return <div className={`chat-feature-list ${listStyleClassName}`}>
-		{ DUMMY_FEATURES.map(feature => {
-			return <>
-				<ChatFeatureButton
-					parentListType={props.listType}
-					chatFeatureName={feature.featureName}
-					chatFeatureIcon={feature.featureIcon}
-				/>
-				{getMarginBetweenButtons()}
-			</>
-		}) }
-	</div>
+	return <>
+		<div className={`chat-feature-list ${listStyleClassName}`}>
+			{ DUMMY_FEATURES.map(feature => {
+				return <>
+					<ChatFeatureButton
+						parentListType={props.listType}
+						chatFeatureName={feature.featureName}
+						chatFeatureIcon={feature.featureIcon}
+					/>
+					{getMarginBetweenButtons()}
+				</>
+			}) }
+		</div>
+		<div className="mobile-chat-feature-list">
+			<IconButtonDropdown
+				icon={<IoMdMore size={ICON_SIZE} />}
+				dropdownItems={DUMMY_FEATURES.map(el => el.featureName)}
+			/>
+		</div>
+	</>
 }

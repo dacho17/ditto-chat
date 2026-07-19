@@ -1,6 +1,6 @@
 .chat-window {
 	--messages-list-container-height: 84%;
-	--messages-input-container-height: 8%;
+	--message-input-container-height: 8%;
 
 	display: flex;
 	flex-direction: column;
@@ -8,6 +8,7 @@
 
 	box-sizing: border-box;
 	height: 100%;
+	width: 100%;
 
 	background-color: var(--dark-background);
 }
@@ -21,13 +22,21 @@
 	align-items: center;
 
 	box-sizing: border-box;
+	width: 100%;
 }
 
 .chat-window-header-chatter-overview-info-container {
+	box-sizing: border-box;
 	width: var(--chatter-overview-container-width);
 }
 
 .chat-window-header-feature-list-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+
+	box-sizing: border-box;
 	width: var(--feature-list-container-width);
 	height: 100%;
 }
@@ -35,15 +44,58 @@
 .chat-window-messages-list-container {
 	box-sizing: border-box;
 	height: var(--messages-list-container-height);
+	width: 100%;
 	border-top: var(--divider-border-style);
 }
 
 .chat-window-message-input-container {
 	box-sizing: border-box;
-	height: var(--messages-input-container-height);
-	padding-top: 1%;
-	padding-bottom: 1%;
+	height: var(--message-input-container-height);
+	width: 100%;
+	padding-top: 7px;
+	padding-bottom: 7px;
 	padding-left: 4%;
 	padding-right: 4%;
 	border-top: var(--divider-border-style);
+}
+
+.mobile-chat-window-header-back-button-container {
+	display: none;
+}
+
+@media (max-width: 720px) {
+	.chat-window {
+		--header-height: 10%;
+		--messages-list-container-height: 82%;
+		--message-input-container-height: 8%;
+
+		width: 100%;
+	}
+
+	.chat-window-header {
+		--back-container-width: 10%;
+		--chatter-overview-container-width: 80%;
+		--feature-list-container-width: 10%;
+
+		height: var(--header-height) !important;		/* overrides .panel-header.height */
+	}
+
+	.mobile-chat-window-header-back-button-container {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+
+		box-sizing: border-box;
+		width: var(--back-container-width);
+		padding-left: 20px;
+	}
+
+	.chat-window-header-chatter-overview-info-container {
+		padding-left: 10px;
+	}
+
+	.chat-window-header-feature-list-container {
+		padding-right: 20px;
+	}
 }

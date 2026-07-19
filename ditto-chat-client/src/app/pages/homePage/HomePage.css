@@ -1,4 +1,4 @@
-.home-page-container {
+.home-page {
 	--side-menu-container-width: 5%;
 	--chat-thread-panel-container-width: 20%;
 	--chat-window-container-width: 55%;
@@ -19,4 +19,34 @@
 }
 .active-chat-thread-panel-container {
 	width: var(--active-chat-thread-panel-container-width);
+}
+
+@media (max-width: 720px) {
+	.side-menu-container {
+		display: none;
+	}
+	.chat-thread-panel-container {
+		width: 100%;
+	}
+	.chat-window-container {
+		display: none;
+	}
+	.active-chat-thread-panel-container {
+		display: none;
+	}
+}
+
+@media (min-width: 721px) and (max-width: 1024px) {
+	.side-menu-container {
+		display: none;
+	}
+	.chat-thread-panel-container {
+		width: 30%;
+	}
+	.chat-window-container {
+		width: 70%;
+	}
+	.active-chat-thread-panel-container {
+		display: none;
+	}
 }

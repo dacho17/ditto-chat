@@ -1,6 +1,9 @@
 .chat-threads-panel {
-	--search-container-height: 15%;
 	--buttons-container-height: 85%;
+	
+	--ditto-chat-title-container-mobile: 50%;
+	--search-container-height-mobile: 50%;
+	
 	--horizontal-padding: 6%;
 
 	display: flex;
@@ -15,12 +18,20 @@
 
 	background-color: var(--dark-panel-color);
 }
+.chat-threads-panel-header-ditto-chat-title-container {
+	display: none;
+}
 .chat-threads-search-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+
 	box-sizing: border-box;
 	width: 100%;
-	/* height: var(--search-container-height); */
-	padding-top: 4%;
-	padding-bottom: 4%;
+	height: 100%;
+	padding-top: 15px;
+	padding-bottom: 10px;
 	padding-left: var(--horizontal-padding);
 	padding-right: var(--horizontal-padding);
 }
@@ -35,4 +46,44 @@
 	padding-left: 2%;
 	padding-right: var(--horizontal-padding);
 	border-top: var(--divider-border-style);
+}
+
+@media (max-width: 720px) {
+	.chat-threads-search-container {
+		height: var(--search-container-height-mobile);
+		padding-top: 10px;
+	}
+
+	.chat-threads-panel-header-ditto-chat-title-container {
+		display: flex;
+		flex-direction: row;
+		justify-content: flex-start;
+		align-items: center;
+
+		box-sizing: border-box;
+		width: 100%;
+		height: var(--ditto-chat-title-container-mobile);
+		padding-top: 20px;
+		padding-bottom: 10px;
+		padding-left: var(--horizontal-padding);
+		padding-right: var(--horizontal-padding);
+	}
+
+	.ditto-logo-container {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.ditto-logo {
+		max-height: 36px;
+		background-color: var(--sidebar-menu-color);
+	}
+	
+	.ditto-chat-title {
+		color: var(--text-main);
+		font-size: 24px;
+		font-weight: 900;
+	}
 }

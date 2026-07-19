@@ -25,6 +25,15 @@ export default function ChatThreadButton(props: Props) {
         }
     }
 
+    function getLastMessageTime(): string {
+        const isLastMessageSentToday = false;        // TODO: this needs to be calculated!
+        if (isLastMessageSentToday === true) {
+            return "12:00";    // TODO: return time of the day!
+        } else {
+            return "31/12/2000";    // TODO: return date!
+        }
+    }
+
     return <div className="chat-thread-button">
         <div className="chat-thread-button-user-image-container">
             <ChatterIcon
@@ -37,7 +46,7 @@ export default function ChatThreadButton(props: Props) {
             <div className="chat-thread-button-summary-row line-height-2">
                 <span className="bold-text handle-overflow">{props.chatterName}</span>
                 { props.lastMessageTime !== null
-                    ? <span className="regular-faded-text">{props.lastMessageTime}</span>
+                    ? <span className="regular-faded-text margin-left-1">{getLastMessageTime()}</span>
                     : null
                 }
             </div>

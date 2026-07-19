@@ -51,19 +51,3 @@
     max-height: 36px;
     background-color: var(--sidebar-menu-color);
 }
-
-.side-menu-feature-button {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-
-	width: 30px;
-	height: 30px;
-	border-radius: 30px;
-    border: none;
-
-	color: var(--text-main);
-
-	cursor: pointer;
-}
