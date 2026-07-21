@@ -1,0 +1,81 @@
+.account-details {
+    --chatter-image-section-height: 20%;
+    --chatter-name-section-height: 70%;
+    --chatter-image-size: 144px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+
+    &.displayed-in-panel {
+        --chatter-image-section-height: 70%;
+        --chatter-name-section-height: 30%;
+    }
+}
+
+.account-details-chatter-image-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--chatter-image-section-height);
+    padding-top: 30px;
+}
+
+.account-details-chatter-image-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.account-details-chatter-image {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: var(--chatter-image-size);
+    height: var(--chatter-image-size);
+    border-radius: var(--chatter-image-size);
+}
+
+.account-details-chatter-name-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--chatter-name-section-height);
+}
+
+.account-details-chatter-name {
+    color: var(--text-main);
+    font-size: 30px;
+    font-weight: 900;
+    text-align: center;
+}
+
+.account-details-chatter-username {
+    color: var(--text-faded);
+    font-size: var(--bold-font-size);
+    text-align: center;
+}
+
+@media (min-width: 721px) and (max-width: 1024px) {
+    .account-details {
+        --chatter-image-section-height: 70%;
+        --chatter-name-section-height: 30%;
+        --chatter-image-size: 192px;
+    }
+}

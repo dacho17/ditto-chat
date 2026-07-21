@@ -1,0 +1,34 @@
+.account-page {
+    --account-details-container-height: 50%;
+    --edit-chatter-image-container-height: 50%;
+
+    display: flex;
+	flex-direction: column;
+
+    width: 100%;
+    height: 100%;
+
+    background-color: var(--dark-background);
+}
+
+.account-page-account-details-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--account-details-container-height);
+    border-top: var(--divider-border-style);
+}
+
+.account-page-edit-chatter-image-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--edit-chatter-image-container-height);
+}

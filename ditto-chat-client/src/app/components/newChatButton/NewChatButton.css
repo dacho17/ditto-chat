@@ -1,0 +1,21 @@
+.new-chat-button {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    box-sizing: border-box;
+    height: 60px;
+    Width: 60px;
+    border: none;
+    border-radius: 12px;
+
+    background-color: var(--ditto-pink);
+    color: var(--text-main);
+
+    z-index: 2;
+    cursor: pointer;
+}

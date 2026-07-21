@@ -1,4 +1,4 @@
-.chat-threads-search {
+.search-bar {
     --icon-container-width: 10%;
     --input-width: 90%;
     --border-radius: 12px;
@@ -18,7 +18,7 @@
     background-color: var(--input-background);
 }
 
-.chat-threads-search-icon-container {
+.search-bar-icon-container {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -29,7 +29,7 @@
     height: 100%;
 }
 
-.chat-threads-search-input {
+.search-bar-input {
     box-sizing: border-box;
     height: 100%;
     width: var(--input-width);

@@ -1,0 +1,16 @@
+.upload-image-button {
+    border: none;
+    background-color: inherit;
+
+    cursor: pointer;
+}
+
+.upload-image-button-text {
+    color: var(--ditto-pink);
+    font-size: var(--bold-font-size);
+    font-weight: 900;
+}
+
+.upload-image-button-input {
+    display: none;    
+}

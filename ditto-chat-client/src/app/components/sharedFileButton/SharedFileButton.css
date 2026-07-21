@@ -25,3 +25,17 @@
 	max-height: var(--button-size);
 	border-radius: var(--border-radius);
 }
+
+@media (max-width: 720px) {
+	.shared-file-button {
+		--button-size: 108px;
+		--border-radius: 16px;
+	}
+}
+
+@media (min-width: 721px) and (max-width: 1024px) {
+	.shared-file-button {
+		--button-size: 192px;
+		--border-radius: 16px;
+	}
+}

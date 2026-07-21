@@ -1,0 +1,38 @@
+.page-with-side-menu {
+    --side-menu-container-width: 5%;
+    --main-page-container-width: 95%;
+
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.side-menu-container {
+    box-sizing: border-box;
+    width: var(--side-menu-container-width);
+    height: 100%;
+}
+
+.main-page-container {
+    box-sizing: border-box;
+    width: var(--main-page-container-width);
+    height: 100%;
+}
+
+@media (max-width: 720px) {
+    .page-with-side-menu {
+        --side-menu-container-width: 0%;
+        --main-page-container-width: 100%;
+    }
+
+    .side-menu-container {
+        display: none;
+    }
+}
+
+@media (min-width: 721px) and (max-width: 1024px) {
+    .page-with-side-menu {
+        --side-menu-container-width: 12%;
+        --main-page-container-width: 88%;
+    }
+}

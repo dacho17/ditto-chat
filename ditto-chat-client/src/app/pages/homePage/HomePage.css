@@ -1,16 +1,14 @@
 .home-page {
-	--side-menu-container-width: 5%;
 	--chat-thread-panel-container-width: 20%;
-	--chat-window-container-width: 55%;
+	--chat-window-container-width: 60%;
 	--active-chat-thread-panel-container-width: 20%;
 
 	display: flex;
 	flex-direction: row;
+	width: 100%;
+	height: 100%;
 }
 
-.side-menu-container {
-	width: var(--side-menu-container-width);
-}
 .chat-thread-panel-container {
 	width: var(--chat-thread-panel-container-width);
 }
@@ -22,9 +20,6 @@
 }
 
 @media (max-width: 720px) {
-	.side-menu-container {
-		display: none;
-	}
 	.chat-thread-panel-container {
 		width: 100%;
 	}
@@ -37,15 +32,11 @@
 }
 
 @media (min-width: 721px) and (max-width: 1024px) {
-	.side-menu-container {
-		display: none;
+	.home-page {
+		--chat-thread-panel-container-width: 30%;
+		--chat-window-container-width: 70%;
 	}
-	.chat-thread-panel-container {
-		width: 30%;
-	}
-	.chat-window-container {
-		width: 70%;
-	}
+
 	.active-chat-thread-panel-container {
 		display: none;
 	}

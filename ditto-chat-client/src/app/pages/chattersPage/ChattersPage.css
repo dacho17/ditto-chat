@@ -1,0 +1,33 @@
+.chatters-page {
+    --horizontal-padding: 6%;
+
+    display: flex;
+	flex-direction: column;
+
+    width: 100%;
+    height: 100%;
+
+    background-color: var(--dark-background);
+}
+
+.chatters-page-header-search-bar-container {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    padding-left: var(--horizontal-padding);
+    padding-top: 15px;
+	padding-bottom: 10px;
+}
+
+.chatters-page-chatters-list-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    border-top: var(--divider-border-style);
+    padding-right: var(--horizontal-padding);
+    padding-left: var(--horizontal-padding);
+}

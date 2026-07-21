@@ -2,7 +2,7 @@
     --ditto-purple: #9461f5;
     --ditto-pink: #f057ab;
     --dark-background: #0f0f12;
-    --sidebar-menu-color: #14141c;
+    --side-menu-menu-color: #14141c;
     --dark-panel-color: #181820;
     --border-color: #2c2c38;
     --input-background: #202028;
@@ -21,6 +21,7 @@
     --bold-font-size: 16px;
     --regular-font-size: 12px;
     --divider-border-style: 1px solid var(--border-color);
+    --page-header-height: 8%;
 
     --mobile-max-width: 720px;
 }

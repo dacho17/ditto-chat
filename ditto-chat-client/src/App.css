@@ -3,7 +3,22 @@
 }
 
 .panel-header {
-    height: 8%;
+    height: var(--page-header-height);
+}
+
+.page-header-page-name {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    padding-left: 20px;
+    
+    color: var(--text-main);
+    font-size: 24px;
 }
 
 .regular-faded-text {
@@ -13,6 +28,10 @@
 .bold-text {
 	font-size: var(--bold-font-size);
     color: var(--text-main);
+}
+
+.alert {
+    color: var(--ditto-pink);
 }
 
 .handle-overflow {

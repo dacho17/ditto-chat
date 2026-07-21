@@ -1,10 +1,11 @@
 import { useState } from "react";
 import IconButton from "../iconButton/IconButton";
+import DropdownItem from "../../interfaces/DropdownItem";
 import "./IconButtonDropdown.css";
 
 interface Props {
     icon: React.JSX.Element,
-    dropdownItems: string[] // TODO: define this type better
+    dropdownItems: DropdownItem[]
 }
 
 export default function IconButtonDropdown(props: Props) {
@@ -23,10 +24,10 @@ export default function IconButtonDropdown(props: Props) {
                 const nonFirstItemStyle = isFirstItem ? "" : "non-first-item";
                 return <button
                     className={`icon-button-dropdown-list-item ${nonFirstItemStyle}`}
-                    onClick={() => console.log("TODO")}
+                    onClick={() => dropdownItem.onClickFunction()}
                 >
                     <div className="bold-text">
-                        {dropdownItem}
+                        {dropdownItem.itemName}
                     </div>
                 </button>
             }) }

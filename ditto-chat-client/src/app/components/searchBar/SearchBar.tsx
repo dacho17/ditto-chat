@@ -1,21 +1,25 @@
 import { IoSearchOutline } from "react-icons/io5";
 import IconContainer from "../iconContainer/IconContainer";
-import "./ChatThreadsSearch.css";
+import "./SearchBar.css";
 
-const SEARCH_INPUT_PLACEHOLDER_VALUE = "Search Chats";
+
+interface Props {
+    inputPlaceholder: string;
+}
+
 const ICON_SIZE = 26;
 
-export default function ChatThreadsSearch() {
-    return <div className="chat-threads-search">
-        <div className="chat-threads-search-icon-container">
+export default function SearchBar(props: Props) {
+    return <div className="search-bar">
+        <div className="search-bar-icon-container">
             <IconContainer icon={ <IoSearchOutline size={ICON_SIZE} /> } />
         </div>
         <input
-            className="chat-threads-search-input"
+            className="search-bar-input"
             disabled={false}
             type="text"
-            name="chat-threads-search-input"
-            placeholder={SEARCH_INPUT_PLACEHOLDER_VALUE}
+            name="search-bar-input"
+            placeholder={props.inputPlaceholder}
             // value={"TODO"}
             // ref={"TODO"}
             // onChange={(event) => onInputChanged(event, false)}

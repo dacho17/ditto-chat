@@ -4,14 +4,19 @@ import "./ChatThreadButton.css";
 const UNREAD_MESSAGES_MESSAGE = "Unread Messages";
 const START_CONVERSATION_MESSAGE = "Start Conversation";
 
+// NOTE: ChatterButton is ChatThreadButton without ThreadDetails
 interface Props {
     chatterName: string;
     chatterImageUrl: string;
     isChatterOnline: boolean;
+    // TODO: this can be a ChatterObject
 
     lastMessage: string | null;
     lastMessageTime: string | null;
     numberOfUnreadMessages: number;
+    // TODO: this can be ChatterThreadOverview, or sth similar. It can be either that type or null
+
+    onClickFunction: Function
 }
 
 export default function ChatThreadButton(props: Props) {
@@ -34,7 +39,10 @@ export default function ChatThreadButton(props: Props) {
         }
     }
 
-    return <div className="chat-thread-button">
+    return <button
+        className="chat-thread-button"
+        onClick={() => props.onClickFunction()}
+    >
         <div className="chat-thread-button-user-image-container">
             <ChatterIcon
                 chatterName={props.chatterName}
@@ -58,5 +66,5 @@ export default function ChatThreadButton(props: Props) {
                 }
             </div>
         </div>
-    </div>
+    </button>
 }

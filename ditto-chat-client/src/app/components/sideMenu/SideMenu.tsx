@@ -1,25 +1,33 @@
-import { IoNotificationsOutline, IoCalendarNumberOutline, IoSettingsOutline } from "react-icons/io5";
-import ChatterIcon from "../chatterIcon/ChatterIcon";
-import ChatterOverview from "../../interfaces/ChatterOverview";
+import { useNavigate } from "react-router-dom";
+import { IoHomeOutline, IoPersonOutline, IoLogOutOutline } from "react-icons/io5";
 import IconButton from "../iconButton/IconButton";
 import CONSTANTS from "../../../Constants";
-import ChatterIconImage from '../../../assets/david-chat-image.jpg';
 import DittoConsultingLogo from '../../../assets/ditto-consulting-logo.png';
 import "./SideMenu.css";
 
-const ICON_SIZE = 26;
-const DUMMY_ACCOUNT: ChatterOverview = {
-    chatterName: "David Dosenovic",
-    chatterImageUrl: ChatterIconImage,
-    isChatterOnline: true
-};
-
-const SIDE_MENU_FEATURES = [
-    <IoNotificationsOutline size={ICON_SIZE}/>,
-    <IoCalendarNumberOutline size={ICON_SIZE}/>
-];
+const ICON_SIZE = 30;
 
 export default function SideMenu() {
+    const navigate = useNavigate();
+    
+    const SIDE_MENU_FEATURES_BUTTONS = [
+        {
+            icon: <IoHomeOutline size={ICON_SIZE} />,
+            onClickFunction: () => navigate(CONSTANTS.HOME_URL)
+        }
+    ];
+
+    const SIDE_MENU_ACCOUNT_BUTTONS = [
+        {
+            icon: <IoPersonOutline size={ICON_SIZE} />,
+            onClickFunction: () => navigate(CONSTANTS.ACCOUNT_URL)
+        },
+        {
+            icon: <IoLogOutOutline size={ICON_SIZE} className="alert" />,
+            onClickFunction: () => navigate(CONSTANTS.LOGOUT_URL) // TODO: First Logout, then redirect to login!
+        }
+    ];
+
     return <div className="side-menu">
         <div className="side-menu-logo-container panel-header">
             <img className="ditto-logo" src={DittoConsultingLogo} alt={CONSTANTS.APPLICATION_NAME}/>
@@ -27,29 +35,25 @@ export default function SideMenu() {
         <div className="side-menu-options">
             <div className="side-menu-features">
                 <div className="margin-bottom-2" />
-                {SIDE_MENU_FEATURES.map((featureEl => {
+                {SIDE_MENU_FEATURES_BUTTONS.map((featureButton => {
                     return <div className="margin-bottom-2">
                         <IconButton
-                            icon={featureEl}
-                            onClick={() => console.log("TODO")}
+                            icon={featureButton.icon}
+                            onClick={featureButton.onClickFunction}
                         />
                     </div>
                 }))}
             </div>
             <div className="side-menu-account">
-                <div className="margin-bottom-2">
-                    <IconButton
-                        icon={<IoSettingsOutline size={ICON_SIZE} />}
-                        onClick={() => console.log("TODO")}
-                    />
-                </div>
-                <div className="side-menu-chatter-icon-container">
-                    <ChatterIcon
-                        chatterName={DUMMY_ACCOUNT.chatterName}
-                        chatterImageUrl={DUMMY_ACCOUNT.chatterImageUrl}
-                        isOnline={DUMMY_ACCOUNT.isChatterOnline}
-                    />
-                </div>
+                <div className="margin-bottom-2" />
+                {SIDE_MENU_ACCOUNT_BUTTONS.map((accountButton => {
+                    return <div className="margin-bottom-2">
+                        <IconButton
+                            icon={accountButton.icon}
+                            onClick={accountButton.onClickFunction}
+                        />
+                    </div>
+                }))}
             </div>
         </div>
 	</div>

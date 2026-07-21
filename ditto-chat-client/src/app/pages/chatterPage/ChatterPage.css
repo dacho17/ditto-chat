@@ -1,0 +1,40 @@
+.chatter-page {
+    --account-details-container-height: 50%;
+    --shared-files-list-container-height: 50%;
+    --horizontal-padding: 6%;
+
+	display: flex;
+	flex-direction: column;
+    justify-content: flex-start;
+	width: 100%;
+	height: 100%;
+}
+
+.chatter-page-account-details-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--account-details-container-height);
+    border-top: var(--divider-border-style);
+    padding-left: var(--horizontal-padding);
+    padding-right: var(--horizontal-padding);
+}
+
+.chatter-page-shared-files-list-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--shared-files-list-container-height);
+    border-top: var(--divider-border-style);
+    padding-top: 20px;
+    padding-left: var(--horizontal-padding);
+    padding-right: var(--horizontal-padding);
+}

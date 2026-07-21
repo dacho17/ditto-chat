@@ -20,7 +20,7 @@
     max-height: 360px;
     border-radius: 12px;
 
-    background-color: var(--sidebar-menu-color);
+    background-color: var(--side-menu-menu-color);
 
     overflow-y: auto;
     scrollbar-width: thin;

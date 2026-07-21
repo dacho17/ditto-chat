@@ -17,18 +17,15 @@
 	}
 }
 
-.mobile-chat-feature-list {
-	display: none;
+.expand-chatter-panel-button {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 }
 
-@media (max-width: 720px) {
-	.chat-feature-list{
+@media (max-width: 1024px) {
+	.expand-chatter-panel-button {
 		display: none;
-	}
-
-	.mobile-chat-feature-list {
-		display: flex;
-		
-		width: 100%;
 	}
 }

@@ -1,10 +1,8 @@
 .chat-threads-panel {
-	--buttons-container-height: 85%;
-	
-	--ditto-chat-title-container-mobile: 50%;
-	--search-container-height-mobile: 50%;
-	
+	--buttons-container-height: 85%;	
 	--horizontal-padding: 6%;
+
+	position: relative;		/* enables Absolute Positioning of NewChatButton */
 
 	display: flex;
 	flex-direction: column;
@@ -21,7 +19,7 @@
 .chat-threads-panel-header-ditto-chat-title-container {
 	display: none;
 }
-.chat-threads-search-container {
+.search-bar-container {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -49,12 +47,21 @@
 }
 
 @media (max-width: 720px) {
-	.chat-threads-search-container {
+	.chat-threads-panel {
+		--ditto-chat-title-container-mobile: 50%;
+		--search-container-height-mobile: 50%;
+	}
+
+	.search-bar-container {
 		height: var(--search-container-height-mobile);
 		padding-top: 10px;
 	}
 
 	.chat-threads-panel-header-ditto-chat-title-container {
+		--ditto-logo-container-width: 10%;
+		--ditto-chat-title-width: 80%;
+		--account-feature-list-container-width: 10%;
+
 		display: flex;
 		flex-direction: row;
 		justify-content: flex-start;
@@ -74,16 +81,32 @@
 		flex-direction: column;
 		justify-content: center;
 		align-items: center;
+
+		box-sizing: border-box;
+		width: var(--ditto-logo-container-width);
 	}
 
 	.ditto-logo {
 		max-height: 36px;
-		background-color: var(--sidebar-menu-color);
+		background-color: var(--side-menu-menu-color);
 	}
 	
 	.ditto-chat-title {
+		box-sizing: border-box;
+		width: var(--ditto-chat-title-width);
+
 		color: var(--text-main);
 		font-size: 24px;
 		font-weight: 900;
+	}
+
+	.account-feature-list-container {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+
+		box-sizing: border-box;
+		width: var(--account-feature-list-container-width);
 	}
 }

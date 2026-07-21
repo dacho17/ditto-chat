@@ -5,12 +5,15 @@ const CONSTANTS = {
     REGISTER_URL: "/register",
     LOGIN_URL: "/login",
     LOGOUT_URL: "/logout",
-    HOME_URL: "/home",
+    HOME_URL: "/home",  
+    ACCOUNT_URL: "/account",
+    CHATTERS_URL: "/chatters",
+    CHATTER_URL: "/chatter",
     CHAT_URL: "/chat",
-    GET_LATEST_CHAT_MESSAGES_URL: "/chat/get-latest-messages",
-    GET_OLDER_CHAT_MESSAGES_URL: "/chat/get-older-messages",
-    UPDATE_LAST_SEEN_CHAT_MESSAGE_URL: "/chat/update-last-seen-message",
-    SEND_CHAT_MESSAGE_URL: "/chat/send-message"
+    GET_LATEST_CHAT_MESSAGES_URL: "/get-latest-messages",
+    GET_OLDER_CHAT_MESSAGES_URL: "/get-older-messages",
+    UPDATE_LAST_SEEN_CHAT_MESSAGE_URL: "/update-last-seen-message",
+    SEND_CHAT_MESSAGE_URL: "/send-message"
 }
 
 export default CONSTANTS;
