@@ -5,25 +5,23 @@ import CONSTANTS from "../../../Constants";
 import DittoConsultingLogo from '../../../assets/ditto-consulting-logo.png';
 import "./SideMenu.css";
 
-const ICON_SIZE = 30;
-
 export default function SideMenu() {
     const navigate = useNavigate();
     
     const SIDE_MENU_FEATURES_BUTTONS = [
         {
-            icon: <IoHomeOutline size={ICON_SIZE} />,
+            icon: <IoHomeOutline size={CONSTANTS.LARGER_ICON_SIZE} />,
             onClickFunction: () => navigate(CONSTANTS.HOME_URL)
         }
     ];
 
     const SIDE_MENU_ACCOUNT_BUTTONS = [
         {
-            icon: <IoPersonOutline size={ICON_SIZE} />,
+            icon: <IoPersonOutline size={CONSTANTS.LARGER_ICON_SIZE} />,
             onClickFunction: () => navigate(CONSTANTS.ACCOUNT_URL)
         },
         {
-            icon: <IoLogOutOutline size={ICON_SIZE} className="alert" />,
+            icon: <IoLogOutOutline size={CONSTANTS.LARGER_ICON_SIZE} className="alert" />,
             onClickFunction: () => navigate(CONSTANTS.LOGOUT_URL) // TODO: First Logout, then redirect to login!
         }
     ];

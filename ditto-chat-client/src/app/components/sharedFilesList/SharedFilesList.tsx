@@ -1,29 +1,15 @@
 import SharedFileButton from "../sharedFileButton/SharedFileButton";
+import SharedFile from "../../classes/SharedFile";
 import ChatterIconImage from '../../../assets/david-chat-image.jpg';
 import "./SharedFilesList.css";
 
 const SHARED_FILES_TITLE = "Shared Files";
-const DUMMY_SHARED_FILES = [
-    {
-        fileName: "Ditto",
-        fileImageUrl: ChatterIconImage
-    },
-    {
-        fileName: "Handsome boy",
-        fileImageUrl: ChatterIconImage
-    },
-    {
-        fileName: "Ditto",
-        fileImageUrl: ChatterIconImage
-    },
-    {
-        fileName: "Ditto",
-        fileImageUrl: ChatterIconImage
-    },
-    {
-        fileName: "Handsome boy",
-        fileImageUrl: ChatterIconImage
-    }
+const DUMMY_SHARED_FILES: SharedFile[] = [
+    new SharedFile("Ditto", ChatterIconImage),
+    new SharedFile("Handsome man", ChatterIconImage),
+    new SharedFile("Ditto", ChatterIconImage),
+    new SharedFile("Ditto", ChatterIconImage),
+    new SharedFile("Handsome man", ChatterIconImage)
 ];
 
 export default function SharedFilesList() {
@@ -37,8 +23,7 @@ export default function SharedFilesList() {
                 return <>
                     <div className="margin-bottom-1 margin-right-1">
                         <SharedFileButton
-                            fileName={sharedFile.fileName}
-                            fileImageUrl={sharedFile.fileImageUrl}
+                            sharedFile={sharedFile}
                         />
                     </div>
                 </>

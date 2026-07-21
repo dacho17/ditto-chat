@@ -1,11 +1,10 @@
 import { IoAttachOutline, IoSendOutline } from "react-icons/io5";
 import { BsEmojiSmileUpsideDown } from "react-icons/bs";
 import IconButton from "../iconButton/IconButton";
+import CONSTANTS from "../../../Constants";
 import "./ChatWindowMessageInput.css";
 
 const INPUT_PLACEHOLDER_VALUE = "Message";
-const ICON_SIZE = 26;
-
 
 export default function ChatWindowMessageInput() {
     return <div className="chat-window-message-input">
@@ -22,11 +21,11 @@ export default function ChatWindowMessageInput() {
         />
         <div className="chat-window-message-input-additions">
             <IconButton
-                icon={<IoAttachOutline size={ICON_SIZE} />}
+                icon={<IoAttachOutline size={CONSTANTS.ICON_SIZE} />}
                 onClick={() => console.log("TODO")} 
             />
             <IconButton
-                icon={<BsEmojiSmileUpsideDown size={ICON_SIZE} />}
+                icon={<BsEmojiSmileUpsideDown size={CONSTANTS.ICON_SIZE} />}
                 onClick={() => console.log("TODO")} 
             />
         </div>
@@ -35,7 +34,7 @@ export default function ChatWindowMessageInput() {
                 onClick={() => console.log("TODO-send-func")}
                 disabled={false}
             >
-                <IoSendOutline size={ICON_SIZE} />
+                <IoSendOutline size={CONSTANTS.ICON_SIZE} />
             </button>
         </div>
     </div>

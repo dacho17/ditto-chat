@@ -12,8 +12,6 @@ interface Props {
 	listType: ListType
 }
 
-const ICON_SIZE = 24;
-
 export default function ChatFeatureList(props: Props) {
 	const navigate = useNavigate();
 
@@ -36,12 +34,12 @@ export default function ChatFeatureList(props: Props) {
 	return <>
 		<div className={`chat-feature-list ${listStyleClassName}`}>
 			<IconButtonDropdown
-				icon={<IoMdMore size={ICON_SIZE} />}
+				icon={<IoMdMore size={CONSTANTS.ICON_SIZE} />}
 				dropdownItems={CHAT_FEATURE_LIST}
 			/>
 			<div className="expand-chatter-panel-button">
 				<IconButton
-					icon={<IoExpandOutline size={ICON_SIZE} />}
+					icon={<IoExpandOutline size={CONSTANTS.ICON_SIZE} />}
 					onClick={() => console.log("TODO-call Reducer to Expand /chatter Panel")}
 					// TODO: make this button change it icon based on whether panel is extended or not!
 				/>

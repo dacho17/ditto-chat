@@ -1,3 +1,4 @@
+import ChatThreadOverview from "../../classes/ChatThreadOverview";
 import ChatterIcon from "../chatterIcon/ChatterIcon";
 import "./ChatThreadButton.css";
 
@@ -6,31 +7,22 @@ const START_CONVERSATION_MESSAGE = "Start Conversation";
 
 // NOTE: ChatterButton is ChatThreadButton without ThreadDetails
 interface Props {
-    chatterName: string;
-    chatterImageUrl: string;
-    isChatterOnline: boolean;
-    // TODO: this can be a ChatterObject
-
-    lastMessage: string | null;
-    lastMessageTime: string | null;
-    numberOfUnreadMessages: number;
-    // TODO: this can be ChatterThreadOverview, or sth similar. It can be either that type or null
-
-    onClickFunction: Function
+    chatThreadOverview: ChatThreadOverview
+    openChatFunction: Function
 }
 
 export default function ChatThreadButton(props: Props) {
     function getLastMessageText(): string {
-        if (props.numberOfUnreadMessages > 0) {
+        if (props.chatThreadOverview.getNumberOfUnseenMessages() > 0) {
             return UNREAD_MESSAGES_MESSAGE;
-        } else if (props.lastMessage !== null) {
-            return props.lastMessage;
+        } else if (props.chatThreadOverview.getLastMessage() !== null) {
+            return props.chatThreadOverview.getLastMessage();
         } else {
             return START_CONVERSATION_MESSAGE;
         }
     }
 
-    function getLastMessageTime(): string {
+    function getLastMessageTime(lastMessageTime: string): string {
         const isLastMessageSentToday = false;        // TODO: this needs to be calculated!
         if (isLastMessageSentToday === true) {
             return "12:00";    // TODO: return time of the day!
@@ -41,27 +33,27 @@ export default function ChatThreadButton(props: Props) {
 
     return <button
         className="chat-thread-button"
-        onClick={() => props.onClickFunction()}
+        onClick={() => props.openChatFunction()}
     >
         <div className="chat-thread-button-user-image-container">
             <ChatterIcon
-                chatterName={props.chatterName}
-                chatterImageUrl={props.chatterImageUrl}
-                isOnline={props.isChatterOnline}
+                chatterFullName={props.chatThreadOverview.getChatter().getChatterFullName()}
+                chatterImageUrl={props.chatThreadOverview.getChatter().getChatterImageUrl()}
+                isOnline={props.chatThreadOverview.getChatter().getIsChatterOnline()}
             />
         </div>
         <div className="chat-thread-button-summary">
             <div className="chat-thread-button-summary-row line-height-2">
-                <span className="bold-text handle-overflow">{props.chatterName}</span>
-                { props.lastMessageTime !== null
-                    ? <span className="regular-faded-text margin-left-1">{getLastMessageTime()}</span>
+                <span className="bold-text handle-overflow">{props.chatThreadOverview.getChatter().getChatterFullName()}</span>
+                { props.chatThreadOverview.getLastMessageTime() !== null
+                    ? <span className="regular-faded-text margin-left-1">{getLastMessageTime(props.chatThreadOverview.getLastMessageTime())}</span>
                     : null
                 }
             </div>
             <div className="chat-thread-button-summary-row line-height-2">
                 <span className="regular-faded-text">{getLastMessageText()}</span>
-                { props.numberOfUnreadMessages > 0
-                    ? <span className="chat-thread-button-summary-unread-messages">{props.numberOfUnreadMessages}</span>
+                { props.chatThreadOverview.getNumberOfUnseenMessages() > 0
+                    ? <span className="chat-thread-button-summary-unread-messages">{props.chatThreadOverview.getNumberOfUnseenMessages()}</span>
                     : null
                 }
             </div>

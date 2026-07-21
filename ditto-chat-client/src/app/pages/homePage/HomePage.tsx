@@ -1,6 +1,6 @@
 import PageWithSideMenu from "../pageWithSideMenu/PageWithSideMenu";
 import ActiveChatThreadPanel from "../../components/activeChatThreadPanel/ActiveChatThreadPanel";
-import ChatTheadsPanel from "../../components/chatThreadsPanel/ChatThreadsPanel";
+import ChatThreadsPanel from "../../components/chatThreadsPanel/ChatThreadsPanel";
 import ChatWindow from "../../components/chatWindow/ChatWindow";
 import "./HomePage.css";
 
@@ -9,7 +9,7 @@ export default function HomePage() {
         mainPage={
             <div className="home-page">
                 <div className="chat-thread-panel-container">
-                    <ChatTheadsPanel />
+                    <ChatThreadsPanel />
                 </div>
                 <div className="chat-window-container">
                     <ChatWindow />

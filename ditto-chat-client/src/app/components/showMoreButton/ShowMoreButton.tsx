@@ -1,7 +1,6 @@
 import { IoArrowUpOutline, IoArrowDownOutline } from "react-icons/io5";
+import CONSTANTS from "../../../Constants";
 import "./ShowMoreButton.css";
-
-const ICON_SIZE = 60;
 
 interface Props {
     showMoreFunc: () => void,
@@ -10,7 +9,7 @@ interface Props {
 
 export default function ShowMoreButton(props: Props) {
     function getShowMoreIcon(): React.JSX.Element {
-        return props.isDirectionUpwards === true ? <IoArrowUpOutline size={ICON_SIZE} /> : <IoArrowDownOutline size={ICON_SIZE} />
+        return props.isDirectionUpwards === true ? <IoArrowUpOutline size={CONSTANTS.ICON_SIZE} /> : <IoArrowDownOutline size={CONSTANTS.ICON_SIZE} />
     }
 
     return <button className="show-more-button">

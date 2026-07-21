@@ -1,12 +1,12 @@
+import SharedFile from "../../classes/SharedFile";
 import "./SharedFileButton.css";
 
 interface Props {
-    fileName: string;
-    fileImageUrl: string;
+    sharedFile: SharedFile;
 }
 
 export default function SharedFileButton(props: Props) {
     return <button className="shared-file-button">
-        <img className="shared-file-button-thumbnail" src={props.fileImageUrl} alt={props.fileName}/>
+        <img className="shared-file-button-thumbnail" src={props.sharedFile.getFileUrl()} alt={props.sharedFile.getFileName()}/>
     </button>
 }

@@ -1,38 +1,34 @@
 import { LuMessageCircleWarning } from "react-icons/lu";
 import LoadingSpinner from "../loadingSpinner/LoadingSpinner";
-import { ChatMessageStatus } from "../../enums/ChatMessageStatus";
+import ChatThreadMessage from "../../classes/ChatThreadMessage";
+import { ChatThreadMessageStatus } from "../../enums/ChatThreadMessageStatus";
 import "./ChatMessageRow.css";
 
-const DUMMY_ACCOUNT = "David Dosenovic";
-const RESEND_CHAT_MESSAGE_TEXT = "Re-send";
-const SENDING_CHAT_MESSAGE_TEXT = "Sending";
 const FAILED_TO_SEND_CHAT_MESSAGE_TEXT = "Failed to send";
 const SENT_CHAT_MESSAGE_TEXT = "Sent";
 const NEW_CHAT_MESSAGE_TEXT = "New message";
 const SEEN_CHAT_MESSAGE_TEXT = "Seen";
+const SENDING_CHAT_MESSAGE_TEXT = "Sending";
+const RESEND_CHAT_MESSAGE_TEXT = "Re-send";
 const INDICATOR_SIZE = 20;
 
 
 interface Props {
-    chatMessageStatus: ChatMessageStatus,
-    messageSender: string;      // NOTE: using prop such as this can enable group chats
-    messageTime: string;
-    messageContent: string;
-    isMessageSeen: boolean;
+    chatThreadMessage: ChatThreadMessage
 }
 
 export default function ChatMessageRow(props: Props) {
     function getChatMessageDetailsText(): string {
         if (isChatMessageSent === true) {
-            if (props.chatMessageStatus === ChatMessageStatus.CONFIRMED) {
+            if (props.chatThreadMessage.getStatus() === ChatThreadMessageStatus.CONFIRMED) {
                 return SENT_CHAT_MESSAGE_TEXT;
-            } else if (props.chatMessageStatus === ChatMessageStatus.SENDING) {
+            } else if (props.chatThreadMessage.getStatus() === ChatThreadMessageStatus.SENDING) {
                 return SENDING_CHAT_MESSAGE_TEXT;
-            } else if (props.chatMessageStatus === ChatMessageStatus.FAILED_TO_SEND) {
+            } else if (props.chatThreadMessage.getStatus() === ChatThreadMessageStatus.FAILED_TO_SEND) {
                 return FAILED_TO_SEND_CHAT_MESSAGE_TEXT;
             }
         } else {
-            if (props.isMessageSeen === true) {
+            if (props.chatThreadMessage.getIsMessageSeen() === true) {
                 return SEEN_CHAT_MESSAGE_TEXT;
             } else {
                 return NEW_CHAT_MESSAGE_TEXT;
@@ -40,12 +36,11 @@ export default function ChatMessageRow(props: Props) {
         }
     }
 
-    const isChatMessageSent = props.messageSender === DUMMY_ACCOUNT;
-    const chatMessageSenderStyle = isChatMessageSent === true
-        ? "message-sender" : "message-receiver";
+    const isChatMessageSent = props.chatThreadMessage.getIsMessageReceived() === false;
+    const chatMessageSenderStyle = isChatMessageSent ? "message-sender" : "message-receiver";
     return <div className="chat-message-row margin-bottom-2">
         <div className={`chat-message ${chatMessageSenderStyle}`}>
-            { isChatMessageSent === true && props.chatMessageStatus === ChatMessageStatus.FAILED_TO_SEND &&
+            { isChatMessageSent === true && props.chatThreadMessage.getStatus() === ChatThreadMessageStatus.FAILED_TO_SEND &&
                 <div className={`chat-message-indicator ${chatMessageSenderStyle}`}>
                     <button className="chat-message-sent-indicator send-failed tooltip" onClick={() => console.log("TODO-resend!")}>
                         <LuMessageCircleWarning size={INDICATOR_SIZE} />
@@ -53,7 +48,7 @@ export default function ChatMessageRow(props: Props) {
                     </button>
                 </div>
             }
-            { isChatMessageSent === true && props.chatMessageStatus === ChatMessageStatus.SENDING &&
+            { isChatMessageSent === true && props.chatThreadMessage.getStatus() === ChatThreadMessageStatus.SENDING &&
                 <div className={`chat-message-indicator ${chatMessageSenderStyle}`}>
                     <div className="chat-message-sent-indicator sending tooltip">
                         <LoadingSpinner />
@@ -62,9 +57,9 @@ export default function ChatMessageRow(props: Props) {
                 </div> 
             }
             <div className={`chat-message-bubble ${chatMessageSenderStyle}`}>
-                <div className="chat-message-content bold-text">{props.messageContent}</div>
+                <div className="chat-message-content bold-text">{props.chatThreadMessage.getMessageContent()}</div>
             </div>
         </div>
-        <span className={`chat-message-details ${chatMessageSenderStyle}`}>{getChatMessageDetailsText()} {props.messageTime}</span>
+        <span className={`chat-message-details ${chatMessageSenderStyle}`}>{getChatMessageDetailsText()} {props.chatThreadMessage.getMessageTime()}</span>
     </div>
 }
