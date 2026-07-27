@@ -1,9 +1,11 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { IoMdMore } from "react-icons/io";
 import { IoExpandOutline } from "react-icons/io5";
+import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
+import { clearChatState, clearChatThreadHistory } from "../../store/ChatSlice";
 import IconButtonDropdown from "../iconButtonDropdown/IconButtonDropdown";
 import IconButton from "../iconButton/IconButton";
-import DropdownItem from "../../interfaces/DropdownItem";
+import DropdownItem from "../../classes/DropdownItem";
 import { ListType } from "../../enums/ListType";
 import CONSTANTS from "../../../Constants";
 import "./ChatFeatureList.css";
@@ -13,17 +15,34 @@ interface Props {
 }
 
 export default function ChatFeatureList(props: Props) {
+	const { chatThread } = useAppSelector(state => state.chatSlice);
+	const dispatch = useAppDispatch();
+	const { chatThreadId } = useParams();
 	const navigate = useNavigate();
 
+	async function tryClearChatThreadHistory(): Promise<void> {
+		try {
+			await dispatch(clearChatThreadHistory({ chatThreadId: chatThreadId })).unwrap();
+		} catch (err) {
+			console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
+		} finally {}					
+	}
+
 	const CHAT_FEATURE_LIST: DropdownItem[] = [
-		{
-			itemName: "View Contact",
-    		onClickFunction: () => navigate(`${CONSTANTS.CHATTER_URL}/TODO`)
-		},
-		{
-			itemName: "Clear Chat",
-			onClickFunction: () => console.log("Call AsyncThunk Function to Send HTTP Request to Clear Chat")
-		}
+		new DropdownItem(
+			"View Contact",
+			() => {
+				const chatterId = chatThread.getOverview().getChatterOverview().getId();
+				dispatch(clearChatState());
+				navigate(`${CONSTANTS.CHATTER_URL}/${chatterId}`);
+			}
+		),
+		new DropdownItem(
+			"Clear Chat",
+			() => {
+				tryClearChatThreadHistory();
+			}
+		)
 	];
 
 	function getListStyleClassName(listType: ListType): string {

@@ -1,5 +1,5 @@
 .chat-thread-button {
-	--user-image-container-width: 20%;
+	--chatter-image-container-width: 20%;
 	--summary-width: 80%;
 
 	display: flex;
@@ -8,7 +8,7 @@
 
 	box-sizing: border-box;
 	width: 100%;
-	height: 72px;
+	min-height: 72px;
 	padding-right: 10px;
 
 	border: none;
@@ -23,7 +23,7 @@
 	/* &:hover .chat-thread-button-summary-unread-messages {
 	} */
 }
-.chat-thread-button-user-image-container {
+.chat-thread-button-chatter-image-container {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -31,7 +31,7 @@
 
 	box-sizing: border-box;
 	height: 100%;
-	width: var(--user-image-container-width);
+	width: var(--chatter-image-container-width);
 }
 .chat-thread-button-summary {
 	display: flex;

@@ -1,5 +1,6 @@
 import { LuMessageCircleWarning } from "react-icons/lu";
 import LoadingSpinner from "../loadingSpinner/LoadingSpinner";
+import TimeHelper from "../../helpers/TimeHelper";
 import ChatThreadMessage from "../../classes/ChatThreadMessage";
 import { ChatThreadMessageStatus } from "../../enums/ChatThreadMessageStatus";
 import "./ChatMessageRow.css";
@@ -14,7 +15,9 @@ const INDICATOR_SIZE = 20;
 
 
 interface Props {
-    chatThreadMessage: ChatThreadMessage
+    chatThreadMessage: ChatThreadMessage;
+    loggedInChatterId: string;
+    resendFunction: (chatMessageClientRef: string) => Promise<void>;
 }
 
 export default function ChatMessageRow(props: Props) {
@@ -36,13 +39,21 @@ export default function ChatMessageRow(props: Props) {
         }
     }
 
-    const isChatMessageSent = props.chatThreadMessage.getIsMessageReceived() === false;
+    function getChatThreadMessageTime(chatThreadMessageTimestamp: number): string {
+        const { localDate, localTime } = TimeHelper.getLocalTimeAndDate(chatThreadMessageTimestamp);
+        return `${localTime} ${localDate}`;
+    }
+
+    const isChatMessageSent = props.chatThreadMessage.isMessageReceived(props.loggedInChatterId) === false;
     const chatMessageSenderStyle = isChatMessageSent ? "message-sender" : "message-receiver";
     return <div className="chat-message-row margin-bottom-2">
         <div className={`chat-message ${chatMessageSenderStyle}`}>
             { isChatMessageSent === true && props.chatThreadMessage.getStatus() === ChatThreadMessageStatus.FAILED_TO_SEND &&
                 <div className={`chat-message-indicator ${chatMessageSenderStyle}`}>
-                    <button className="chat-message-sent-indicator send-failed tooltip" onClick={() => console.log("TODO-resend!")}>
+                    <button
+                        className="chat-message-sent-indicator send-failed tooltip"
+                        onClick={() => props.resendFunction(props.chatThreadMessage.getClientRef())}
+                    >
                         <LuMessageCircleWarning size={INDICATOR_SIZE} />
                         <span className="tooltip-text">{RESEND_CHAT_MESSAGE_TEXT}</span>
                     </button>
@@ -60,6 +71,8 @@ export default function ChatMessageRow(props: Props) {
                 <div className="chat-message-content bold-text">{props.chatThreadMessage.getMessageContent()}</div>
             </div>
         </div>
-        <span className={`chat-message-details ${chatMessageSenderStyle}`}>{getChatMessageDetailsText()} {props.chatThreadMessage.getMessageTime()}</span>
+        <span className={`chat-message-details ${chatMessageSenderStyle}`}>
+            {getChatMessageDetailsText()} {getChatThreadMessageTime(props.chatThreadMessage.getMessageTimestamp())}
+        </span>
     </div>
 }

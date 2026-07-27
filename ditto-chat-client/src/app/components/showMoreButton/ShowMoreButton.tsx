@@ -12,7 +12,10 @@ export default function ShowMoreButton(props: Props) {
         return props.isDirectionUpwards === true ? <IoArrowUpOutline size={CONSTANTS.ICON_SIZE} /> : <IoArrowDownOutline size={CONSTANTS.ICON_SIZE} />
     }
 
-    return <button className="show-more-button">
+    return <button
+        className="show-more-button"
+        onClick={() => props.showMoreFunc()}
+    >
         {getShowMoreIcon()}
     </button>
 }

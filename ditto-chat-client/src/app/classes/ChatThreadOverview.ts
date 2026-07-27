@@ -2,22 +2,25 @@ import ChatterOverview from "./ChatterOverview";
 
 export default class ChatThreadOverview {
     private id: string;
-    private chatter: ChatterOverview;
+    private chatterOverview: ChatterOverview;
+    private chatThreadCreatedAtTimestamp: number;
     private numberOfUnseenMessages: number;
-    private lastMessageTime: string | null;
+    private lastMessageTimestamp: number | null;
     private lastMessage: string | null;
 
     public constructor(
         id: string,
-        chatter: ChatterOverview,
+        chatterOverview: ChatterOverview,
+        chatThreadCreatedAtTimestamp: number,
         numberOfUnseenMessages: number,
-        lastMessageTime: string | null,
+        lastMessageTimestamp: number | null,
         lastMessage: string | null,
     ) {
         this.id = id;
-        this.chatter = chatter;
+        this.chatterOverview = chatterOverview;
+        this.chatThreadCreatedAtTimestamp = chatThreadCreatedAtTimestamp;
         this.numberOfUnseenMessages = numberOfUnseenMessages;
-        this.lastMessageTime = lastMessageTime;
+        this.lastMessageTimestamp = lastMessageTimestamp;
         this.lastMessage = lastMessage;
     }
 
@@ -25,19 +28,35 @@ export default class ChatThreadOverview {
         return this.id;
     }
 
-    public getChatter(): ChatterOverview {
-        return this.chatter;
+    public getChatterOverview(): ChatterOverview {
+        return this.chatterOverview;
+    }
+
+    public getChatThreadCreatedAtTimestamp(): number {
+        return this.chatThreadCreatedAtTimestamp;
     }
 
     public getNumberOfUnseenMessages(): number {
         return this.numberOfUnseenMessages;
     }
 
-    public getLastMessageTime(): string | null {
-        return this.lastMessageTime;
+    public setNumberOfUnseenMessages(numberOfUnseenMessages: number): void {
+        this.numberOfUnseenMessages = numberOfUnseenMessages;
+    }
+
+    public getLastMessageTimestamp(): number | null {
+        return this.lastMessageTimestamp;
+    }
+
+    public setLastMessageTimestamp(lastMessageTimestamp: number): void {
+        this.lastMessageTimestamp = lastMessageTimestamp;
     }
 
     public getLastMessage(): string | null {
         return this.lastMessage;
+    }
+
+    public setLastMessage(lastMessage: string): void {
+        this.lastMessage = lastMessage;
     }
 }

@@ -1,64 +1,74 @@
+import { useParams } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
+import { getChatThreadMessages, sendChatThreadMessage, setCurrentChatThreadMessagesListPage, setIsLoadingOlderMessages } from "../../store/ChatSlice";
 import ChatMessageRow from "../chatMessageRow/ChatMessageRow";
 import ShowMoreButton from "../showMoreButton/ShowMoreButton";
 import LoadingSpinner from "../loadingSpinner/LoadingSpinner";
 import ChatThreadMessage from "../../classes/ChatThreadMessage";
+import ChatThreadMessageForm from "../../classes/ChatThreadMessageForm";
 import { ChatThreadMessageStatus } from "../../enums/ChatThreadMessageStatus";
 import "./ChatWindowMessagesList.css";
 
 const START_THE_CHAT_INDICATOR_TEXT = "No message history. Be the first one to message the tenant";
 const CHAT_STARTED_INDICATOR_TEXT = "Conversation started";
-const NUMBER_OF_CHAT_MESSAGES_PER_PAGE = 10;
-
-const DUMMY_MESSAGE_LIST: ChatThreadMessage[] = [
-    new ChatThreadMessage(
-        ChatThreadMessageStatus.SENDING, "id-1", "Message which is being sent", "18/06/2026 15:10", false, true
-    ),
-    new ChatThreadMessage(
-        ChatThreadMessageStatus.FAILED_TO_SEND, "id-1", "Message which failed to be sent", "18/06/2026 15:05", false, true
-    ),
-    new ChatThreadMessage(
-        ChatThreadMessageStatus.CONFIRMED, "id-2", "New, not seen message", "18/06/2026 15:00", true, false
-    ),
-    new ChatThreadMessage(
-        ChatThreadMessageStatus.CONFIRMED, "id-2", "Response Message", "16/06/2026 11:13", true, true
-    ),
-    new ChatThreadMessage(
-        ChatThreadMessageStatus.CONFIRMED, "id-2", "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since 1966, when designers at Letraset and James Mosley, the librarian at St Bride Printing Library in London, took a 1914 Cicero translation and scrambled it to make dummy text for Letraset's Body Type sheets. It has survived not only many decades, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised thanks to these sheets and more recently with desktop publishing software like Aldus PageMaker and Microsoft Word including versions of Lorem Ipsum",
-        "16/06/2026 11:13", true, true
-    ),
-    new ChatThreadMessage(
-        ChatThreadMessageStatus.CONFIRMED, "id-1", "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since 1966, when designers at Letraset and James Mosley, the librarian at St Bride Printing Library in London, took a 1914 Cicero translation and scrambled it to make dummy text for Letraset's Body Type sheets. It has survived not only many decades, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised thanks to these sheets and more recently with desktop publishing software like Aldus PageMaker and Microsoft Word including versions of Lorem Ipsum",
-        "16/06/2026 11:12", false, true
-    ),
-    new ChatThreadMessage(
-        ChatThreadMessageStatus.CONFIRMED, "id-1",
-        "Second Message", "16/06/2026 11:12", false, true
-    ),
-    new ChatThreadMessage(
-        ChatThreadMessageStatus.CONFIRMED, "id-1",
-        "First Message", "16/06/2026 11:11", false, true
-    ),
-];
-const DUMMY_OLDER_MESSAGES_LOADING_STATUS = false;
-const DUMMY_IS_ENTIRE_CHAT_HISTORY_LOADED = true;
 
 export default function ChatWindowMessagesList() {
-    function getFirstChatMessagerRow(): React.JSX.Element {
-        if (DUMMY_MESSAGE_LIST.length === 0) {
+    const { chatThread, isLastChatMessagesListPage, currentChatMessagesListPage, isLoadingOlderMessages } = useAppSelector(state => state.chatSlice);
+    const { chatterOverview } = useAppSelector(state => state.authSlice);
+    const dispatch = useAppDispatch();
+	const { chatThreadId } = useParams();
+
+    async function tryGetOlderChatMessages(): Promise<void> {
+        dispatch(setIsLoadingOlderMessages(true));
+        dispatch(setCurrentChatThreadMessagesListPage(currentChatMessagesListPage + 1));
+
+        // TODO: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
+
+        try {
+            await dispatch(getChatThreadMessages({ chatThreadId: chatThreadId })).unwrap();
+
+            // TODO: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
+            return;
+        } catch (err: any) {
+            console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
+        } finally {
+            dispatch(setIsLoadingOlderMessages(false));
+        }
+    }
+
+    async function tryResendChatMessage(chatMessageClientRef: string): Promise<void> {
+        const failedChatMessage = chatThread.getMessages()
+            .find(chatThreadMessage => chatThreadMessage.getClientRef() === chatMessageClientRef
+                && chatThreadMessage.getStatus() === ChatThreadMessageStatus.FAILED_TO_SEND);
+        if (failedChatMessage !== undefined) {
+            const failedToSendChatThreadMessage = new ChatThreadMessageForm(failedChatMessage.getMessageContent(), failedChatMessage.getClientRef(), true);
+
+            try {
+                await dispatch(sendChatThreadMessage({ chatThreadId: chatThreadId, chatThreadMessageForm: failedToSendChatThreadMessage })).unwrap();
+            } catch (err) {
+                console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
+            }
+        } else {
+            console.log("ERROR: Referenced messsage does not exist!");
+        }
+    }
+
+    function getFirstChatMessagerRow(chatThreadMessages: ChatThreadMessage[]): React.JSX.Element {
+        if (chatThreadMessages.length === 0) {
             return <div className="chat-window-messages-list-indicator-row margin-bottom-10">
                 <span>{START_THE_CHAT_INDICATOR_TEXT}</span>
             </div>
-        } else if (DUMMY_IS_ENTIRE_CHAT_HISTORY_LOADED === true || DUMMY_MESSAGE_LIST.length < NUMBER_OF_CHAT_MESSAGES_PER_PAGE) {
+        } else if (isLastChatMessagesListPage === true) {
             return <div className='chat-window-messages-list-indicator-row margin-top-3 margin-bottom-2'>
                 <span>{CHAT_STARTED_INDICATOR_TEXT}</span>
             </div>
         } else {
-            if (DUMMY_OLDER_MESSAGES_LOADING_STATUS) {
+            if (isLoadingOlderMessages === true) {
                 return  <LoadingSpinner />
             } else {
                 return <div className='chat-window-messages-list-indicator-row margin-bottom-1'>
                     <ShowMoreButton
-                        showMoreFunc={() => console.log("TODO-show more func")}
+                        showMoreFunc={tryGetOlderChatMessages}
                         isDirectionUpwards={true}
                     />
                 </div>
@@ -66,13 +76,17 @@ export default function ChatWindowMessagesList() {
         }
     }
 
+    const displayedChatThreadMessages = chatThread.getMessages();
     return <div className="chat-window-messages-list">
         <div className="margin-bottom-2" />
-            {DUMMY_MESSAGE_LIST.map(chatMessage => {
+            {displayedChatThreadMessages.map(chatMessage => {
                 return <ChatMessageRow
+                    key={chatMessage.getId()}
                     chatThreadMessage={chatMessage}
+                    loggedInChatterId={chatterOverview.getId()}
+                    resendFunction={(chatMessageClientRef: string) => tryResendChatMessage(chatMessageClientRef)}
                 />
             })}
-            {getFirstChatMessagerRow()}
+            {getFirstChatMessagerRow(displayedChatThreadMessages)}
     </div>
 }

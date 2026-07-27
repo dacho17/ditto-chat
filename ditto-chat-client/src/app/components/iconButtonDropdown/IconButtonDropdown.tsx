@@ -1,6 +1,6 @@
 import { useState } from "react";
 import IconButton from "../iconButton/IconButton";
-import DropdownItem from "../../interfaces/DropdownItem";
+import DropdownItem from "../../classes/DropdownItem";
 import "./IconButtonDropdown.css";
 
 interface Props {
@@ -23,11 +23,15 @@ export default function IconButtonDropdown(props: Props) {
 
                 const nonFirstItemStyle = isFirstItem ? "" : "non-first-item";
                 return <button
+                    key={`id-${index}-${dropdownItem.getItemName()}`}
                     className={`icon-button-dropdown-list-item ${nonFirstItemStyle}`}
-                    onClick={() => dropdownItem.onClickFunction()}
+                    onClick={() => {
+                        dropdownItem.getFunction()();
+                        setIsDropdownOpen(false);
+                    }}
                 >
                     <div className="bold-text">
-                        {dropdownItem.itemName}
+                        {dropdownItem.getItemName()}
                     </div>
                 </button>
             }) }

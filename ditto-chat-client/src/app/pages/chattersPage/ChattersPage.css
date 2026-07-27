@@ -20,14 +20,26 @@
 }
 
 .chatters-page-chatters-list-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
 
-    box-sizing: border-box;
-    width: 100%;
+	width: 100%;
     height: 100%;
-    border-top: var(--divider-border-style);
+}
+
+.chatter-buttons-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
+	border-top: var(--divider-border-style);
     padding-right: var(--horizontal-padding);
     padding-left: var(--horizontal-padding);
+
+	overflow-y: auto;
 }

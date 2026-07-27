@@ -1,5 +1,5 @@
-import ChatThreadMessage from "./ChatThreadMessage";
 import ChatThreadOverview from "./ChatThreadOverview";
+import ChatThreadMessage from "./ChatThreadMessage";
 
 export default class ChatThread {
     private overview: ChatThreadOverview;
@@ -16,5 +16,16 @@ export default class ChatThread {
 
     public getMessages(): ChatThreadMessage[] {
         return this.messages;
+    }
+
+    public setMessages(chatThreadMessages: ChatThreadMessage[]): void {
+        this.messages = chatThreadMessages;
+    }
+
+    public static getShallowCopy(chatThread: ChatThread): ChatThread {
+        return new ChatThread(
+            chatThread.getOverview(),
+            chatThread.getMessages()
+        );
     }
 }

@@ -1,5 +1,5 @@
 .chat-threads-panel {
-	--buttons-container-height: 85%;	
+	--buttons-container-height: 86%;
 	--horizontal-padding: 6%;
 
 	position: relative;		/* enables Absolute Positioning of NewChatButton */
@@ -33,17 +33,29 @@
 	padding-left: var(--horizontal-padding);
 	padding-right: var(--horizontal-padding);
 }
-.chat-thread-buttons-container {
+.chat-threads-container {
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-start;
 
-	box-sizing: border-box;
 	width: 100%;
 	height: var(--buttons-container-height);
+}
+
+.chat-thread-buttons-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
 	padding-left: 2%;
 	padding-right: var(--horizontal-padding);
 	border-top: var(--divider-border-style);
+
+	overflow-y: auto;
 }
 
 @media (max-width: 720px) {

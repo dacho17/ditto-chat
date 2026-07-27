@@ -33,9 +33,13 @@ export default function SideMenu() {
         <div className="side-menu-options">
             <div className="side-menu-features">
                 <div className="margin-bottom-2" />
-                {SIDE_MENU_FEATURES_BUTTONS.map((featureButton => {
-                    return <div className="margin-bottom-2">
+                {SIDE_MENU_FEATURES_BUTTONS.map(((featureButton, index) => {
+                    return <div
+                        key={`margin-feature-button-id-${index}`}
+                        className="margin-bottom-2"
+                    >
                         <IconButton
+                            key={`feature-button-id-${index}`}
                             icon={featureButton.icon}
                             onClick={featureButton.onClickFunction}
                         />
@@ -44,9 +48,13 @@ export default function SideMenu() {
             </div>
             <div className="side-menu-account">
                 <div className="margin-bottom-2" />
-                {SIDE_MENU_ACCOUNT_BUTTONS.map((accountButton => {
-                    return <div className="margin-bottom-2">
+                {SIDE_MENU_ACCOUNT_BUTTONS.map(((accountButton, index) => {
+                    return <div
+                        key={`margin-account-button-id-${index}`}
+                        className="margin-bottom-2"
+                    >
                         <IconButton
+                            key={`account-button-id-${index}`}
                             icon={accountButton.icon}
                             onClick={accountButton.onClickFunction}
                         />

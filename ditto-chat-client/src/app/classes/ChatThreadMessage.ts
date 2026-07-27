@@ -6,23 +6,20 @@ export default class ChatThreadMessage {
     private id: string | null;
     private messageSenderId: string;
     private messageContent: string;
-    private messageTime: string;
-    private isMessageReceived: boolean;
+    private messageTimestamp: number;
     private isMessageSeen: boolean;
 
     public constructor(
         status: ChatThreadMessageStatus,
         messageSenderId: string,
         messageContent: string,
-        messageTime: string,
-        isMessageReceived: boolean,
+        messageTimestamp: number,
         isMessageSeen: boolean,
     ) {
         this.status = status;
         this.messageSenderId = messageSenderId;
         this.messageContent = messageContent;
-        this.messageTime = messageTime;
-        this.isMessageReceived = isMessageReceived;
+        this.messageTimestamp = messageTimestamp;
         this.isMessageSeen = isMessageSeen;
     }
 
@@ -34,8 +31,12 @@ export default class ChatThreadMessage {
         this.clientRef = clientRef;
     }
 
-    public getStatus(): string {
+    public getStatus(): ChatThreadMessageStatus {
         return this.status;
+    }
+
+    public setStatus(status: ChatThreadMessageStatus): void {
+        this.status = status;
     }
 
     public getId(): string | null {
@@ -54,15 +55,19 @@ export default class ChatThreadMessage {
         return this.messageContent;
     }
 
-    public getMessageTime(): string {
-        return this.messageTime;
-    }
-
-    public getIsMessageReceived(): boolean {
-        return this.isMessageReceived;
+    public getMessageTimestamp(): number {
+        return this.messageTimestamp;
     }
 
     public getIsMessageSeen(): boolean {
         return this.isMessageSeen;
+    }
+
+    public setIsMessageSeen(isMessageSeen: boolean): void {
+        this.isMessageSeen = isMessageSeen;
+    }
+
+    public isMessageReceived(loggedInChatterId: string): boolean {
+        return this.messageSenderId !== loggedInChatterId;
     }
 }

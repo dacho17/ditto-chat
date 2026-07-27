@@ -3,7 +3,7 @@ import BackHeader from "../../components/backHeader/BackHeader";
 import "./PageWithBackHeader.css";
 
 interface Props {
-    backTargetUrl: string;
+    backOnClickFunction: Function;
     backHeaderContent: ReactNode;
     mainPage: ReactNode;
 }
@@ -12,7 +12,7 @@ export default function PageWithBackHeader(props: Props) {
     return <div className="page-with-back-header full-screen-height">
         <div className="back-header-container">
             <BackHeader
-                backTargetUrl={props.backTargetUrl}
+                onClickFunction={props.backOnClickFunction}
                 backHeaderContent={props.backHeaderContent}
             />
         </div>

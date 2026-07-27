@@ -1,9 +1,11 @@
 import { useRef } from "react";
+import LoadingSpinner from "../loadingSpinner/LoadingSpinner";
 import "./UploadImageButton.css";
 
 interface Props {
     buttonText: string;
-    uploadFunction: Function
+    uploadFunction: Function;
+    isCurrentlyUploading: boolean;
 }
 
 export default function UploadImageButton(props: Props) {
@@ -16,10 +18,14 @@ export default function UploadImageButton(props: Props) {
     return <button
         className="upload-image-button"
         onClick={() => onClickOpenUploadFileWindow()}
+        disabled={props.isCurrentlyUploading}
     >
-        <div className="upload-image-button-text">
-            {props.buttonText}
-        </div>
+        { props.isCurrentlyUploading === true 
+            ? <LoadingSpinner />
+            : <div className="upload-image-button-text">
+                {props.buttonText}
+            </div>
+        }
         <input
             className="upload-image-button-input"
             name="upload-image"

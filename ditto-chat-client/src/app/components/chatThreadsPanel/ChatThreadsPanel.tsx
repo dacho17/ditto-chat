@@ -1,59 +1,78 @@
+import { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoMdMore } from "react-icons/io";
+import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
+import { clearHomeState, getChatThreads, setChatThreadSearchFilter, setCurrentChatThreadListPage, setIsLoadingChatThreads, setIsLoadingOlderChatThreads } from "../../store/HomeSlice";
+import { logout } from "../../store/AuthSlice";
 import SearchBar from "../searchBar/SearchBar";
 import ChatThreadButton from "../chatThreadButton/ChatThreadButton";
 import IconButtonDropdown from "../iconButtonDropdown/IconButtonDropdown";
 import NewChatButton from "../newChatButton/NewChatButton";
-import DropdownItem from "../../interfaces/DropdownItem";
+import ShowMoreButton from "../showMoreButton/ShowMoreButton";
+import LoadingSpinner from "../loadingSpinner/LoadingSpinner";
+import DropdownItem from "../../classes/DropdownItem";
 import ChatThreadOverview from "../../classes/ChatThreadOverview";
-import ChatterOverview from "../../classes/ChatterOverview";
 import DittoConsultingLogo from '../../../assets/ditto-consulting-logo.png';
-import ChatterIconImage from '../../../assets/david-chat-image.jpg';
 import CONSTANTS from "../../../Constants";
 import "./ChatThreadsPanel.css";
 
 const SEARCH_INPUT_PLACEHOLDER_VALUE = "Search Chats";
 
-// TODO: lastChatThreads must be retrieved from Server, using AsyncThunk Function
-const CHAT_THREAD_DUMMIES: ChatThreadOverview[] = [
-	new ChatThreadOverview(
-		"id-1", new ChatterOverview(
-			"David", "Dosenovic", "david.dosenovic", ChatterIconImage, true
-		),
-		1, "18/06/2026 11:35", "Let's meet"
-	),
-	new ChatThreadOverview(
-		"id-2", new ChatterOverview(
-			"Keyser", "Soze", "keyser.soze", ChatterIconImage, false
-		),
-		0, null, null
-	),
-	new ChatThreadOverview(
-		"id-3", new ChatterOverview(
-			"Mr", "X", "mr.x", ChatterIconImage, true
-		),
-		0, "17/05/2026 10:00", "We are watching yout"
-	),
-	new ChatThreadOverview(
-		"id-4", new ChatterOverview(
-			"Jehova", "Witness", "jehova.witness", ChatterIconImage, true
-		),
-		0, "15/03/2026 10:00", "Stranka te prati"
-	)
-];
-
 export default function ChatThreadsPanel() {
+	const { chatThreadList, chatThreadSearchFilter, currentChatThreadListPage, isLastChatThreadListPage, isLoadingChatThreads }
+		= useAppSelector(state => state.homeSlice);
+	const dispatch = useAppDispatch();
 	const navigate = useNavigate();
 
-	const ACCOUNT_FEATURES: DropdownItem[] = [
-        {
-            itemName: "Account",
-            onClickFunction: () => navigate(CONSTANTS.ACCOUNT_URL)
-        },
-        {
-            itemName: "Logout",
-            onClickFunction: () => navigate(CONSTANTS.LOGOUT_URL)
+	const tryGetChatThreads = useCallback(async (isLoadingReducer: Function): Promise<ChatThreadOverview[]> => {
+		dispatch(isLoadingReducer(true));
+
+		// TODO: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
+
+		try {
+			const retrievedChatThreadOverviews = await dispatch(getChatThreads()).unwrap();
+
+			// TODO: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
+			return retrievedChatThreadOverviews;
+		} catch (err: any) {
+			console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
+		} finally {
+			dispatch(isLoadingReducer(false));
+		}
+	}, []);
+
+	async function tryGetOlderChatThreads(): Promise<void> {
+		dispatch(setCurrentChatThreadListPage(currentChatThreadListPage + 1));
+		tryGetChatThreads(setIsLoadingOlderChatThreads);
+	}
+
+	// NOTE: Retrieve ChatThreads whenever chatThreadSearchFilter changes
+	useEffect(() => {
+		const timeoutId = setTimeout(() => {
+			tryGetChatThreads(setIsLoadingChatThreads);
+        }, CONSTANTS.SEARCH_FILTER_CHANGE_HTTP_REQUEST_DELAY_IN_MS);
+
+        return () => {
+            clearTimeout(timeoutId);
         }
+	}, [chatThreadSearchFilter]);
+
+	const ACCOUNT_FEATURES: DropdownItem[] = [
+		new DropdownItem(
+			"Account",
+			() => {
+				dispatch(clearHomeState());
+				navigate(CONSTANTS.ACCOUNT_URL);
+			}
+		),
+		new DropdownItem(
+			"Logout",
+			async () => {
+				await dispatch(logout());
+				dispatch(clearHomeState());
+				navigate(CONSTANTS.LOGIN_URL);
+			}
+		)
     ];
 
     return <div className="chat-threads-panel">
@@ -75,17 +94,37 @@ export default function ChatThreadsPanel() {
 			</div>
 			<div className="search-bar-container">
 				<SearchBar
+					inputVariable={chatThreadSearchFilter}
+					setInputVariable={(newSearchInput: string) => {
+						dispatch(setChatThreadSearchFilter(newSearchInput));
+						dispatch(setCurrentChatThreadListPage(0));
+					}}
 					inputPlaceholder={SEARCH_INPUT_PLACEHOLDER_VALUE}
 				/>
 			</div>
 		</div>
-		<div className="chat-thread-buttons-container">
-			{ CHAT_THREAD_DUMMIES.map(chatThreadOverview => {
-				return <ChatThreadButton
-					chatThreadOverview={chatThreadOverview}
-					openChatFunction={() => navigate(`${CONSTANTS.CHAT_URL}`)}	// TODO: add ChatId to url. Stay on /home and open a newChatThread for non-mobile devices
-				/>
-			})}
+		<div className="chat-threads-container">
+			{ isLoadingChatThreads === true
+				? <LoadingSpinner />
+				: <div className="chat-thread-buttons-container">
+					{ chatThreadList.map(chatThreadOverview => {
+						return <ChatThreadButton
+							key={chatThreadOverview.getId()}
+							chatThreadOverview={chatThreadOverview as ChatThreadOverview}
+							openChatFunction={() => {
+								dispatch(clearHomeState())
+								navigate(`${CONSTANTS.CHAT_URL}/${chatThreadOverview.getId()}`)}
+							}
+						/>
+					})}
+					{ isLastChatThreadListPage === false && 
+						<ShowMoreButton
+							isDirectionUpwards={false}
+							showMoreFunc={tryGetOlderChatThreads}
+						/>
+					}
+				</div>
+			}
 		</div>
 		<NewChatButton />
 	</div>

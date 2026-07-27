@@ -1,45 +1,69 @@
+import { useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
+import { clearChatterState, getChatter, setIsLoadingChatter } from "../../store/ChatterSlice";
 import PageWithSideMenu from "../pageWithSideMenu/PageWithSideMenu";
 import PageWithBackHeader from "../pageWithBackHeader/PageWithBackHeader";
 import AccountDetails from "../../components/accountDetails/AccountDetails";
 import SharedFilesList from "../../components/sharedFilesList/SharedFilesList";
-import ChatterOverview from "../../classes/ChatterOverview";
+import LoadingSpinner from "../../components/loadingSpinner/LoadingSpinner";
+import DeviceScreenHelper from "../../helpers/DeviceScreenHelper";
 import CONSTANTS from "../../../Constants";
-import ChatterIconImage from '../../../assets/david-chat-image.jpg';
 import "./ChatterPage.css";
 
-const CHATTER_PAGE_TEXT = "Chatter";
-const DUMMY_CHATTER_ACCOUNT = new ChatterOverview(
-    "Name",
-    "Surname",
-    "name.surname",
-    ChatterIconImage,
-    true
-);
-
 export default function ChatterPage() {
-    // TODO: redirect if 1024+ !
+    const { chatter, isLoadingChatter } = useAppSelector(state => state.chatterSlice);
+    const dispatch = useAppDispatch();
+    const { chatterId } = useParams();
+    const navigate = useNavigate();
+
+    if (DeviceScreenHelper.isPcScreen() === true) {
+        dispatch(clearChatterState());
+        navigate(CONSTANTS.HOME_URL);
+    }
+
+    useEffect(() => {
+        tryGetChatter();
+    }, []);
+
+    async function tryGetChatter(): Promise<void> {
+        dispatch(setIsLoadingChatter(true));
+
+        try {
+            await dispatch(getChatter({ chatterId: chatterId }));
+        } catch (err) {
+            console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
+        } finally {
+            dispatch(setIsLoadingChatter(false));
+        }
+    }
+
     return <PageWithSideMenu
-        mainPage={
-            <PageWithBackHeader
-                backTargetUrl={`${CONSTANTS.CHAT_URL}`}     // TODO: chatId is needed
-                backHeaderContent={
-                    <div className="page-header-page-name">
-                        {CHATTER_PAGE_TEXT}
+        mainPage={ isLoadingChatter === true
+            ? <LoadingSpinner />
+            : <PageWithBackHeader
+            backOnClickFunction={() => {
+                dispatch(clearChatterState());
+                navigate(`${CONSTANTS.CHAT_URL}/${chatter.getChatterOverview().getChatThreadId()}`);
+            }}
+            backHeaderContent={
+                <div className="page-header-page-name">
+                    {chatter.getChatterOverview().getChatterFullName()}
+                </div>
+            }
+            mainPage={
+                <div className="chatter-page">
+                    <div className="chatter-page-account-details-container">
+                        <AccountDetails
+                            accountOverview={chatter.getChatterOverview()}
+                            isDisplayedInPanel={true}
+                        />
                     </div>
-                }
-                mainPage={
-                    <div className="chatter-page">
-                        <div className="chatter-page-account-details-container">
-                            <AccountDetails
-                                accountOverview={DUMMY_CHATTER_ACCOUNT}
-                                isDisplayedInPanel={true}
-                            />
-                        </div>
-                        <div className="chatter-page-shared-files-list-container">
-                            <SharedFilesList />
-                        </div>
+                    <div className="chatter-page-shared-files-list-container">
+                        <SharedFilesList />
                     </div>
-                }
-        />}
+                </div>
+            }
+        />}            
     />
 }

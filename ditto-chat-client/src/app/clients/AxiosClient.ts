@@ -25,11 +25,11 @@ export default class AxiosClient {
         });
     }
 
-    protected async sendGetRequest(url: string, params?: URLSearchParams): Promise<AxiosResponse> {
+    protected async sendGetRequest<T>(url: string, params?: URLSearchParams): Promise<AxiosResponse<T>> {
         return await this.client.get(url, {params, withCredentials: true});
     }
 
-    protected async sendPostRequest(url: string, body?: {}, config?: AxiosRequestConfig) {
+    protected async sendPostRequest<T>(url: string, body?: {}, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         return await this.client.post(url, body, {
             ...config, withCredentials: true,
             headers: AxiosClient.DEFAULT_REQUEST_HEADERS

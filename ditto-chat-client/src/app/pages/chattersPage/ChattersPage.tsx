@@ -1,48 +1,83 @@
+import { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
+import { clearChattersState, getChatters, setChatterSearchFilter, setCurrentChatterOverviewListPage, setIsLoadingChatterOverviews, setIsLoadingOlderChatterOverviews } from "../../store/ChattersSlice";
+import { postChatThread } from "../../store/ChatSlice";
 import PageWithSideMenu from "../pageWithSideMenu/PageWithSideMenu";
 import PageWithBackHeader from "../pageWithBackHeader/PageWithBackHeader";
-import ChatThreadButton from "../../components/chatThreadButton/ChatThreadButton";
 import SearchBar from "../../components/searchBar/SearchBar";
-import ChatThreadOverview from "../../classes/ChatThreadOverview";
+import ChatterButton from "../../components/chatterButton/ChatterButton";
+import ChatThread from "../../classes/ChatThread";
 import ChatterOverview from "../../classes/ChatterOverview";
-import DittoConsultingLogo from '../../../assets/ditto-consulting-logo.png';
-import ChatterIconImage from '../../../assets/david-chat-image.jpg';
+import ShowMoreButton from "../../components/showMoreButton/ShowMoreButton";
+import LoadingSpinner from "../../components/loadingSpinner/LoadingSpinner";
 import CONSTANTS from "../../../Constants";
 import "./ChattersPage.css";
 
 const SEARCH_INPUT_PLACEHOLDER_VALUE = "Search Chatters";
-const DUMMY_CHATTERS: ChatThreadOverview[] = [
-    new ChatThreadOverview(
-        "id-1", new ChatterOverview(
-            "Contacted", "Chatter", "contacted.chatter", DittoConsultingLogo, true
-        ),
-        0, "21/12/2112", "I contacted you"
-    ),
-    new ChatThreadOverview(
-        "id-2", new ChatterOverview(
-            "Not", "Contacted Chatter", "not.contacted.chatter", ChatterIconImage, false
-        ),
-        0, null, null
-    )
-];
-
 
 export default function ChattersPage() {
+    const { chatterOverviewList, currentChatterOverviewListPage, isLastChatterOverviewListPage, chatterSearchFilter, isLoadingChatterOverviews } = useAppSelector(state => state.chattersSlice);
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    
+    const tryGetChatters = useCallback(async (isLoadingReducer: Function): Promise<ChatterOverview[]> => {
+        dispatch(isLoadingReducer(true));
 
-    /*
-    TODO:
-        - as input changes, results change (are retrieved from server)
-            - logic for this already exists in Client!
-    */
+        // TODO: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
+
+        try {
+            const retrievedChatterOverviews = await dispatch(getChatters()).unwrap();
+
+            // TODO: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
+            return retrievedChatterOverviews;
+        } catch (err: any) {
+            console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
+        } finally {
+            dispatch(isLoadingReducer(false));
+        }
+    }, []);
+ 
+    async function tryGetMoreChatters(): Promise<void> {
+        dispatch(setCurrentChatterOverviewListPage(currentChatterOverviewListPage + 1));
+        tryGetChatters(setIsLoadingOlderChatterOverviews);
+    }
+
+    async function tryPostChatThread(selectedChatterId: string): Promise<ChatThread> {
+        try {
+            const createdChatThread = await dispatch(postChatThread({ chatterId: selectedChatterId})).unwrap();
+            return createdChatThread;
+        } catch (err: any) {
+            console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
+        } finally {}
+    }
+ 
+    // NOTE: Retrieve ChatterOverviews whenever chatterSearchFilter changes
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            tryGetChatters(setIsLoadingChatterOverviews);
+        }, CONSTANTS.SEARCH_FILTER_CHANGE_HTTP_REQUEST_DELAY_IN_MS);
+
+        return () => {
+            clearTimeout(timeoutId);
+        }
+    }, [chatterSearchFilter]);
 
     return <PageWithSideMenu
         mainPage={
             <PageWithBackHeader
-                backTargetUrl={`${CONSTANTS.HOME_URL}`}
+                backOnClickFunction={() => {
+                    dispatch(clearChattersState());
+                    navigate(CONSTANTS.HOME_URL);   // TODO: in actuallity, user can land on /chatters from any page, not only from /home
+                }}
                 backHeaderContent={
                     <div className="chatters-page-header-search-bar-container">
                         <SearchBar
+                            inputVariable={chatterSearchFilter}
+                            setInputVariable={(newSearchInput: string) => {
+                                dispatch(setChatterSearchFilter(newSearchInput));
+                                dispatch(setCurrentChatterOverviewListPage(0));
+                            }}
                             inputPlaceholder={SEARCH_INPUT_PLACEHOLDER_VALUE}
                         />
                     </div>
@@ -50,16 +85,38 @@ export default function ChattersPage() {
                 mainPage={
                     <div className="chatters-page">
                         <div className="chatters-page-chatters-list-container">
-                            {DUMMY_CHATTERS.map(chatter => {
-                                return <ChatThreadButton
-                                    chatThreadOverview={chatter}
-                                    openChatFunction={() => navigate(`${CONSTANTS.CHAT_URL}`)}
-                                //  onClick, leads to /chat, either: a) new, if does not exist, or b) existing, if exists
-                                />
-                            })}
+                            { isLoadingChatterOverviews === true
+                                ? <LoadingSpinner />
+                                : <div className="chatter-buttons-container">
+                                    {chatterOverviewList.map(chatterOverview => {
+                                        return <ChatterButton
+                                            key={`${chatterOverview.getId()}`}
+                                            chatterOverview={chatterOverview as ChatterOverview}
+                                            openChatFunction={ async () => {
+                                                let redirectChatThreadId = chatterOverview.getChatThreadId();
+
+                                                if (redirectChatThreadId === null) {
+                                                    const newChatThread = await tryPostChatThread(chatterOverview.getId());
+                                                    redirectChatThreadId = newChatThread.getOverview().getId();
+                                                }
+
+                                                dispatch(clearChattersState());
+                                                navigate(`${CONSTANTS.CHAT_URL}/${redirectChatThreadId}`);
+                                            }}
+                                        />
+                                    })}
+                                    { isLastChatterOverviewListPage === false && 
+                                        <ShowMoreButton
+                                            isDirectionUpwards={false}
+                                            showMoreFunc={tryGetMoreChatters}
+                                        />
+                                    }
+                                </div>
+                            }
                         </div>
                     </div>
                 }
-        />}
+            />
+        }
     />
 }

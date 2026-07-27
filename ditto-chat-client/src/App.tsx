@@ -16,10 +16,10 @@ export default function App() {
                 <Route path={CONSTANTS.REGISTER_URL} element={<AuthenticationPage />} />
                 <Route path={CONSTANTS.LOGIN_URL} element={<AuthenticationPage />} />
                 <Route path={CONSTANTS.HOME_URL} element={<HomePage />} />
-                <Route path={CONSTANTS.CHAT_URL} element={<MobileChatPage />} />
+                <Route path={`${CONSTANTS.CHAT_URL}/:chatThreadId`} element={<MobileChatPage />} />
                 <Route path={CONSTANTS.ACCOUNT_URL} element={<AccountPage />} />
                 <Route path={CONSTANTS.CHATTERS_URL} element={<ChattersPage />} />
-                <Route path={CONSTANTS.CHATTER_URL} element={<ChatterPage />} />
+                <Route path={`${CONSTANTS.CHATTER_URL}/:chatterId`} element={<ChatterPage />} />
             </Routes>
         </>
     );
