@@ -437,7 +437,7 @@ export default class DummyChatClient implements ChatClientInterface {
         });
     }
 
-    public async updateLastSeenChatThreadMessage(chatThreadId: string, chatThreadMessageId: string): ChatServerResponse<void> {
+    public async updateLastSeenChatThreadMessage(chatThreadId: string, chatThreadMessageId: string): ChatServerResponse<ChatThreadMessageDto> {
         console.log(`Rececived chatThreadId: ${chatThreadId}, and chatThreadMessageId: ${chatThreadMessageId}`);
 
         const foundChatThread = DUMMY_OPENED_CHAT_THREADS
@@ -447,10 +447,10 @@ export default class DummyChatClient implements ChatClientInterface {
         foundChatThread.chatThreadOverview.lastMessageContent = newLastSeenChatThreadMessage.messageContent;
         foundChatThread.chatThreadOverview.lastMessageTime = newLastSeenChatThreadMessage.messageRegisteredAt;
 
-        console.log(`Found ChatThreadDto updated to: ${JSON.stringify(foundChatThread)}. \nResponding with null`);
+        console.log(`Found ChatThreadDto updated to: ${JSON.stringify(foundChatThread)}. \nResponding with ChatThreadMessageDto: ${JSON.stringify(newLastSeenChatThreadMessage)}`);
         return Promise.resolve({ 
             message: null,
-            data: null
+            data: newLastSeenChatThreadMessage
         });
     }
 

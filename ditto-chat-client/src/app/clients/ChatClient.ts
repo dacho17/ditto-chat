@@ -120,8 +120,8 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
         return axiosResponse.data;
     }
 
-    public async updateLastSeenChatThreadMessage(chatThreadId: string, chatThreadMessageId: string): ChatServerResponse<void> {
-        const axiosResponse = await this.sendPostRequest<ChatServerResponse<void>>(
+    public async updateLastSeenChatThreadMessage(chatThreadId: string, chatThreadMessageId: string): ChatServerResponse<ChatThreadMessageDto> {
+        const axiosResponse = await this.sendPostRequest<ChatServerResponse<ChatThreadMessageDto>>(
             `${CONSTANTS.CHAT_URL}/${chatThreadId}${CONSTANTS.UPDATE_LAST_SEEN_CHAT_MESSAGE_URL}/${chatThreadMessageId}`
         );
         return axiosResponse.data;

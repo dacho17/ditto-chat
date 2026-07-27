@@ -96,12 +96,15 @@ export const getChatThreadMessages = createAsyncThunk<ChatThreadMessage[], { cha
     }
 );
 
-// TODO: Implementation might need to be expanded!
 export const updateLastSeenChatThreadMessage = createAsyncThunk<void, { chatThreadId: string, chatThreadMessageId: string }, AyncThunkRejectType>(
     "chat/updateLastSeenChatThreadMessage",
     async ({ chatThreadId, chatThreadMessageId }, thunkAPI) => {
         try {
-            const _ = await ChatClient.getChatClient().updateLastSeenChatThreadMessage(chatThreadId, chatThreadMessageId);
+            const res = await ChatClient.getChatClient().updateLastSeenChatThreadMessage(chatThreadId, chatThreadMessageId);
+            const newLastSeenChatThreadMessageDto = res.data;
+            const newLastSeenChatThreadMessage = Mapper.chatThreadMessageFromDto(newLastSeenChatThreadMessageDto);
+
+            thunkAPI.dispatch(setChatThreadMessagesToSeen(newLastSeenChatThreadMessage));
             
             return thunkAPI.fulfillWithValue(null);
         } catch (err: any) {
@@ -233,14 +236,24 @@ export const ChatSlice = createSlice({
             updatedChatThread.getOverview().setNumberOfUnseenMessages(action.payload);
             state.chatThread = updatedChatThread;
         },
-        setChatThreadMessagesToSeen: (state) => {
+        setChatThreadMessagesToSeen: (state, action: { payload: ChatThreadMessage }) => {
+            const newLastSeenChatThreadMessage = action.payload;
+
+            // set IsmessageSeen of all messages older than newLastSeenChatThreadMessage
             const updatedChatThreadMessages = state.chatThread.getMessages().map(chatThreadMessage => {
-                chatThreadMessage.setIsMessageSeen(true);
+                if (chatThreadMessage.getMessageTimestamp() <= newLastSeenChatThreadMessage.getMessageTimestamp()) {
+                    chatThreadMessage.setIsMessageSeen(true);
+                }
+
                 return chatThreadMessage;
             });
+            const newNumberOfUneseenMessages =
+                updatedChatThreadMessages.filter(chatThreadMessage => chatThreadMessage.getIsMessageSeen() === false).length;
 
             const updatedChatThread = ChatThread.getShallowCopy(state.chatThread as ChatThread);
             updatedChatThread.setMessages(updatedChatThreadMessages);
+            updatedChatThread.getOverview().setNumberOfUnseenMessages(newNumberOfUneseenMessages);
+
             state.chatThread = updatedChatThread;
         },
         setCurrentChatMessageInput: (state, action: { payload: string }) => {

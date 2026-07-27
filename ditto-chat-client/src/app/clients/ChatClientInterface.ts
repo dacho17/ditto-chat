@@ -38,7 +38,7 @@ export default interface ChatClientInterface {
     postChatThread(chatterId: string): ChatServerResponse<ChatThreadDto>;
     getChatThread(chatThreadId: string): ChatServerResponse<ChatThreadDto>;
     getChatThreadMessages(chatThreadId: string, queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatThreadMessageDto>>;
-    updateLastSeenChatThreadMessage(chatThreadId: string, chatThreadMessageId: string): ChatServerResponse<void>;
+    updateLastSeenChatThreadMessage(chatThreadId: string, chatThreadMessageId: string): ChatServerResponse<ChatThreadMessageDto>;
     sendChatThreadMessage(chatThreadId: string, newChatThreadMessage: ChatThreadMessageForm): ChatServerResponse<ChatThreadMessageDto>;
     clearChatThreadHistory(chatThreadId: string): ChatServerResponse<void>;
 
