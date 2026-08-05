@@ -9,7 +9,8 @@ const START_CONVERSATION_MESSAGE = "Start Conversation";
 // NOTE: ChatterButton is ChatThreadButton without ThreadDetails
 interface Props {
     chatThreadOverview: ChatThreadOverview
-    openChatFunction: Function
+    openChatFunction: Function,
+    isSelected: boolean
 }
 
 export default function ChatThreadButton(props: Props) {
@@ -31,8 +32,9 @@ export default function ChatThreadButton(props: Props) {
         }
     }
 
+    const isSelectedStyle = props.isSelected ? "selected" : "";
     return <button
-        className="chat-thread-button"
+        className={`chat-thread-button ${isSelectedStyle}`}
         onClick={() => props.openChatFunction()}
     >
         <div className="chat-thread-button-chatter-image-container">

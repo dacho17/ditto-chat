@@ -1,6 +1,6 @@
-import { useParams } from "react-router-dom";
 import { getSharedFiles, setCurrentSharedFilesListPage, setIsLoadingOlderSharedFiles } from "../../store/ChatterSlice";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
+import useChatterId from "../../hooks/UseChatterId";
 import LoadingSpinner from "../loadingSpinner/LoadingSpinner";
 import SharedFileButton from "../sharedFileButton/SharedFileButton";
 import ShowMoreButton from "../showMoreButton/ShowMoreButton";
@@ -11,7 +11,7 @@ const SHARED_FILES_TITLE = "Shared Files";
 export default function SharedFilesList() {
     const { chatter, currentSharedFilesListPage, isLastSharedFilesListPage, isLoadingOlderSharedFiles } = useAppSelector(state => state.chatterSlice);
     const dispatch = useAppDispatch();
-    const { chatterId } = useParams();
+    const chatterId = useChatterId();
 
     async function tryGetOlderSharedFiles(): Promise<void> {
         dispatch(setCurrentSharedFilesListPage(currentSharedFilesListPage + 1));

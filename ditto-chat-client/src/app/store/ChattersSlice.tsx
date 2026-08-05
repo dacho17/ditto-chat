@@ -1,45 +1,61 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosResponse } from "axios";
-import { AyncThunkRejectType, RootState } from "./ReduxStore";
+import { AyncThunkRejectType } from "./ReduxStore";
 import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
 import SliceHelper from "../helpers/SliceHelper";
 import Mapper from "../helpers/Mapper";
 import ChatterOverview from "../classes/ChatterOverview";
+import TypeFormatter from "../helpers/TypeFormatter";
+import CONSTANTS from "../../Constants";
 
 interface ChattersState {
     chatterOverviewList: ChatterOverview[];     // sorted descendingly alphabetically at all times!
     isLoadingChatterOverviews: boolean;
+    isFilterCurrentlyChanging: boolean;
     isLoadingOlderChatterOverviews: boolean;
-    chatterSearchFilter: string;
-    currentChatterOverviewListPage: number;
     isLastChatterOverviewListPage: boolean;
 }
 
 const initialState: ChattersState = {
     chatterOverviewList: [],
     isLoadingChatterOverviews: true,
+    isFilterCurrentlyChanging: false,
     isLoadingOlderChatterOverviews: false,
-    chatterSearchFilter: "",
-    currentChatterOverviewListPage: 0,
     isLastChatterOverviewListPage: false,
 };
 
-export const getChatters = createAsyncThunk<ChatterOverview[], void, AyncThunkRejectType>(
-    "chatters/getChatters",
-    async (_, thunkAPI) => {
-        try {
-            const { currentChatterOverviewListPage, chatterSearchFilter } = (thunkAPI.getState() as RootState).chattersSlice;
+function sortChatterOverviews(chatterOverviews: ChatterOverview[]): ChatterOverview[] {
+    const sortedChatterOverviews = chatterOverviews.toSorted((first, second) => {
+        const firstChatterFullName = first.getChatterFullName();
+        const secondChatterFullName = second.getChatterFullName();
+        
+        return firstChatterFullName.toLowerCase().localeCompare(secondChatterFullName.toLowerCase());
+    });
 
+    return sortedChatterOverviews;
+}
+
+export const getChatters = createAsyncThunk<ChatterOverview[], { chatterSearchFilter: string, currentPageNumber: string, isInitialRetrieval: boolean }, AyncThunkRejectType>(
+    "chatters/getChatters",
+    async ({ chatterSearchFilter, currentPageNumber, isInitialRetrieval }, thunkAPI) => {
+        try {
             const queryParams = new URLSearchParams();
-            queryParams.set("pageNumber", currentChatterOverviewListPage.toString());
-            queryParams.set("chatterSearchFilter", chatterSearchFilter);
-            
+            queryParams.set(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER, chatterSearchFilter);
+            queryParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, currentPageNumber);
+            queryParams.set(CONSTANTS.IS_INITIAL_RETRIEVAL_QUERY_PARAMETER, TypeFormatter.booleanToString(isInitialRetrieval));
+
             const retrievedChatterOverviews = await ChatClient.getChatClient().getChatters(queryParams);
             const { pagedList, isLastPage } = retrievedChatterOverviews.data;
 
             const chatterOverviews = pagedList.map(chatterOverviewDto => Mapper.chatterOverviewFromDto(chatterOverviewDto));
-            thunkAPI.dispatch(appendChatterOverviewsToList(chatterOverviews));
+
+            if (isInitialRetrieval === true) {
+                thunkAPI.dispatch(setChatterOverviewsList(chatterOverviews));
+            } else {
+                thunkAPI.dispatch(appendChatterOverviewsToList(chatterOverviews));
+            }
+
             thunkAPI.dispatch(setIsLastChatterOverviewListPage(isLastPage));
 
             return thunkAPI.fulfillWithValue(chatterOverviews);
@@ -54,20 +70,25 @@ export const ChattersSlice = createSlice({
     name: "chatters",
     initialState,
     reducers: {
+        setChatterOverviewsList: (state, action: { payload: ChatterOverview[] }) => {
+            const sortedNewChatterOverviewsList = sortChatterOverviews(action.payload);
+
+            state.chatterOverviewList = sortedNewChatterOverviewsList;
+        },
         appendChatterOverviewsToList: (state, action: { payload: ChatterOverview[] }) => {
-            state.chatterOverviewList = [...state.chatterOverviewList, ...action.payload];  // TODO: may need to be sorted!
+            const mergedChatterOverviewLists = [...action.payload, ...state.chatterOverviewList];
+            const sortedNewChatterOverviewsList = sortChatterOverviews(mergedChatterOverviewLists as ChatterOverview[]);
+
+            state.chatterOverviewList = sortedNewChatterOverviewsList;            
         },
         setIsLoadingChatterOverviews: (state, action: { payload: boolean }) => {
             state.isLoadingChatterOverviews = action.payload;
         },
+        setIsChattersFilterCurrentlyChanging: (state, action: { payload: boolean }) => {
+            state.isFilterCurrentlyChanging = action.payload;
+        },
         setIsLoadingOlderChatterOverviews: (state, action: { payload: boolean }) => {
             state.isLoadingOlderChatterOverviews = action.payload;
-        },
-        setChatterSearchFilter: (state, action: { payload: string }) => {
-            state.chatterSearchFilter = action.payload;
-        },
-        setCurrentChatterOverviewListPage: (state, action: { payload: number }) => {
-            state.currentChatterOverviewListPage = action.payload;
         },
         setIsLastChatterOverviewListPage: (state, action: { payload: boolean }) => {
             state.isLastChatterOverviewListPage = action.payload;
@@ -75,20 +96,19 @@ export const ChattersSlice = createSlice({
         clearChattersState: (state) => {
             state.chatterOverviewList = initialState.chatterOverviewList;
             state.isLoadingChatterOverviews = initialState.isLoadingChatterOverviews;
+            state.isFilterCurrentlyChanging = initialState.isFilterCurrentlyChanging;
             state.isLoadingOlderChatterOverviews = initialState.isLoadingOlderChatterOverviews;
-            state.chatterSearchFilter = initialState.chatterSearchFilter;
-            state.currentChatterOverviewListPage = initialState.currentChatterOverviewListPage;
             state.isLastChatterOverviewListPage = initialState.isLastChatterOverviewListPage;
         }
     }
 });
 
 export const {
+    setChatterOverviewsList,
     appendChatterOverviewsToList,
     setIsLoadingChatterOverviews,
+    setIsChattersFilterCurrentlyChanging,
     setIsLoadingOlderChatterOverviews,
-    setChatterSearchFilter,
-    setCurrentChatterOverviewListPage,
     setIsLastChatterOverviewListPage,
     clearChattersState
 } = ChattersSlice.actions;

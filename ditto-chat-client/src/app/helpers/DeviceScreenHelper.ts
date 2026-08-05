@@ -1,6 +1,6 @@
 export default class DeviceScreenHelper {
-    private static MOBILE_SCREEN_WIDTH_THRESHOLD: 720;
-    private static TABLET_SCREEN_WIDTH_THRESHOLD: 1024;
+    private static MOBILE_SCREEN_WIDTH_THRESHOLD = 720;
+    private static TABLET_SCREEN_WIDTH_THRESHOLD = 1024;
 
     public static getViewPortDimensions(): { height: number, width: number } {
         return {

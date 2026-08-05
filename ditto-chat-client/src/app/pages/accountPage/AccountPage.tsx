@@ -1,16 +1,17 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
-import { clearAccountState, requestAccountImageUploadUrl, setIsChatterImageBeingUploaded, uploadAccountImageToS3 } from "../../store/AccountSlice";
-import { refreshChatterOverview, setIsLoadingChatterOverview } from "../../store/AuthSlice";
+import { requestAccountImageUploadUrl, setIsChatterImageBeingUploaded, uploadAccountImageToS3 } from "../../store/AccountSlice";
+import { setIsLoadingChatterOverview } from "../../store/AuthSlice";
+import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
 import PageWithSideMenu from "../pageWithSideMenu/PageWithSideMenu";
 import PageWithBackHeader from "../pageWithBackHeader/PageWithBackHeader";
 import AccountDetails from "../../components/accountDetails/AccountDetails";
 import UploadImageButton from "../../components/uploadImageButton/UploadImageButton";
 import LoadingSpinner from "../../components/loadingSpinner/LoadingSpinner";
+import SliceHelper from "../../helpers/SliceHelper";
+import FileHelper from "../../helpers/FileHelper";
 import ChatterOverview from "../../classes/ChatterOverview";
 import UploadFileIntent from "../../classes/UploadFileIntent";
-import CONSTANTS from "../../../Constants";
 import "./AccountPage.css";
 
 const PAGE_NAME_TEXT = "Account";
@@ -20,29 +21,54 @@ export default function AccountPage() {
     const { chatterOverview, isLoadingChatterOverview } = useAppSelector(state => state.authSlice);
     const { isChatterImageBeingUploaded } = useAppSelector(state => state.accountSlice);
     const dispatch = useAppDispatch();
-    const navigate = useNavigate();
+    const { addUrlToHistory, navigateBack } = useUrlHistoryNavigate();
 
     useEffect(() => {
-        dispatch(setIsLoadingChatterOverview(true));
-        dispatch(refreshChatterOverview());
+        SliceHelper.clearPageStates(dispatch);
+        addUrlToHistory("");
         dispatch(setIsLoadingChatterOverview(false));
     }, []);
 
-    // TODO: Implement Upload Image Function. I need to understand how to retrieve fileName and extension
-    async function uploadChatterImage(arg): Promise<void> {
+    const VALID_ACCOUNT_IMAGE_FILE_TYPES = ["image/png", "TODO-other-allowed-types?"];
+    const MAXIMUM_ACCOUNT_IMAGE_FILE_SIZE_IN_BYTES = 2097152; // Number of Bytes in 2 MB
+    function validateUploadFileIntent(uploadFileIntent: UploadFileIntent): boolean {
+        const fileType = uploadFileIntent.getFileType();
+        if (VALID_ACCOUNT_IMAGE_FILE_TYPES.includes(fileType) === false) {
+            console.log("TODO: Notify user that they are attepmting to upload unsupported File Type. Tell them what passes");
+            return false;
+        }
+
+        if (MAXIMUM_ACCOUNT_IMAGE_FILE_SIZE_IN_BYTES < uploadFileIntent.getFileSize()) {
+            console.log("TODO: Notify user that they are attepmting to upload File of size over 2 MBs.");
+            return false;
+        }
+
+        return true;
+    }
+
+    async function uploadChatterImage(fileMetadata: UploadFileIntent, fileContentStream: ReadableStream): Promise<void> {
+        if (validateUploadFileIntent(fileMetadata) === false) {
+            return;
+        }
+
         dispatch(setIsChatterImageBeingUploaded(true));
 
-        const newChatterImageUploadIntent = new UploadFileIntent(
-            "TODO-fileName", ".jpeg"
-        );
-
         try {
-            const s3UploadUrlDto = await dispatch(requestAccountImageUploadUrl({ uploadFileIntent: newChatterImageUploadIntent })).unwrap();
+            const imageBlob = await FileHelper.createBlobFromStream(fileContentStream);
+            if (imageBlob === null) {
+                console.log("Exception occured during Reading. TODO: handle the case!");
+            }
+            const imageUrl = URL.createObjectURL(imageBlob);
+            (document.getElementById("account-details-image-id") as HTMLImageElement).src = imageUrl;
+
+            const s3UploadUrlDto = await dispatch(requestAccountImageUploadUrl({ uploadFileIntent: fileMetadata })).unwrap();
             console.log(`Retrieved s3UploadUrlDto: ${s3UploadUrlDto}`);
 
-            const res = await dispatch(uploadAccountImageToS3({ s3PreSignedUploadUrl: s3UploadUrlDto })).unwrap();
-
-            // TODO: The new image URL needs to be set so that the Image is shown!
+            const res = await dispatch(uploadAccountImageToS3(
+                { s3PreSignedUploadUrl: s3UploadUrlDto, fileContentStream: fileContentStream }
+            )).unwrap();
+            
+            // TODO: set AuthSlice.chatterOverview.chatterImageUrl to the received URL (both in AuthSlice State and Browser Local Storage)
         } catch (err) {
         } finally {
             dispatch(setIsChatterImageBeingUploaded(false));
@@ -53,8 +79,7 @@ export default function AccountPage() {
         mainPage={
             <PageWithBackHeader
                 backOnClickFunction={() => {
-                    dispatch(clearAccountState());
-                    navigate(CONSTANTS.HOME_URL);       // TODO: user can arrive to this page from others as well. e.g. by entering url
+                    navigateBack();
                 }}
                 backHeaderContent={
                     <div className="page-header-page-name">
@@ -75,7 +100,9 @@ export default function AccountPage() {
                                 <div className="account-page-edit-chatter-image-container">
                                     <UploadImageButton 
                                         buttonText={CHANGE_IMAGE_TEXT}
-                                        uploadFunction={() => uploadChatterImage("TODO")}
+                                        uploadFunction={(fileMetadata: UploadFileIntent, fileContentStream: ReadableStream) =>
+                                            uploadChatterImage(fileMetadata, fileContentStream)
+                                        }
                                         isCurrentlyUploading={isChatterImageBeingUploaded}
                                     />
                                 </div>

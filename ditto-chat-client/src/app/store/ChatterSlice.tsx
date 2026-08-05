@@ -54,7 +54,7 @@ export const getSharedFiles = createAsyncThunk<SharedFile[], { chatterId: string
             const { currentSharedFilesListPage } = (thunkAPI.getState() as RootState).chatterSlice;
 
             const queryParams = new URLSearchParams();
-            queryParams.set("pageNumber", currentSharedFilesListPage.toString());
+            queryParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, currentSharedFilesListPage.toString());
             
             const retrievedSharedFiles = await ChatClient.getChatClient().getSharedFiles(chatterId, queryParams);
             const { pagedList, isLastPage } = retrievedSharedFiles.data;

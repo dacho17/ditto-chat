@@ -1,28 +1,40 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { IoHomeOutline, IoPersonOutline, IoLogOutOutline } from "react-icons/io5";
+import { useAppDispatch } from "../../store/ReduxStore";
 import IconButton from "../iconButton/IconButton";
+import SliceHelper from "../../helpers/SliceHelper";
+import NavigationHelper from "../../helpers/NavigationHelper";
 import CONSTANTS from "../../../Constants";
 import DittoConsultingLogo from '../../../assets/ditto-consulting-logo.png';
 import "./SideMenu.css";
 
 export default function SideMenu() {
+    const dispatch = useAppDispatch();
+    const location = useLocation();
     const navigate = useNavigate();
-    
+
     const SIDE_MENU_FEATURES_BUTTONS = [
         {
             icon: <IoHomeOutline size={CONSTANTS.LARGER_ICON_SIZE} />,
-            onClickFunction: () => navigate(CONSTANTS.HOME_URL)
+            onClickFunction: () => {
+                NavigationHelper.navigateToInitialHome(navigate, location.pathname);
+            }
         }
     ];
 
     const SIDE_MENU_ACCOUNT_BUTTONS = [
         {
             icon: <IoPersonOutline size={CONSTANTS.LARGER_ICON_SIZE} />,
-            onClickFunction: () => navigate(CONSTANTS.ACCOUNT_URL)
+            onClickFunction: () => {
+                NavigationHelper.navigateToAccount(navigate, location.pathname);
+            }
         },
         {
             icon: <IoLogOutOutline size={CONSTANTS.LARGER_ICON_SIZE} className="alert" />,
-            onClickFunction: () => navigate(CONSTANTS.LOGOUT_URL) // TODO: First Logout, then redirect to login!
+            onClickFunction: async () => {
+                const redirectUrl = await SliceHelper.tryLogout(dispatch);
+                navigate(redirectUrl);
+            }
         }
     ];
 

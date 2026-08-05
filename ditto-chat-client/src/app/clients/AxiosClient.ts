@@ -1,15 +1,15 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 
 export default class AxiosClient {
-    // private static axiosClientSingletonReference: AxiosClient | null = null;
     private client: AxiosInstance | null = null;
     private static DEFAULT_REQUEST_HEADERS = {
         "Content-Type": "application/json"
     };
 
-    protected constructor(serverDomain: string) {
+    protected constructor(serverDomain: string | null) {
+        const baseServerUrl = serverDomain !== null ? `https://${serverDomain}` : null;
         this.client = axios.create({
-            baseURL: `https://${serverDomain}`,
+            baseURL: baseServerUrl,
         });
 
         this.client.interceptors.response.use((response: AxiosResponse) => {
@@ -31,8 +31,16 @@ export default class AxiosClient {
 
     protected async sendPostRequest<T>(url: string, body?: {}, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
         return await this.client.post(url, body, {
-            ...config, withCredentials: true,
-            headers: AxiosClient.DEFAULT_REQUEST_HEADERS
+            headers: AxiosClient.DEFAULT_REQUEST_HEADERS,
+            withCredentials: true,
+            ...config
+        });
+    }
+
+    protected async sendPutRequest<T>(url: string, body?: {}, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+        return await this.client.put(url, body, {
+            headers: AxiosClient.DEFAULT_REQUEST_HEADERS,
+            ...config
         });
     }
 }

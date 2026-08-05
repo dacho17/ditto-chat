@@ -8,7 +8,6 @@ import PagedListDto from "../interfaces/PagedListDto";
 import LoginDto from "../interfaces/LoginDto";
 import ChatterOverviewDto from "../interfaces/ChatterOverviewDto";
 import S3PreSignedUrlDto from "../interfaces/S3PreSignedUrlDto";
-import S3UploadFileResponseDto from "../interfaces/S3UploadFileResponseDto";
 import ChatThreadOverviewDto from "../interfaces/ChatThreadOverviewDto";
 import ChatterDto from "../interfaces/ChatterDto";
 import SharedFileDto from "../interfaces/SharedFileDto";
@@ -68,7 +67,21 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
 
     public async getChatThreads(queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatThreadOverviewDto>> {
         const axiosResponse = await this.sendGetRequest<ChatServerResponse<PagedListDto<ChatThreadOverviewDto>>>(
-            `${CONSTANTS.CHATS_URL}`,
+            `${CONSTANTS.HOME_URL}`,
+            queryParams
+        );
+        return axiosResponse.data;
+    }
+
+    public async getChatThreadsWithSelectedChatThread(queryParams: URLSearchParams): ChatServerResponse<{
+        selectedChatThread: ChatThreadDto,
+        chatThreadsPage: PagedListDto<ChatThreadOverviewDto>
+    }> {
+        const axiosResponse = await this.sendGetRequest<ChatServerResponse<{
+            selectedChatThread: ChatThreadDto,
+            chatThreadsPage: PagedListDto<ChatThreadOverviewDto>
+        }>>(
+            `${CONSTANTS.HOME_URL}/preselected-chat`,
             queryParams
         );
         return axiosResponse.data;
@@ -86,14 +99,6 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
         const axiosResponse = await this.sendPostRequest<ChatServerResponse<S3PreSignedUrlDto>>(
             `${CONSTANTS.ACCOUNT_URL}${CONSTANTS.REQUEST_UPLOAD_IMAGE_URL}`,
             uploadFileIntent
-        );
-        return axiosResponse.data;
-    }
-
-    public async uploadAccountImageToS3(s3PreSignedUploadUrl: S3PreSignedUrlDto): ChatServerResponse<S3UploadFileResponseDto> {
-        const targetUrl = s3PreSignedUploadUrl.url;
-        const axiosResponse = await this.sendPostRequest<ChatServerResponse<S3UploadFileResponseDto>>(
-            `TODO/${targetUrl}` // TODO: THIS REQUEST IS NOT SENT TO CHAT SERVER, BUT TO AWS!!! I can not use the baseURL defined in AxiosClient!
         );
         return axiosResponse.data;
     }

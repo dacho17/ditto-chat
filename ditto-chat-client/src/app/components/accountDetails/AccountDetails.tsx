@@ -12,7 +12,9 @@ export default function AccountDetails(props: Props) {
     return <div className={`account-details ${displayedInPanelStyle}`}>
         <div className="account-details-chatter-image-section">
             <div className="account-details-chatter-image-container">
-                <img className="account-details-chatter-image"
+                <img
+                    id="account-details-image-id"
+                    className="account-details-chatter-image"
                     src={props.accountOverview.getChatterImageUrl()}
                     alt={props.accountOverview.getChatterFullName()}
                 />

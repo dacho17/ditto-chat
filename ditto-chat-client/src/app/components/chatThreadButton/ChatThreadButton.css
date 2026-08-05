@@ -20,6 +20,10 @@
 	&:hover span {
         color: var(--text-main);
     }
+
+	&.selected {
+        background-color: var(--ditto-pink);
+	}
 	/* &:hover .chat-thread-button-summary-unread-messages {
 	} */
 }

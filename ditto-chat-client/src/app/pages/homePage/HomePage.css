@@ -2,6 +2,7 @@
 	--chat-thread-panel-container-width: 20%;
 	--chat-window-container-width: 60%;
 	--active-chat-thread-panel-container-width: 20%;
+	--chat-window-container-expanded-width: 80%;
 
 	display: flex;
 	flex-direction: row;
@@ -13,10 +14,26 @@
 	width: var(--chat-thread-panel-container-width);
 }
 .chat-window-container {
-	width: var(--chat-window-container-width);
+	width: var(--chat-window-container-expanded-width);
+
+	&.active-chat-thread-panel-expanded {
+		width: var(--chat-window-container-width);
+	}
 }
+
 .active-chat-thread-panel-container {
-	width: var(--active-chat-thread-panel-container-width);
+	width: 0%;
+	opacity: 0;
+    visibility: hidden;
+	display: none;
+
+	&.expanded {
+		display: flex;
+
+		width: var(--active-chat-thread-panel-container-width);
+		opacity: 1;
+	    visibility: visible;
+	}
 }
 
 @media (max-width: 720px) {
@@ -34,7 +51,7 @@
 @media (min-width: 721px) and (max-width: 1024px) {
 	.home-page {
 		--chat-thread-panel-container-width: 30%;
-		--chat-window-container-width: 70%;
+		--chat-window-container-expanded-width: 70%;
 	}
 
 	.active-chat-thread-panel-container {

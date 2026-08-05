@@ -1,6 +1,8 @@
 import ChatClientInterface, { ChatServerResponse } from "./ChatClientInterface";
+import AwsClientInterface from "./AwsClientInterface";
 import CryptoHelper from "../helpers/CryptoHelper";
 import TimeHelper from "../helpers/TimeHelper";
+import TypeFormatter from "../helpers/TypeFormatter";
 import UploadFileIntent from "../classes/UploadFileIntent";
 import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
 import LoginForm from "../classes/LoginForm";
@@ -184,7 +186,7 @@ const DUMMY_S3_UPLOAD_FILE_RESPONSE = {
     // TODO!
 } as S3UploadFileResponseDto;
 
-export default class DummyChatClient implements ChatClientInterface {
+export default class DummyChatClient implements ChatClientInterface, AwsClientInterface {
     private static dummyChatClientSingletonReference: DummyChatClient | null = null;
 
     private constructor() {}
@@ -228,7 +230,7 @@ export default class DummyChatClient implements ChatClientInterface {
         });
     }
 
-    public async uploadAccountImageToS3(s3PreSignedUploadUrl: S3PreSignedUrlDto): ChatServerResponse<S3UploadFileResponseDto> {
+    public async uploadAccountImageToS3(s3PreSignedUploadUrl: S3PreSignedUrlDto, fileContentStream: ReadableStream): Promise<S3UploadFileResponseDto> {
         console.log(`Received S3PreSignedUrlDto: ${JSON.stringify(s3PreSignedUploadUrl)}`);
         console.log(`Respdnding with S3UploadFileResponseDto: ${JSON.stringify(DUMMY_S3_UPLOAD_FILE_RESPONSE)}`);
         return Promise.resolve({
@@ -240,8 +242,9 @@ export default class DummyChatClient implements ChatClientInterface {
     public async getChatThreads(queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatThreadOverviewDto>> {
         console.log(`Received queryParams: ${JSON.stringify(queryParams.toString())}`);
 
-        const pageNumber = parseInt(queryParams.get("pageNumber"));
-        const chatThreadSearchFilter = queryParams.get("chatThreadSearchFilter");
+        const pageNumber = TypeFormatter.stringToInt(queryParams.get(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER));
+        const chatThreadSearchFilter = queryParams.get(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER);
+        const isInitialRetrieval = TypeFormatter.stringToBoolean(queryParams.get(CONSTANTS.IS_INITIAL_RETRIEVAL_QUERY_PARAMETER));
 
         const applyFilter = (chatterOverviewDto: ChatterOverviewDto): boolean => {
             return `${chatterOverviewDto.chatterName} ${chatterOverviewDto.chatterSurname}`.toLowerCase().includes(chatThreadSearchFilter.toLowerCase());
@@ -259,7 +262,9 @@ export default class DummyChatClient implements ChatClientInterface {
                 return secondLatestChatThreadActivityTimestamp - firstLatestChatThreadActivityTimestamp;
             });
 
-        const chatThreadOverviewPage = PAGED_DUMMY_DATA.slice(pageNumber * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE, (pageNumber + 1) * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE);
+        const chatThreadOverviewPage = isInitialRetrieval === true
+            ? PAGED_DUMMY_DATA.slice(0, (pageNumber + 1) * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE)
+            : PAGED_DUMMY_DATA.slice(pageNumber * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE, (pageNumber + 1) * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE);
 
         const responseData = {
             pagedList: chatThreadOverviewPage,
@@ -275,21 +280,52 @@ export default class DummyChatClient implements ChatClientInterface {
         });
     }
 
+    public async getChatThreadsWithSelectedChatThread(queryParams: URLSearchParams): ChatServerResponse<{
+        selectedChatThread: ChatThreadDto,
+        chatThreadsPage: PagedListDto<ChatThreadOverviewDto>
+    }> {
+        console.log(`Received queryParams: ${JSON.stringify(queryParams.toString())}`);
+
+        queryParams.set(CONSTANTS.IS_INITIAL_RETRIEVAL_QUERY_PARAMETER, "true");
+        const chatThreadsRes = await this.getChatThreads(queryParams);
+        const chatThreadRes = await this.getChatThread(queryParams.get(CONSTANTS.SELECTED_CHAT_THREAD_ID_QUERY_PARAMETER));
+
+        console.log(`Responding with:\nselectedChatThread: ${JSON.stringify(chatThreadRes.data)}\nPagedListDto<ChatThreadOverviewDto> containing ${chatThreadsRes.data.pagedList.length} entries`);
+
+        return Promise.resolve({
+            message: null,
+            data: {
+                selectedChatThread: chatThreadRes.data,
+                chatThreadsPage: chatThreadsRes.data
+            }
+        });
+    }
+
     public async getChatters(queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatterOverviewDto>> {
         console.log(`Received queryParams: ${JSON.stringify(queryParams.toString())}`);
 
-        const pageNumber = parseInt(queryParams.get("pageNumber"));
-        const chatterSearchFilter = queryParams.get("chatterSearchFilter");
+        const pageNumber = TypeFormatter.stringToInt(queryParams.get(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER));
+        const chatterSearchFilter = queryParams.get(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER);
+        const isInitialRetrieval = TypeFormatter.stringToBoolean(queryParams.get(CONSTANTS.IS_INITIAL_RETRIEVAL_QUERY_PARAMETER));
 
+        const getChatterOvervirewFullName = (chatterOverviewDto: ChatterOverviewDto) =>
+                `${chatterOverviewDto.chatterName} ${chatterOverviewDto.chatterSurname}`;
         const applyFilter = (chatterOverviewDto: ChatterOverviewDto): boolean =>
-                `${chatterOverviewDto.chatterName} ${chatterOverviewDto.chatterSurname}`.toLowerCase().includes(chatterSearchFilter.toLowerCase());
+                getChatterOvervirewFullName(chatterOverviewDto).toLowerCase().includes(chatterSearchFilter.toLowerCase());
 
         const FILTERED_DUMMY_DATA = DUMMY_ALL_CHATTERS
+            .toSorted((first, second) => {
+                const firstChatterFullName = getChatterOvervirewFullName(first.chatterOverview);
+                const secondChatterFullName = getChatterOvervirewFullName(second.chatterOverview);
+                
+                return firstChatterFullName.toLowerCase().localeCompare(secondChatterFullName.toLowerCase());
+            })
             .filter(chatterDto => applyFilter(chatterDto.chatterOverview))
             .map(chatterDto => chatterDto.chatterOverview);
 
-        const chatterOverviewPage =
-            FILTERED_DUMMY_DATA.slice(pageNumber * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE, (pageNumber + 1) * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE);
+        const chatterOverviewPage = isInitialRetrieval === true
+            ? FILTERED_DUMMY_DATA.slice(0, (pageNumber + 1) * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE)
+            : FILTERED_DUMMY_DATA.slice(pageNumber * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE, (pageNumber + 1) * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE);
 
         const responseData = {
             pagedList: chatterOverviewPage,
@@ -332,7 +368,7 @@ export default class DummyChatClient implements ChatClientInterface {
     public async getSharedFiles(chatterId: string, queryParams: URLSearchParams): ChatServerResponse<PagedListDto<SharedFileDto>> {
         console.log(`Rececived chatterId: ${chatterId}, and queryParams: ${JSON.stringify(queryParams.toString())}`);
 
-        const pageNumber = parseInt(queryParams.get("pageNumber"));
+        const pageNumber = TypeFormatter.stringToInt(queryParams.get(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER));
         const foundChatter = DUMMY_ALL_CHATTERS
             .find(chatterDto => chatterDto.chatterOverview.id === chatterId);
 
@@ -412,7 +448,7 @@ export default class DummyChatClient implements ChatClientInterface {
     public async getChatThreadMessages(chatThreadId: string, queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatThreadMessageDto>> {
         console.log(`Rececived chatThreadId: ${chatThreadId}, and queryParams: ${JSON.stringify(queryParams.toString())}`);
 
-        const pageNumber = parseInt(queryParams.get("pageNumber"));
+        const pageNumber = TypeFormatter.stringToInt(queryParams.get(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER));
 
         const foundChatThread = DUMMY_OPENED_CHAT_THREADS
             .find((chatThreadDto) => chatThreadDto.chatThreadOverview.id === chatThreadId);

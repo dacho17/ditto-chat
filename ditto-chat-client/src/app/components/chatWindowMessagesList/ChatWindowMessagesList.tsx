@@ -1,6 +1,6 @@
-import { useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { getChatThreadMessages, sendChatThreadMessage, setCurrentChatThreadMessagesListPage, setIsLoadingOlderMessages } from "../../store/ChatSlice";
+import useChatThreadIdParam from "../../hooks/UseChatParams";
 import ChatMessageRow from "../chatMessageRow/ChatMessageRow";
 import ShowMoreButton from "../showMoreButton/ShowMoreButton";
 import LoadingSpinner from "../loadingSpinner/LoadingSpinner";
@@ -16,7 +16,7 @@ export default function ChatWindowMessagesList() {
     const { chatThread, isLastChatMessagesListPage, currentChatMessagesListPage, isLoadingOlderMessages } = useAppSelector(state => state.chatSlice);
     const { chatterOverview } = useAppSelector(state => state.authSlice);
     const dispatch = useAppDispatch();
-	const { chatThreadId } = useParams();
+	const chatThreadId = useChatThreadIdParam();
 
     async function tryGetOlderChatMessages(): Promise<void> {
         dispatch(setIsLoadingOlderMessages(true));

@@ -3,6 +3,7 @@ import { AxiosResponse } from "axios";
 import { AyncThunkRejectType } from "./ReduxStore";
 import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
+import AwsClient from "../clients/AwsClient";
 import SliceHelper from "../helpers/SliceHelper";
 import UploadFileIntent from "../classes/UploadFileIntent";
 import S3PreSignedUrlDto from "../interfaces/S3PreSignedUrlDto";
@@ -33,15 +34,20 @@ export const requestAccountImageUploadUrl = createAsyncThunk<S3PreSignedUrlDto, 
 
 // TODO: Image Content needs to be passed as another Argument to this Function and sent to AWS
     // Check what does AWS Expect from their side in the Request
-export const uploadAccountImageToS3 = createAsyncThunk<S3UploadFileResponseDto, { s3PreSignedUploadUrl: S3PreSignedUrlDto }, AyncThunkRejectType>(
+    // https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#API_PutObject_RequestSyntax
+export const uploadAccountImageToS3 = createAsyncThunk<S3UploadFileResponseDto, { s3PreSignedUploadUrl: S3PreSignedUrlDto, fileContentStream: ReadableStream }, AyncThunkRejectType>(
     "account/uploadAccountImageToS3",
-    async ({ s3PreSignedUploadUrl } , thunkAPI) => {
+    async ({ s3PreSignedUploadUrl, fileContentStream } , thunkAPI) => {
         try {
-            const res = await ChatClient.getChatClient().uploadAccountImageToS3(s3PreSignedUploadUrl);
+            // const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
+            const res = await AwsClient.getAwsClient().uploadAccountImageToS3(s3PreSignedUploadUrl, fileContentStream);
             
             // TODO: likely, show success Message to the Client that they changed their Image
+            
+            // TODO: set chatterOverview ImageUrl to the URL of the uploaded Image
+            // thunkAPI.dispatch(setChatterOverview())
 
-            return thunkAPI.fulfillWithValue(res.data);
+            return thunkAPI.fulfillWithValue(res);
         } catch (err: any) {
             // TODO: possibly AWS Sends special Error Types Back on S3 Image Upload. I may not be able to use ChatClientResponseErrorBody. Look into this!
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);

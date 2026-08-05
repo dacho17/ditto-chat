@@ -22,6 +22,12 @@ const CONSTANTS = {
     ICON_SIZE: 26,
     LARGER_ICON_SIZE: 30,
     SEARCH_FILTER_CHANGE_HTTP_REQUEST_DELAY_IN_MS: 300,
+    CONTENT_TYPE_STREAM: "application/octet-stream",
+
+    SEARCH_FILTER_QUERY_PARAMETER: "searchFilter",
+    PAGE_NUMBER_QUERY_PARAMETER: "pageNumber",
+    IS_INITIAL_RETRIEVAL_QUERY_PARAMETER: "isInitialRetrieval",
+    SELECTED_CHAT_THREAD_ID_QUERY_PARAMETER: "selectedChatThreadId",
 }
 
 export default CONSTANTS;

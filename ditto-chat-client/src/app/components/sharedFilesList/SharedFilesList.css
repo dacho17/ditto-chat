@@ -14,6 +14,8 @@
 	justify-content: flex-start;
 
 	width: 100%;
+
+    overflow-y: auto;
 }
 
 .shared-files-list-files {

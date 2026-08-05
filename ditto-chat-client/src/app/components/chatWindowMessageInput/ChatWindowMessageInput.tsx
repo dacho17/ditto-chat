@@ -1,8 +1,8 @@
-import { useParams } from "react-router-dom";
 import { IoAttachOutline, IoSendOutline } from "react-icons/io5";
 import { BsEmojiSmileUpsideDown } from "react-icons/bs";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { sendChatThreadMessage, setCurrentChatMessageInput, updateLastSeenChatThreadMessage } from "../../store/ChatSlice";
+import useChatThreadIdParam from "../../hooks/UseChatParams";
 import IconButton from "../iconButton/IconButton";
 import CryptoHelper from "../../helpers/CryptoHelper";
 import ChatThreadMessageForm from "../../classes/ChatThreadMessageForm";
@@ -14,7 +14,7 @@ const INPUT_PLACEHOLDER_VALUE = "Message";
 export default function ChatWindowMessageInput() {
     const { currentChatMessageInput, chatThread } = useAppSelector(state => state.chatSlice);
     const dispatch = useAppDispatch();
-	const { chatThreadId } = useParams();
+	const chatThreadId = useChatThreadIdParam();
 
     async function trySendChatThreadMessage(): Promise<void> {
         const newChatThreadMessage = new ChatThreadMessageForm(currentChatMessageInput, CryptoHelper.generateUuid(), false);

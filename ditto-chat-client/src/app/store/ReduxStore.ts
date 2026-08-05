@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { AuthSlice } from "./AuthSlice";
+import { UrlHistorySlice } from "./UrlHistorySlice";
 import { HomeSlice } from "./HomeSlice";
 import { AccountSlice } from "./AccountSlice";
 import { ChattersSlice } from "./ChattersSlice";
@@ -10,6 +11,7 @@ import { ChatterSlice } from "./ChatterSlice";
 export const reduxStore = configureStore({
     reducer: {
         authSlice: AuthSlice.reducer,
+        urlHistorySlice: UrlHistorySlice.reducer,
         homeSlice: HomeSlice.reducer,
         accountSlice: AccountSlice.reducer,
         chattersSlice: ChattersSlice.reducer,

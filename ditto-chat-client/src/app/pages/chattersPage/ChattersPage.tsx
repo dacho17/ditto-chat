@@ -1,46 +1,49 @@
-import { useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
-import { clearChattersState, getChatters, setChatterSearchFilter, setCurrentChatterOverviewListPage, setIsLoadingChatterOverviews, setIsLoadingOlderChatterOverviews } from "../../store/ChattersSlice";
+import { setChatterOverviewsList, setIsChattersFilterCurrentlyChanging, setIsLastChatterOverviewListPage, setIsLoadingChatterOverviews, setIsLoadingOlderChatterOverviews } from "../../store/ChattersSlice";
 import { postChatThread } from "../../store/ChatSlice";
+import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
 import PageWithSideMenu from "../pageWithSideMenu/PageWithSideMenu";
 import PageWithBackHeader from "../pageWithBackHeader/PageWithBackHeader";
 import SearchBar from "../../components/searchBar/SearchBar";
 import ChatterButton from "../../components/chatterButton/ChatterButton";
-import ChatThread from "../../classes/ChatThread";
-import ChatterOverview from "../../classes/ChatterOverview";
 import ShowMoreButton from "../../components/showMoreButton/ShowMoreButton";
 import LoadingSpinner from "../../components/loadingSpinner/LoadingSpinner";
+import SliceHelper from "../../helpers/SliceHelper";
+import NavigationHelper from "../../helpers/NavigationHelper";
+import UrlHelper from "../../helpers/UrlHelper";
+import TypeFormatter from "../../helpers/TypeFormatter";
+import ChatThread from "../../classes/ChatThread";
+import ChatterOverview from "../../classes/ChatterOverview";
 import CONSTANTS from "../../../Constants";
 import "./ChattersPage.css";
 
 const SEARCH_INPUT_PLACEHOLDER_VALUE = "Search Chatters";
 
 export default function ChattersPage() {
-    const { chatterOverviewList, currentChatterOverviewListPage, isLastChatterOverviewListPage, chatterSearchFilter, isLoadingChatterOverviews } = useAppSelector(state => state.chattersSlice);
+    const { chatterOverviewList, isLastChatterOverviewListPage, isLoadingChatterOverviews, isFilterCurrentlyChanging } = useAppSelector(state => state.chattersSlice);
     const dispatch = useAppDispatch();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const { addUrlToHistory, navigateBack } = useUrlHistoryNavigate();
     const navigate = useNavigate();
     
-    const tryGetChatters = useCallback(async (isLoadingReducer: Function): Promise<ChatterOverview[]> => {
-        dispatch(isLoadingReducer(true));
+    async function retrieveChattersPage(isInitialRetrieval: boolean, queryParams: URLSearchParams, isLoadingReducer: Function): Promise<void> {
+        const chattersSearchFilter = queryParams.get(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER);
+        const currentPageNumber = queryParams.get(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER);
 
-        // TODO: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
+        const chatterOverviews = await SliceHelper.tryGetChatters(
+            chattersSearchFilter, currentPageNumber, isInitialRetrieval, isLoadingReducer, dispatch
+        );
+    }
 
-        try {
-            const retrievedChatterOverviews = await dispatch(getChatters()).unwrap();
-
-            // TODO: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
-            return retrievedChatterOverviews;
-        } catch (err: any) {
-            console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
-        } finally {
-            dispatch(isLoadingReducer(false));
-        }
-    }, []);
- 
     async function tryGetMoreChatters(): Promise<void> {
-        dispatch(setCurrentChatterOverviewListPage(currentChatterOverviewListPage + 1));
-        tryGetChatters(setIsLoadingOlderChatterOverviews);
+        const newPage = TypeFormatter.stringToInt(searchParams.get(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER)) + 1;
+        searchParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, newPage.toString());
+        setSearchParams(searchParams);
+        addUrlToHistory(searchParams.toString());
+
+        await retrieveChattersPage(false, searchParams, setIsLoadingOlderChatterOverviews);
     }
 
     async function tryPostChatThread(selectedChatterId: string): Promise<ChatThread> {
@@ -51,33 +54,64 @@ export default function ChattersPage() {
             console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
         } finally {}
     }
+
+    function onSearchInputChange(newSearchInput: string): void {
+		dispatch(setIsChattersFilterCurrentlyChanging(true));
+		searchParams.set(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER, newSearchInput);
+		searchParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, "0");
+		setSearchParams(searchParams);
+        addUrlToHistory(searchParams.toString());
+	}
+
+    async function onClickingChatter(chatterOverview: ChatterOverview): Promise<void> {
+        let redirectChatThreadId = chatterOverview.getChatThreadId();
+        if (redirectChatThreadId === null) {
+            const newChatThread = await tryPostChatThread(chatterOverview.getId());
+            redirectChatThreadId = newChatThread.getOverview().getId();
+        }
+
+        NavigationHelper.navigateToChat(navigate, redirectChatThreadId, null, new URLSearchParams());
+    }
  
-    // NOTE: Retrieve ChatterOverviews whenever chatterSearchFilter changes
     useEffect(() => {
+        const queryParams = UrlHelper.constructInitialChattersPageQueryParams(searchParams);
+        setSearchParams(queryParams);
+        SliceHelper.clearPageStates(dispatch);
+        addUrlToHistory(queryParams.toString());
+
+        retrieveChattersPage(true, queryParams, setIsLoadingChatterOverviews);
+        navigate(`${CONSTANTS.CHATTERS_URL}?${queryParams.toString()}`);
+    }, []);
+
+    // NOTE: Retrieve Initial ChatterOverviews Page whenever searchFilter queryParam value is changed in URL
+    useEffect(() => {
+        if (isFilterCurrentlyChanging === false) {
+            return;
+        }
+
+        dispatch(setChatterOverviewsList([]));
+        dispatch(setIsLastChatterOverviewListPage(false));
+
         const timeoutId = setTimeout(() => {
-            tryGetChatters(setIsLoadingChatterOverviews);
+            retrieveChattersPage(true, searchParams, setIsChattersFilterCurrentlyChanging);
         }, CONSTANTS.SEARCH_FILTER_CHANGE_HTTP_REQUEST_DELAY_IN_MS);
 
         return () => {
             clearTimeout(timeoutId);
         }
-    }, [chatterSearchFilter]);
+    }, [searchParams.get(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER)]);
 
     return <PageWithSideMenu
         mainPage={
             <PageWithBackHeader
                 backOnClickFunction={() => {
-                    dispatch(clearChattersState());
-                    navigate(CONSTANTS.HOME_URL);   // TODO: in actuallity, user can land on /chatters from any page, not only from /home
+                    navigateBack();
                 }}
                 backHeaderContent={
                     <div className="chatters-page-header-search-bar-container">
                         <SearchBar
-                            inputVariable={chatterSearchFilter}
-                            setInputVariable={(newSearchInput: string) => {
-                                dispatch(setChatterSearchFilter(newSearchInput));
-                                dispatch(setCurrentChatterOverviewListPage(0));
-                            }}
+                            inputVariable={searchParams.get(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER) || ""}
+                            setInputVariable={(newSearchInput: string) => onSearchInputChange(newSearchInput)}
                             inputPlaceholder={SEARCH_INPUT_PLACEHOLDER_VALUE}
                         />
                     </div>
@@ -92,17 +126,7 @@ export default function ChattersPage() {
                                         return <ChatterButton
                                             key={`${chatterOverview.getId()}`}
                                             chatterOverview={chatterOverview as ChatterOverview}
-                                            openChatFunction={ async () => {
-                                                let redirectChatThreadId = chatterOverview.getChatThreadId();
-
-                                                if (redirectChatThreadId === null) {
-                                                    const newChatThread = await tryPostChatThread(chatterOverview.getId());
-                                                    redirectChatThreadId = newChatThread.getOverview().getId();
-                                                }
-
-                                                dispatch(clearChattersState());
-                                                navigate(`${CONSTANTS.CHAT_URL}/${redirectChatThreadId}`);
-                                            }}
+                                            openChatFunction={() => onClickingChatter(chatterOverview)}
                                         />
                                     })}
                                     { isLastChatterOverviewListPage === false && 

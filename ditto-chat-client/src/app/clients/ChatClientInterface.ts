@@ -4,7 +4,6 @@ import ChatterDto from "../interfaces/ChatterDto";
 import ChatterOverviewDto from "../interfaces/ChatterOverviewDto";
 import ChatThreadOverviewDto from "../interfaces/ChatThreadOverviewDto";
 import S3PreSignedUrlDto from "../interfaces/S3PreSignedUrlDto";
-import S3UploadFileResponseDto from "../interfaces/S3UploadFileResponseDto";
 import SharedFileDto from "../interfaces/SharedFileDto";
 import ChatThreadDto from "../interfaces/ChatThreadDto";
 import ChatThreadMessageDto from "../interfaces/ChatThreadMessageDto";
@@ -29,11 +28,14 @@ export default interface ChatClientInterface {
     logout(): ChatServerResponse<void>;
 
     getChatThreads(queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatThreadOverviewDto>>;
+    getChatThreadsWithSelectedChatThread(queryParams: URLSearchParams): ChatServerResponse<{
+        selectedChatThread: ChatThreadDto,
+        chatThreadsPage: PagedListDto<ChatThreadOverviewDto>
+    }>;
 
     getChatters(queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatterOverviewDto>>;
 
     requestAccountImageUploadUrl(uploadFileIntent: UploadFileIntent): ChatServerResponse<S3PreSignedUrlDto>;
-    uploadAccountImageToS3(s3PreSignedUploadUrl: S3PreSignedUrlDto): ChatServerResponse<S3UploadFileResponseDto>;
 
     postChatThread(chatterId: string): ChatServerResponse<ChatThreadDto>;
     getChatThread(chatThreadId: string): ChatServerResponse<ChatThreadDto>;

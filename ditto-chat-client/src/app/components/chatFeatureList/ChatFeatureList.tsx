@@ -1,10 +1,14 @@
-import { useNavigate, useParams } from "react-router-dom";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { IoMdMore } from "react-icons/io";
-import { IoExpandOutline } from "react-icons/io5";
+import { IoExpandOutline, IoContractOutline } from "react-icons/io5";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
-import { clearChatState, clearChatThreadHistory } from "../../store/ChatSlice";
+import { clearChatThreadHistory } from "../../store/ChatSlice";
+import { setIsActiveChatThreadPanelExpanded } from "../../store/HomeSlice";
+import useChatThreadIdParam from "../../hooks/UseChatParams";
 import IconButtonDropdown from "../iconButtonDropdown/IconButtonDropdown";
 import IconButton from "../iconButton/IconButton";
+import DeviceScreenHelper from "../../helpers/DeviceScreenHelper";
 import DropdownItem from "../../classes/DropdownItem";
 import { ListType } from "../../enums/ListType";
 import CONSTANTS from "../../../Constants";
@@ -16,8 +20,9 @@ interface Props {
 
 export default function ChatFeatureList(props: Props) {
 	const { chatThread } = useAppSelector(state => state.chatSlice);
+	const { isActiveChatThreadPanelExpanded } = useAppSelector(state => state.homeSlice);
 	const dispatch = useAppDispatch();
-	const { chatThreadId } = useParams();
+	const chatThreadId = useChatThreadIdParam();
 	const navigate = useNavigate();
 
 	async function tryClearChatThreadHistory(): Promise<void> {
@@ -27,26 +32,37 @@ export default function ChatFeatureList(props: Props) {
 			console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
 		} finally {}					
 	}
+	
+	function getChatFeatureList(): DropdownItem[] {
+		const CHAT_FEATURE_LIST: DropdownItem[] = [];
+		if (DeviceScreenHelper.isPcScreen() === false) {
+			CHAT_FEATURE_LIST.push(new DropdownItem(
+				"View Contact",
+				() => {
+					const chatterId = chatThread.getOverview().getChatterOverview().getId();
+					navigate(`${CONSTANTS.CHATTER_URL}/${chatterId}`);
+				}
+			));
+		}
 
-	const CHAT_FEATURE_LIST: DropdownItem[] = [
-		new DropdownItem(
-			"View Contact",
-			() => {
-				const chatterId = chatThread.getOverview().getChatterOverview().getId();
-				dispatch(clearChatState());
-				navigate(`${CONSTANTS.CHATTER_URL}/${chatterId}`);
-			}
-		),
-		new DropdownItem(
+		CHAT_FEATURE_LIST.push(new DropdownItem(
 			"Clear Chat",
 			() => {
 				tryClearChatThreadHistory();
 			}
-		)
-	];
+		));
+
+		return CHAT_FEATURE_LIST;
+	}
 
 	function getListStyleClassName(listType: ListType): string {
 		return listType === ListType.ROW ? "list-as-row" : "list-as-column";
+	}
+
+	function getPanelExpansionIcon(): React.JSX.Element {
+		return isActiveChatThreadPanelExpanded === true
+			? <IoContractOutline size={CONSTANTS.ICON_SIZE} />
+			: <IoExpandOutline size={CONSTANTS.ICON_SIZE} />;
 	}
 
 	const listStyleClassName = getListStyleClassName(props.listType);
@@ -54,13 +70,12 @@ export default function ChatFeatureList(props: Props) {
 		<div className={`chat-feature-list ${listStyleClassName}`}>
 			<IconButtonDropdown
 				icon={<IoMdMore size={CONSTANTS.ICON_SIZE} />}
-				dropdownItems={CHAT_FEATURE_LIST}
+				dropdownItems={getChatFeatureList()}
 			/>
 			<div className="expand-chatter-panel-button">
 				<IconButton
-					icon={<IoExpandOutline size={CONSTANTS.ICON_SIZE} />}
-					onClick={() => console.log("TODO-call Reducer to Expand /chatter Panel")}
-					// TODO: make this button change it icon based on whether panel is extended or not!
+					icon={getPanelExpansionIcon()}
+					onClick={() => dispatch(setIsActiveChatThreadPanelExpanded(!isActiveChatThreadPanelExpanded))}
 				/>
 			</div>
 		</div>

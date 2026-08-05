@@ -1,3 +1,7 @@
+// TODO: There are cases which needs to be handled:
+    // 1. How does Confirmation of Sent Message influence currentChatMessagesListPage
+    // 2. How do Live Incoming messages influence currentChatMessagesListPage
+
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosResponse } from "axios";
 import { AyncThunkRejectType, RootState } from "./ReduxStore";
@@ -76,10 +80,10 @@ export const getChatThreadMessages = createAsyncThunk<ChatThreadMessage[], { cha
     "chat/getChatThreadMessages",
     async ({ chatThreadId }, thunkAPI) => {
         try {
-            const { currentChatMessagesListPage } = (thunkAPI.getState() as RootState).chatSlice;
+            const { currentChatMessagesListPage, chatThread } = (thunkAPI.getState() as RootState).chatSlice;
 
             const queryParams = new URLSearchParams();
-            queryParams.set("pageNumber", currentChatMessagesListPage.toString());
+            queryParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, currentChatMessagesListPage.toString());
             
             const res = await ChatClient.getChatClient().getChatThreadMessages(chatThreadId, queryParams);
             const { pagedList, isLastPage } = res.data;
@@ -147,7 +151,7 @@ export const sendChatThreadMessage = createAsyncThunk<ChatThreadMessage, { chatT
             return thunkAPI.fulfillWithValue(sentChatThreadMessage);
         } catch (err: any) {
             // const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
-            
+            console.log(`Error occurred: ${JSON.stringify(err)}`)
             thunkAPI.dispatch(setChatThreadMessageStatus({
                 chatThreadMessageClientRef: chatThreadMessageForm.getChatMessageClientRef(),
                 newChatThreadMessageStatus: ChatThreadMessageStatus.FAILED_TO_SEND
