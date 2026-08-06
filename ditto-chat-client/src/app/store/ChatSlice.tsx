@@ -41,6 +41,29 @@ function sortChatThreadMessages(chatThreadMessages: ChatThreadMessage[]): ChatTh
     });
 }
 
+function mergeChatThreadMessages(chatThreadMessages: ChatThreadMessage[], chatThreadMessagePage: ChatThreadMessage[]): ChatThreadMessage[] {
+    const mergedList = [...chatThreadMessages];
+
+    for (let i = 0; i < chatThreadMessagePage.length; i++) {
+        const isAlreadyInList =
+            mergedList.find(chatThreadMessage =>
+                (chatThreadMessage.getId() !== null
+                    && chatThreadMessagePage[i].getId() !== null
+                    && chatThreadMessage.getId() === chatThreadMessagePage[i].getId()
+                ) ||
+                (chatThreadMessage.getClientRef() !== null 
+                    && chatThreadMessagePage[i].getClientRef() !== null
+                    && chatThreadMessage.getClientRef() === chatThreadMessagePage[i].getClientRef()
+                )
+            ) !== undefined
+        if (isAlreadyInList === false) {
+            mergedList.push(chatThreadMessagePage[i]);
+        }
+    }
+
+    return mergedList;
+}
+
 export const postChatThread = createAsyncThunk<ChatThread, { chatterId: string }, AyncThunkRejectType>(
     "chat/postChatThread",
     async ({ chatterId }, thunkAPI) => {
@@ -198,16 +221,16 @@ export const ChatSlice = createSlice({
             state.isLoadingOlderMessages = action.payload;
         },
         appendChatThreadMessagesToList: (state, action: { payload: ChatThreadMessage[] }) => {
-            const updatedChatThreadMessages = [...state.chatThread.getMessages(), ...action.payload];
-            const sortedChatThreadMessages = sortChatThreadMessages(updatedChatThreadMessages);
+            const mergedChatThreadMessages = mergeChatThreadMessages(state.chatThread.getMessages(), action.payload);
+            const sortedChatThreadMessages = sortChatThreadMessages(mergedChatThreadMessages);
 
             const updatedChatThread = ChatThread.getShallowCopy(state.chatThread as ChatThread);
             updatedChatThread.setMessages(sortedChatThreadMessages);
             state.chatThread = updatedChatThread;            
         },
         addNewChatThreadMessageToList: (state, action: { payload: ChatThreadMessage }) => {
-            const updatedChatThreadMessages = [action.payload, ...state.chatThread.getMessages()];
-            const sortedChatThreadMessages = sortChatThreadMessages(updatedChatThreadMessages);
+            const mergedChatThreadMessages = mergeChatThreadMessages(state.chatThread.getMessages(), [action.payload]);
+            const sortedChatThreadMessages = sortChatThreadMessages(mergedChatThreadMessages);
 
             const updatedChatThread = ChatThread.getShallowCopy(state.chatThread as ChatThread);
             updatedChatThread.setMessages(sortedChatThreadMessages);

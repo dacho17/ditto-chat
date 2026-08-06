@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
-import { getChatThreadsWithSelectedChatThread, setChatThreadList, setIsChatThreadsFilterCurrentlyChanging, setIsInitialLoadFinished, setIsLastChatThreadListPage, setIsLoadingChatThreads } from "../../store/HomeSlice";
+import { getChatThreadsWithSelectedChatThread, setChatThreadList, setIsChatThreadsFilterCurrentlyChanging, setIsLastChatThreadListPage, setIsLoadingChatThreads } from "../../store/HomeSlice";
 import { setIsLoadingChatThread } from "../../store/ChatSlice";
 import useChatThreadIdParam from "../../hooks/UseChatParams";
 import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
@@ -44,10 +44,6 @@ export default function HomePage() {
             isInitialRetrieval, isLoadingReducer, dispatch
         );
 
-        if (isInitialRetrieval === true) {
-            dispatch(setIsInitialLoadFinished(true));
-        }
-
         if (isChatWindowOnHomePage === true && chatThreadId === null) {
             navigate(`${CONSTANTS.HOME_URL}/${chatThreadOverviews[0].getId()}?${queryParams.toString()}`);
         }
@@ -66,7 +62,6 @@ export default function HomePage() {
         } catch(err) {
             console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
         } finally {
-            dispatch(setIsInitialLoadFinished(true));
             dispatch(setIsLoadingChatThreads(false));
             dispatch(setIsLoadingChatThread(false));
         }

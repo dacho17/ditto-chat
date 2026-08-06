@@ -271,7 +271,6 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
             isLastPage: PAGED_DUMMY_DATA.length <= (pageNumber + 1) * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE
         } as PagedListDto<ChatThreadOverviewDto>;
 
-        // console.log(`Responding with PagedListDto<ChatThreadOverviewDto>: ${responseData}`);
         console.log(`Responding with PagedListDto<ChatThreadOverviewDto> containing ${responseData.pagedList.length} entries`);
 
         return Promise.resolve({

@@ -8,24 +8,31 @@
     height: 100%;
 }
 
+.shared-files-list-title {
+    width: 100%;
+    height: 10%;
+}
+
 .shared-files-list-files-container{
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-start;
 
 	width: 100%;
-
+    height: 90%;
+ 
     overflow-y: auto;
 }
 
 .shared-files-list-files {
 	display: flex;
 	flex-direction: row;
-	justify-content: flex-start;
+	justify-content: space-around;
 	align-items: flex-start;
 	flex-wrap: wrap;
 
 	width: 100%;
+    height: 70%;
 
     overflow-y: auto;
 }
@@ -37,4 +44,5 @@
     align-items: center;
 
     width: 100%;
+    height: 30%;
 }

@@ -1,6 +1,6 @@
 .active-chat-thread-panel {
-	--feature-list-container-height: 30%;
-	--files-list-container-height: 55%;
+	--feature-list-container-height: 40%;
+	--files-list-container-height: 52%;
 	--padding-left: 5%;
 
 	display: flex;
@@ -24,6 +24,7 @@
 }
 .active-chat-thread-panel-chatter-overview-info-container {
     width: 100%;
+	height: 100%;
 }
 .active-chat-thread-panel-feature-list-container {
 	display: flex;

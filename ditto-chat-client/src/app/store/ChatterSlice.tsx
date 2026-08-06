@@ -27,6 +27,20 @@ const initialState: ChatterState = {
     isImageEnlarged: false
 };
 
+function mergeSharedFilePageToList(sharedFileList: SharedFile[], sharedFilesPage: SharedFile[]): SharedFile[] {
+    const mergedList = [...sharedFileList];
+
+    for (let i = 0; i < sharedFilesPage.length; i++) {
+        const isAlreadyInList =
+            mergedList.find(sharedFile => sharedFile.getFileUrl() === sharedFilesPage[i].getFileUrl()) !== undefined
+        if (isAlreadyInList === false) {
+            mergedList.push(sharedFilesPage[i]);
+        }
+    }
+
+    return mergedList;
+}
+
 export const getChatter = createAsyncThunk<Chatter, { chatterId: string }, AyncThunkRejectType>(
     "chatter/getChatter",
     async ({ chatterId }, thunkAPI) => {
@@ -85,15 +99,15 @@ export const ChatterSlice = createSlice({
             state.isLoadingOlderSharedFiles = action.payload;
         },
         appendSharedFilesToList: (state, action: { payload: SharedFile[] }) => {
-            const updatedSharedFiles = [...state.chatter.getSharedFiles(), ...action.payload];
+            const mergedSharedFiles = mergeSharedFilePageToList(state.chatter.getSharedFiles(), action.payload);
 
             // sorting SharedFiles based on the time when they were shared
-            const sortedUpdatedSharedFiles = updatedSharedFiles.toSorted((first, second) => {
+            const sortedMergedSharedFiles = mergedSharedFiles.toSorted((first, second) => {
                 return second.getFileSharedAtTimestamp() - first.getFileSharedAtTimestamp();
             });
 
             const updatedChatter = Chatter.getShallowCopy(state.chatter as Chatter);
-            updatedChatter.setSharedFiles(sortedUpdatedSharedFiles);
+            updatedChatter.setSharedFiles(sortedMergedSharedFiles);
             state.chatter = updatedChatter;
         },
         setCurrentSharedFilesListPage: (state, action: { payload: number }) => {

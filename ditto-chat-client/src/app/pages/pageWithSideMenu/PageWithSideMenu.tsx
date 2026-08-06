@@ -11,7 +11,7 @@ export default function PageWithSideMenu(props: Props) {
         <div className="side-menu-container">
             <SideMenu />
         </div>
-        <div className="main-page-container">
+        <div className="page-with-side-menu-main-page-container">
             {props.mainPage}
         </div>
     </div>

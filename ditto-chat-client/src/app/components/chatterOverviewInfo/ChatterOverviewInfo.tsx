@@ -19,7 +19,9 @@ export default function ChatterOverviewInfo(props: Props) {
             />
         </div>
         <div className="chatter-overview-info-chatter-summary">
-            <span className="bold-text handle-overflow">{props.chatterOverview.getChatterFullName()}</span>
+            <div className="chatter-overview-info-name">
+                <span className="bold-text handle-overflow">{props.chatterOverview.getChatterFullName()}</span>
+            </div>
             <div className="chatter-overview-info-chatter-online-status">
                 <div className={`online-indicator margin-right-1 ${onlineStyle}`} />
                 <span className="regular-faded-text line-height-2">{onlineStyle}</span>

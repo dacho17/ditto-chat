@@ -1,6 +1,6 @@
 .page-with-side-menu {
     --side-menu-container-width: 5%;
-    --main-page-container-width: 95%;
+    --page-with-side-menu-main-page-container-width: 95%;
 
     display: flex;
     flex-direction: row;
@@ -13,9 +13,9 @@
     height: 100%;
 }
 
-.main-page-container {
+.page-with-side-menu-main-page-container {
     box-sizing: border-box;
-    width: var(--main-page-container-width);
+    width: var(--page-with-side-menu-main-page-container-width);
     height: 100%;
 }
 
@@ -33,6 +33,6 @@
 @media (min-width: 721px) and (max-width: 1024px) {
     .page-with-side-menu {
         --side-menu-container-width: 12%;
-        --main-page-container-width: 88%;
+        --page-with-side-menu-main-page-container-width: 88%;
     }
 }

@@ -36,6 +36,20 @@ function sortChatterOverviews(chatterOverviews: ChatterOverview[]): ChatterOverv
     return sortedChatterOverviews;
 }
 
+function mergeChatterOverviewPageIntoList(chatterOverviewsList: ChatterOverview[], chatterOverviewPage: ChatterOverview[]): ChatterOverview[] {
+    const mergedList = [...chatterOverviewsList];
+
+    for (let i = 0; i < chatterOverviewPage.length; i++) {
+        const isAlreadyInList =
+            mergedList.find(chatterOverview => chatterOverview.getId() === chatterOverviewPage[i].getId()) !== undefined
+        if (isAlreadyInList === false) {
+            mergedList.push(chatterOverviewPage[i]);
+        }
+    }
+
+    return mergedList;
+}
+
 export const getChatters = createAsyncThunk<ChatterOverview[], { chatterSearchFilter: string, currentPageNumber: string, isInitialRetrieval: boolean }, AyncThunkRejectType>(
     "chatters/getChatters",
     async ({ chatterSearchFilter, currentPageNumber, isInitialRetrieval }, thunkAPI) => {
@@ -76,7 +90,7 @@ export const ChattersSlice = createSlice({
             state.chatterOverviewList = sortedNewChatterOverviewsList;
         },
         appendChatterOverviewsToList: (state, action: { payload: ChatterOverview[] }) => {
-            const mergedChatterOverviewLists = [...action.payload, ...state.chatterOverviewList];
+            const mergedChatterOverviewLists = mergeChatterOverviewPageIntoList(state.chatterOverviewList as ChatterOverview[], action.payload);
             const sortedNewChatterOverviewsList = sortChatterOverviews(mergedChatterOverviewLists as ChatterOverview[]);
 
             state.chatterOverviewList = sortedNewChatterOverviewsList;            

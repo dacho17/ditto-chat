@@ -33,9 +33,8 @@ export default function SharedFilesList() {
 
     const filesSharedWithChatter = chatter.getSharedFiles();
     return <div className="shared-files-list">
-        <div className="bold-text">
+        <div className="shared-files-list-title bold-text">
             {SHARED_FILES_TITLE}
-            <div className="margin-bottom-2" />
         </div>
         <div className="shared-files-list-files-container">
             <div className="shared-files-list-files">

@@ -16,7 +16,7 @@ export default function PageWithBackHeader(props: Props) {
                 backHeaderContent={props.backHeaderContent}
             />
         </div>
-        <div className="main-page-container">
+        <div className="page-with-back-header-main-page-container">
             {props.mainPage}
         </div>
     </div>

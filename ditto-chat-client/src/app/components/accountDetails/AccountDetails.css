@@ -13,8 +13,8 @@
     height: 100%;
 
     &.displayed-in-panel {
-        --chatter-image-section-height: 70%;
-        --chatter-name-section-height: 30%;
+        --chatter-image-section-height: 50%;
+        --chatter-name-section-height: 50%;
     }
 }
 
@@ -72,9 +72,15 @@
     text-align: center;
 }
 
+@media (max-width: 720px) {
+    .account-details-chatter-image-section {
+        --chatter-image-section-height: 50%;
+    }
+}
+
 @media (min-width: 721px) and (max-width: 1024px) {
     .account-details {
-        --chatter-image-section-height: 70%;
+        --chatter-image-section-height: 50%;
         --chatter-name-section-height: 30%;
         --chatter-image-size: 192px;
     }

@@ -1,6 +1,6 @@
 .page-with-back-header {
     --back-header-container-height: var(--page-header-height);
-    --main-page-container-height: 92%;
+    --page-with-back-header-main-page-container-height: 92%;
 
     display: flex;
     flex-direction: column;
@@ -17,15 +17,15 @@
     width: 100%;
 }
 
-.main-page-container {
+.page-with-back-header-main-page-container {
     box-sizing: border-box;
-    height: var(--main-page-container-height);
+    height: var(--page-with-back-header-main-page-container-height);
     width: 100%;
 }
 
 @media (max-width: 720px) {
     .page-with-back-header {
         --back-header-container-height: 10%;
-        --main-page-container-height: 90%;
+        --page-with-back-header-main-page-container-height: 90%;
     }
 }

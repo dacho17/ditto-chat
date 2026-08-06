@@ -50,11 +50,24 @@ function sortChatThreadOverviews(chatThreadOverviews: ChatThreadOverview[]): Cha
 
 function isChatThreadOverviewInChatThreadList(queriedChatThreadOverview: ChatThreadOverview | null, chatThreadList: ChatThreadOverview[]): boolean {
     if (queriedChatThreadOverview === null) {
-        return false;
+        return true;
     }
 
     const isInList = chatThreadList.find(chatThread => chatThread.getId() === queriedChatThreadOverview.getId()) !== undefined;
     return isInList;
+}
+
+function mergeChatThreadOverviewPageIntoList(chatThreadList: ChatThreadOverview[], chatThreadListPage: ChatThreadOverview[]): ChatThreadOverview[] {
+    const mergedList = [...chatThreadList];
+
+    for (let i = 0; i < chatThreadListPage.length; i++) {
+        const isAlreadyInList = isChatThreadOverviewInChatThreadList(chatThreadListPage[i], chatThreadList);
+        if (isAlreadyInList === false) {
+            mergedList.push(chatThreadListPage[i]);
+        }
+    }
+
+    return mergedList;
 }
 
 export const getChatThreads = createAsyncThunk<ChatThreadOverview[], {
@@ -81,6 +94,7 @@ export const getChatThreads = createAsyncThunk<ChatThreadOverview[], {
             }
             
             thunkAPI.dispatch(setIsLastChatThreadListPage(isLastPage));
+            thunkAPI.dispatch(setIsInitialLoadFinished(true));
 
             return thunkAPI.fulfillWithValue(chatThreadOverviews);
         } catch (err: any) {
@@ -115,6 +129,7 @@ export const getChatThreadsWithSelectedChatThread = createAsyncThunk<ChatThreadO
             
             thunkAPI.dispatch(setChatThreadList({ newChatThreadList: chatThreadOverviews, currentlySelectedChatThread: chatThread.getOverview() }));
             thunkAPI.dispatch(setIsLastChatThreadListPage(chatThreadsPage.isLastPage));
+            thunkAPI.dispatch(setIsInitialLoadFinished(true));
 
             return thunkAPI.fulfillWithValue(chatThreadOverviews);
         } catch (err: any) {
@@ -140,7 +155,7 @@ export const HomeSlice = createSlice({
         },
         appendChatThreadsToList: (state, action: { payload: { chatThreadListPage: ChatThreadOverview[], currentlySelectedChatThread: ChatThreadOverview | null } }) => {
             const { chatThreadListPage, currentlySelectedChatThread } = action.payload;
-            const mergedChatThreadLists = [...chatThreadListPage, ...state.chatThreadList];
+            const mergedChatThreadLists = mergeChatThreadOverviewPageIntoList(state.chatThreadList as ChatThreadOverview[], chatThreadListPage);
             if (isChatThreadOverviewInChatThreadList(currentlySelectedChatThread, mergedChatThreadLists as ChatThreadOverview[]) === false) {
                 mergedChatThreadLists.push(currentlySelectedChatThread as ChatThreadOverview);
             }
