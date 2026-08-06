@@ -1,6 +1,8 @@
 import AxiosClient from "./AxiosClient";
 import ChatClientInterface, { ChatServerResponse } from "./ChatClientInterface";
 import DummyChatClient from "./DummyChatClient";
+import ViteHelper from "../helpers/ViteHelper";
+import ChatterRegistrationForm from "../classes/ChatterRegistrationForm";
 import LoginForm from "../classes/LoginForm";
 import UploadFileIntent from "../classes/UploadFileIntent";
 import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
@@ -15,8 +17,6 @@ import ChatThreadDto from "../interfaces/ChatThreadDto";
 import ChatThreadMessageDto from "../interfaces/ChatThreadMessageDto";
 import CONSTANTS from "../../Constants";
 
-const EXECUTION_ENVIRONMENT = "DEV";    // TODO: Read this Value Dynamically
-
 export default class ChatClient extends AxiosClient implements ChatClientInterface {
     private static chatClientSingletonReference: ChatClient | null = null;
     private static CHAT_SERVER_DOMAIN: string = "localhost";
@@ -27,7 +27,7 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
     }
 
     public static getChatClient(): ChatClientInterface {
-        if (EXECUTION_ENVIRONMENT === "DEV") {
+        if (ViteHelper.isDevEnvironment() === true) {
             return DummyChatClient.getDummyChatClient();
         } else {
            if (ChatClient.chatClientSingletonReference === null) {
@@ -38,17 +38,27 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
         }
     }
 
-    /* Fill out Endpoints as they are Required by Components/Slices
-    public static async getRegisterPage(): Promise<AxiosResponse<>> {   // TODO: define Type of Response!
-        return await this.sendGetRequest(CONSTANTS.REGISTER_URL);
+    public async getRegister(): ChatServerResponse<void> {
+        const axiosResponse = await this.sendGetRequest<ChatServerResponse<void>>(
+            `${CONSTANTS.REGISTER_URL}`
+        );
+        return axiosResponse.data;
     }
-    public static async register(body: {}): Promise<AxiosResponse<>> {  // TODO: define Type of body and Response!
-        return await this.sendPostRequest(CONSTANTS.REGISTER_URL, body);
+
+    public async register(registrationForm: ChatterRegistrationForm): ChatServerResponse<{ redirectUrl: string }> {
+        const axiosResponse = await this.sendPostRequest<ChatServerResponse<{ redirectUrl: string }>>(
+            `${CONSTANTS.REGISTER_URL}`,
+            registrationForm
+        );
+        return axiosResponse.data;
     }
-    public static async getLoginPage(): Promise<AxiosResponse<>> {   // TODO: define Type of Response!
-        return await this.sendGetRequest(CONSTANTS.LOGIN_URL);
+
+    public async getLogin(): ChatServerResponse<void> {
+        const axiosResponse = await this.sendGetRequest<ChatServerResponse<void>>(
+            `${CONSTANTS.LOGIN_URL}`
+        );
+        return axiosResponse.data;        
     }
-    */
 
     public async login(loginForm: LoginForm): ChatServerResponse<LoginDto> {
         const axiosResponse = await this.sendPostRequest<ChatServerResponse<LoginDto>>(

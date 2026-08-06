@@ -1,3 +1,5 @@
+import ChatterRegistrationForm from "../classes/ChatterRegistrationForm";
+import LoginForm from "../classes/LoginForm";
 import UploadFileIntent from "../classes/UploadFileIntent";
 import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
 import ChatterDto from "../interfaces/ChatterDto";
@@ -7,7 +9,6 @@ import S3PreSignedUrlDto from "../interfaces/S3PreSignedUrlDto";
 import SharedFileDto from "../interfaces/SharedFileDto";
 import ChatThreadDto from "../interfaces/ChatThreadDto";
 import ChatThreadMessageDto from "../interfaces/ChatThreadMessageDto";
-import LoginForm from "../classes/LoginForm";
 import LoginDto from "../interfaces/LoginDto";
 import PagedListDto from "../interfaces/PagedListDto";
 
@@ -24,6 +25,9 @@ export type ChatServerResponseErrorBody = ChatServerResponseBody<{
 export type ChatServerResponse<T> = Promise<ChatServerResponseBody<T>>;
 
 export default interface ChatClientInterface {
+    getRegister(): ChatServerResponse<void>;
+    register(registrationForm: ChatterRegistrationForm): ChatServerResponse<{ redirectUrl: string }>;
+    getLogin(): ChatServerResponse<void>;
     login(loginForm: LoginForm): ChatServerResponse<LoginDto>;
     logout(): ChatServerResponse<void>;
 

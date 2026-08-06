@@ -5,6 +5,7 @@ import TimeHelper from "../helpers/TimeHelper";
 import TypeFormatter from "../helpers/TypeFormatter";
 import UploadFileIntent from "../classes/UploadFileIntent";
 import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
+import ChatterRegistrationForm from "../classes/ChatterRegistrationForm";
 import LoginForm from "../classes/LoginForm";
 import PagedListDto from "../interfaces/PagedListDto";
 import LoginDto from "../interfaces/LoginDto";
@@ -20,11 +21,11 @@ import CONSTANTS from "../../Constants";
 import DittoConsultingLogo from '../../assets/ditto-consulting-logo.png';
 import ChatterIconImage from '../../assets/david-chat-image.jpg';
 
+const DUMMY_ACCOUNT_REGISTRATION_SUCCESS_MESSAGE = "You have registered successfully.";
 const DUMMY_LOGIN_SUCCESS_MESSAGE = "You are logged in.";
 const DUMMY_LOGOUT_SUCCESS_MESSAGE = "You are logged out.";
 const DUMMY_ACCOUNT_IMAGE_UPLOAD_STARTED_MESSAGE = "Image Upload Started.";
 const DUMMY_ACCOUNT_IMAGE_UPLOAD_SUCCESS_MESSAGE = "Your Image has been Changed!";
-
 
 // CORRECT
 const DUMMY_LOGGED_IN_CHATTER_OVERVIEW = {
@@ -199,9 +200,37 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
         return DummyChatClient.dummyChatClientSingletonReference;
     }
 
+    public async getRegister(): ChatServerResponse<void> {
+        console.log(`Received getRegister Request.`);
+        console.log(`Responding with null`);
+        return Promise.resolve({ 
+            message: null,
+            data: null
+        });
+    }
+
+    public async register(registrationForm: ChatterRegistrationForm): ChatServerResponse<{ redirectUrl: string; }> {
+        console.log(`Received register Request with registrationForm=${JSON.stringify(registrationForm)}.`);
+        console.log(`Responding with message and RedirectUrl to Login Page`);
+        return Promise.resolve({ 
+            message: DUMMY_ACCOUNT_REGISTRATION_SUCCESS_MESSAGE,
+            data: {
+                redirectUrl: CONSTANTS.LOGIN_URL
+            }
+        });
+    }
+
+    public async getLogin(): ChatServerResponse<void> {
+        console.log(`Received getLogin Request.`);
+        console.log(`Responding with null`);
+        return Promise.resolve({ 
+            message: null,
+            data: null
+        });
+    }
+
     public async login(loginForm: LoginForm): ChatServerResponse<LoginDto> {
         console.log(`Received LoginForm: ${JSON.stringify(loginForm)}`);
-
         console.log(`Responding with LoginDto: ${JSON.stringify(DUMMY_LOGGED_IN_CHATTER_OVERVIEW)}`);
         return Promise.resolve({
             message: DUMMY_LOGIN_SUCCESS_MESSAGE,
