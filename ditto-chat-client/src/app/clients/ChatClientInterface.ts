@@ -29,7 +29,7 @@ export default interface ChatClientInterface {
     register(registrationForm: ChatterRegistrationForm): ChatServerResponse<{ redirectUrl: string }>;
     getLogin(): ChatServerResponse<void>;
     login(loginForm: LoginForm): ChatServerResponse<LoginDto>;
-    logout(): ChatServerResponse<void>;
+    logout(): ChatServerResponse<{ redirectUrl: string }>;
 
     getChatThreads(queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatThreadOverviewDto>>;
     getChatThreadsWithSelectedChatThread(queryParams: URLSearchParams): ChatServerResponse<{

@@ -3,6 +3,10 @@ export default class TimeHelper {
         return Date.now();
     }
 
+    public static addSecondsToTimeStamp(timestamp: number, seconds: number): number {
+        return timestamp + seconds * 1000;
+    }
+
     public static dateStringToTimestamp(dateString: string): number {
         const date = new Date(dateString);
         return date.getTime();
@@ -36,8 +40,8 @@ export default class TimeHelper {
         return { localTime: localTime, localDate: localDate };
     }
 
-    public static getServerFormattedCurrentTimestamp(): string {
-        const currentDate = TimeHelper.timestampToDate(TimeHelper.getCurrentTimestamp());
+    public static getServerFormattedTimestamp(timestamp: number): string {
+        const currentDate = TimeHelper.timestampToDate(timestamp);
         
         const localYear = currentDate.toLocaleDateString('en-US', { year: 'numeric'});
         const localMonth = currentDate.toLocaleDateString('en-US', { month: '2-digit' });

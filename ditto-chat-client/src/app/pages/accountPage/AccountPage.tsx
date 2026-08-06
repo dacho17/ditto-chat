@@ -29,17 +29,17 @@ export default function AccountPage() {
         dispatch(setIsLoadingChatterOverview(false));
     }, []);
 
-    const VALID_ACCOUNT_IMAGE_FILE_TYPES = ["image/png", "TODO-other-allowed-types?"];
+    const VALID_ACCOUNT_IMAGE_FILE_TYPES = ["image/png", "image/jpeg"];
     const MAXIMUM_ACCOUNT_IMAGE_FILE_SIZE_IN_BYTES = 2097152; // Number of Bytes in 2 MB
     function validateUploadFileIntent(uploadFileIntent: UploadFileIntent): boolean {
         const fileType = uploadFileIntent.getFileType();
         if (VALID_ACCOUNT_IMAGE_FILE_TYPES.includes(fileType) === false) {
-            console.log("TODO: Notify user that they are attepmting to upload unsupported File Type. Tell them what passes");
+            console.log("TODO-toasting: Notify user that they are attepmting to upload unsupported File Type. Tell them what passes");
             return false;
         }
 
         if (MAXIMUM_ACCOUNT_IMAGE_FILE_SIZE_IN_BYTES < uploadFileIntent.getFileSize()) {
-            console.log("TODO: Notify user that they are attepmting to upload File of size over 2 MBs.");
+            console.log("TODO-toasting: Notify user that they are attepmting to upload File of size over 2 MBs.");
             return false;
         }
 
@@ -56,7 +56,7 @@ export default function AccountPage() {
         try {
             const imageBlob = await FileHelper.createBlobFromStream(fileContentStream);
             if (imageBlob === null) {
-                console.log("Exception occured during Reading. TODO: handle the case!");
+                console.log("Exception occured during Reading. TODO-toasting: handle the case!");
             }
             const imageUrl = URL.createObjectURL(imageBlob);
             (document.getElementById("account-details-image-id") as HTMLImageElement).src = imageUrl;
@@ -68,7 +68,7 @@ export default function AccountPage() {
                 { s3PreSignedUploadUrl: s3UploadUrlDto, fileContentStream: fileContentStream }
             )).unwrap();
             
-            // TODO: set AuthSlice.chatterOverview.chatterImageUrl to the received URL (both in AuthSlice State and Browser Local Storage)
+            // TODO-image-upload: set AuthSlice.chatterOverview.chatterImageUrl to the received URL (both in AuthSlice State and Browser Local Storage)
         } catch (err) {
         } finally {
             dispatch(setIsChatterImageBeingUploaded(false));

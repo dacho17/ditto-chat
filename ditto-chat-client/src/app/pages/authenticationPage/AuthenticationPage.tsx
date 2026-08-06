@@ -6,7 +6,7 @@ import LoginForm from "../../classes/LoginForm";
 
 const DUMMY_LOGIN_FORM = new LoginForm("dummy@email.hr", "password");
 
-// TODO: This is a Dummy Implementation simulating the Gateway into the State Machine
+// TODO-auth: This is a Dummy Implementation simulating the Gateway into the State Machine
 export default function AuthenticationPage() {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -30,6 +30,6 @@ export default function AuthenticationPage() {
     }, [trySendLoginForm]);
 
     return <>
-        TODO
+        TODO-auth
     </>
 }

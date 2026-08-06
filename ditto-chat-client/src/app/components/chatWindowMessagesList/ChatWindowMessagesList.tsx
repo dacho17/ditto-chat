@@ -22,12 +22,12 @@ export default function ChatWindowMessagesList() {
         dispatch(setIsLoadingOlderMessages(true));
         dispatch(setCurrentChatThreadMessagesListPage(currentChatMessagesListPage + 1));
 
-        // TODO: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
+        // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
 
         try {
             await dispatch(getChatThreadMessages({ chatThreadId: chatThreadId })).unwrap();
 
-            // TODO: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
+            // TODO-result-caching: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
             return;
         } catch (err: any) {
             console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);

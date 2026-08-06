@@ -11,7 +11,7 @@ import S3UploadFileResponseDto from "../interfaces/S3UploadFileResponseDto";
 
 interface AccountState {
     isChatterImageBeingUploaded: boolean;
-    imageBeingUploadedUrl: string | null;  // TODO: or something similar. I need to be able to show Image before it is stored in S3 Bucket
+    imageBeingUploadedUrl: string | null;  // TODO-image-upload: or something similar. I need to be able to show Image before it is stored in S3 Bucket
 }
 
 const initialState: AccountState = {
@@ -32,7 +32,7 @@ export const requestAccountImageUploadUrl = createAsyncThunk<S3PreSignedUrlDto, 
     }
 );
 
-// TODO: Image Content needs to be passed as another Argument to this Function and sent to AWS
+// TODO-image-upload: Image Content needs to be passed as another Argument to this Function and sent to AWS
     // Check what does AWS Expect from their side in the Request
     // https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#API_PutObject_RequestSyntax
 export const uploadAccountImageToS3 = createAsyncThunk<S3UploadFileResponseDto, { s3PreSignedUploadUrl: S3PreSignedUrlDto, fileContentStream: ReadableStream }, AyncThunkRejectType>(
@@ -42,14 +42,14 @@ export const uploadAccountImageToS3 = createAsyncThunk<S3UploadFileResponseDto, 
             // const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
             const res = await AwsClient.getAwsClient().uploadAccountImageToS3(s3PreSignedUploadUrl, fileContentStream);
             
-            // TODO: likely, show success Message to the Client that they changed their Image
+            // TODO-toasting: likely, show success Message to the Client that they changed their Image
             
-            // TODO: set chatterOverview ImageUrl to the URL of the uploaded Image
+            // TODO-image-upload: set chatterOverview ImageUrl to the URL of the uploaded Image
             // thunkAPI.dispatch(setChatterOverview())
 
             return thunkAPI.fulfillWithValue(res);
         } catch (err: any) {
-            // TODO: possibly AWS Sends special Error Types Back on S3 Image Upload. I may not be able to use ChatClientResponseErrorBody. Look into this!
+            // TODO-toasting: possibly AWS Sends special Error Types Back on S3 Image Upload. I may not be able to use ChatClientResponseErrorBody. Look into this!
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             return thunkAPI.rejectWithValue(redirectUrlOrNull);
         }

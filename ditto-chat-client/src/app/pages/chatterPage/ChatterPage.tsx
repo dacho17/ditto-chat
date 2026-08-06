@@ -21,7 +21,7 @@ export default function ChatterPage() {
     const { addUrlToHistory, navigateBack } = useUrlHistoryNavigate();
     const navigate = useNavigate();
 
-    // TODO: revise this!
+    // TODO-dynamical-resizing: revise this!
     if (DeviceScreenHelper.isPcScreen() === true) {
         dispatch(clearChatterState());
         navigate(CONSTANTS.HOME_URL);

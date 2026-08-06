@@ -68,8 +68,8 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
         return axiosResponse.data;
     }
 
-    public async logout(): ChatServerResponse<void> {
-       const axiosResponse = await this.sendPostRequest<ChatServerResponse<void>>(
+    public async logout(): ChatServerResponse<{ redirectUrl: string }> {
+       const axiosResponse = await this.sendPostRequest<ChatServerResponse<{ redirectUrl: string }>>(
             `${CONSTANTS.LOGOUT_URL}`
         );
         return axiosResponse.data;

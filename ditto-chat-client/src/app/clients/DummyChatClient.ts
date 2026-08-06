@@ -180,11 +180,11 @@ const DUMMY_OPENED_CHAT_THREADS = Array.from({ length: DUMMY_NUMBER_OF_GENERATED
 
 // CORRECT.
 const DUMMY_S3_PRE_SIGNED_URL = {
-    url: "dummy-aws-url-TODO",
-    expiresAt: "TOOD"
+    url: "./dummy_account_image",
+    expiresAt: TimeHelper.getServerFormattedTimestamp(TimeHelper.addSecondsToTimeStamp(TimeHelper.getCurrentTimestamp(), 60 * 15))
 } as S3PreSignedUrlDto;
 const DUMMY_S3_UPLOAD_FILE_RESPONSE = {
-    // TODO!
+    // NOTE: the response is Empty
 } as S3UploadFileResponseDto;
 
 export default class DummyChatClient implements ChatClientInterface, AwsClientInterface {
@@ -241,12 +241,14 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
         });
     }
 
-    public async logout(): ChatServerResponse<void> {
+    public async logout(): ChatServerResponse<{ redirectUrl: string }> {
         console.log(`Nothing Received on /logout`);
-        console.log(`Responding with null`);
+        console.log(`Responding with redirectUrl`);
         return Promise.resolve({ 
             message: DUMMY_LOGOUT_SUCCESS_MESSAGE,
-            data: null
+            data: {
+                redirectUrl: CONSTANTS.LOGIN_URL
+            }
         });
     }
 
@@ -430,7 +432,7 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
             chatThreadOverview: {
                 id: `chat-thread-id-${DUMMY_OPENED_CHAT_THREADS.length + 1}`,
                 chatterOverview: foundChatter.chatterOverview,
-                chatThreadCreatedAt: TimeHelper.getServerFormattedCurrentTimestamp(),
+                chatThreadCreatedAt: TimeHelper.getServerFormattedTimestamp(TimeHelper.getCurrentTimestamp()),
                 lastMessageContent: null,
                 lastMessageTime: null,
                 numberOfUnseenMessages: 0
@@ -528,7 +530,7 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
             id: `chatter-${DUMMY_LOGGED_IN_CHATTER_OVERVIEW.id}-chat-thread-message-id-${foundChatThread.chatThreadMessages.length + 1}`,
             messageSenderId: `${DUMMY_LOGGED_IN_CHATTER_OVERVIEW.id}`,
             messageContent: `Newly sent Message: ${newChatThreadMessage.getMessage()}`,
-            messageRegisteredAt: TimeHelper.getServerFormattedCurrentTimestamp()
+            messageRegisteredAt: TimeHelper.getServerFormattedTimestamp(TimeHelper.getCurrentTimestamp())
         } as ChatThreadMessageDto;
 
         foundChatThread.chatThreadMessages.push(registeredChatThreadMessage);

@@ -20,7 +20,7 @@ const initialState: AuthState = {
     isLoadingChatterOverview: true,
 };
 
-// TODO: store expiresAt as well
+// TODO-auth: store expiresAt as well
 const AUTH_LOCAL_STORAGE_KEYS = {
     chatterId: "chatterId",
     chatterName: "chatterName",
@@ -29,7 +29,7 @@ const AUTH_LOCAL_STORAGE_KEYS = {
     chatterImageUrl: "chatterImageUrl",
 };
 
-// TODO: All of the Functions bellow need to be Implemented yet. These versions were used for testing.
+// TODO-auth: All of the Functions bellow need to be Implemented yet. These versions were used for testing.
 
 export const login = createAsyncThunk<{ redirectUrl: string }, LoginForm, AyncThunkRejectType>(
     "auth/login",
@@ -48,16 +48,15 @@ export const login = createAsyncThunk<{ redirectUrl: string }, LoginForm, AyncTh
     }
 );
 
-export const logout = createAsyncThunk<void, void, AyncThunkRejectType>(
+export const logout = createAsyncThunk<{ redirectUrl: string }, void, AyncThunkRejectType>(
     "auth/logout",
     async (_, thunkAPI) => {
         try {
-            const _ = await ChatClient.getChatClient().logout();
-            // TODO: potentially GET redirectUrl from response
+            const res = await ChatClient.getChatClient().logout();
 
             thunkAPI.dispatch(clearAuthState());
 
-            return thunkAPI.fulfillWithValue(null);
+            return thunkAPI.fulfillWithValue(res.data);
         } catch (err: any) {
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             return thunkAPI.rejectWithValue(redirectUrlOrNull);

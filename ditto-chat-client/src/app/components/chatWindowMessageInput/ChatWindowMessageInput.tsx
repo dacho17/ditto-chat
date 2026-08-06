@@ -56,11 +56,11 @@ export default function ChatWindowMessageInput() {
         <div className="chat-window-message-input-additions">
             <IconButton
                 icon={<IoAttachOutline size={CONSTANTS.ICON_SIZE} />}
-                onClick={() => console.log("TODO")} 
+                onClick={() => console.log("TODO-attachment")} 
             />
             <IconButton
                 icon={<BsEmojiSmileUpsideDown size={CONSTANTS.ICON_SIZE} />}
-                onClick={() => console.log("TODO")} 
+                onClick={() => console.log("TODO-emoji")} 
             />
         </div>
         <div className="chat-window-message-input-send-button-container">

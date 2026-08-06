@@ -10,13 +10,12 @@ import { clearAuthState, logout, refreshChatterOverview } from "../store/AuthSli
 import { clearUrlHistoryState, refreshUrlHistory } from "../store/UrlHistorySlice";
 import ChatThreadOverview from "../classes/ChatThreadOverview";
 import ChatterOverview from "../classes/ChatterOverview";
-import CONSTANTS from "../../Constants";
 
 export default class SliceHelper {
     public static handleAxiosErrorResponse(err: AxiosResponse<ChatServerResponseErrorBody>, thunkAPI: GetThunkAPI<any>): { redirectUrl: string } | null {
         // const axiosErrorResponse = err as AxiosResponse<BookingRestApiResponseObject<RedirectResponseObject | null>>;
 
-        // TODO: if errorResponseMessage is received, display it in Notification Bubble (Toast)
+        // TODO-toasting: if errorResponseMessage is received, display it in Notification Bubble (Toast)
         // const errorResponseMessage = err.data.message;
         // const errorMessage = NotificationMessageMapper.newNotificationMessage(
         //     thunkErrorResponse.message || CONSTANTS.UNEXPECTED_ERROR_CLIENT_MESSAGE, NotificationMessageType.ACTION_FAILED);
@@ -73,7 +72,7 @@ export default class SliceHelper {
 
     public static async tryGetChatThreads(chatThreadSearchFilter: string, currentPageNumber: string, currentlySelectedChatThread: ChatThreadOverview | null, isInitialRetrieval: boolean, isLoadingReducer: Function, dispatch: Function): Promise<ChatThreadOverview[]> {
         dispatch(isLoadingReducer(true));
-        // TODO: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
+        // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
 
         try {
             const retrievedChatThreadOverviews = await dispatch(getChatThreads({
@@ -83,7 +82,7 @@ export default class SliceHelper {
                 isInitialRetrieval: isInitialRetrieval
             })).unwrap();
 
-            // TODO: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
+            // TODO-result-caching: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
             return retrievedChatThreadOverviews;
         } catch (err: any) {
             console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
@@ -95,12 +94,12 @@ export default class SliceHelper {
     public static async tryGetChatters(chattersSearchFilter: string, currentPageNumber: string, isInitialRetrieval: boolean, isLoadingReducer: Function, dispatch: Function): Promise<ChatterOverview[]> {
         dispatch(isLoadingReducer(true));
         
-        // TODO: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
+        // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
 
         try {
             const retrievedChatterOverviews = await dispatch(getChatters({ chatterSearchFilter: chattersSearchFilter, currentPageNumber: currentPageNumber, isInitialRetrieval: isInitialRetrieval })).unwrap();
 
-            // TODO: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
+            // TODO-result-caching: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
             return retrievedChatterOverviews;
         } catch (err: any) {
             console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
@@ -110,8 +109,8 @@ export default class SliceHelper {
     }
 
     public static async tryLogout(dispatch: Function): Promise<string> {
-        const redirectUrl = await dispatch(logout()).unwrap();  // TODO: get redirectUrl from response and navigate there
+        const { redirectUrl } = await dispatch(logout()).unwrap();
         SliceHelper.clearAllStates(dispatch);
-        return CONSTANTS.LOGIN_URL; // redirectUrl
+        return redirectUrl;
     }
 }

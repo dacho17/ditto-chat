@@ -22,7 +22,7 @@ export default function MobileChatPage() {
     const { addUrlToHistory, navigateBack } = useUrlHistoryNavigate();
     const navigate = useNavigate();
 
-    // TODO: revise this!
+    // TODO-dynamical-resizing: revise this!
     if (DeviceScreenHelper.isMobileScreen() === false) {
         dispatch(clearChatState());
         navigate(CONSTANTS.HOME_URL);
