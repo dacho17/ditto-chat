@@ -12,10 +12,6 @@ export default class TimeHelper {
         return date.getTime();
     }
 
-    public static timestampToDate(timestamp: number): Date {
-        return new Date(timestamp);
-    }
-
     public static isTimestampToday(timestamp: number): boolean {
         const timestampDate = TimeHelper.timestampToDate(timestamp);
         const timestampDay = timestampDate.getDay();
@@ -32,12 +28,23 @@ export default class TimeHelper {
             && timestampYear === todayYear;
     }
 
-    public static getLocalTimeAndDate(timestamp: number): { localTime: string, localDate: string} {
-        const timestampDate = TimeHelper.timestampToDate(timestamp);
-        const localTime = timestampDate.toLocaleTimeString();
-        const localDate = timestampDate.toLocaleDateString();
+    public static timestampToLocalTimeOfDay(timestamp: number): string {
+        const currentDate = TimeHelper.timestampToDate(timestamp);
+        
+        const localHour = TimeHelper.prependLeadingZero(currentDate.toLocaleTimeString('hr', { hour: '2-digit' }));
+        const localMinute = TimeHelper.prependLeadingZero(currentDate.toLocaleTimeString('hr', { minute: '2-digit' }));
 
-        return { localTime: localTime, localDate: localDate };
+        return `${localHour}:${localMinute}`;
+    }
+
+    public static timestampToLocalCalendarDay(timestamp: number): string {
+        const currentDate = TimeHelper.timestampToDate(timestamp);
+        
+        const localYear = TimeHelper.prependLeadingZero(currentDate.toLocaleDateString('en-US', { year: 'numeric'}));
+        const localMonth = TimeHelper.prependLeadingZero(currentDate.toLocaleDateString('en-US', { month: '2-digit' }));
+        const localDay = TimeHelper.prependLeadingZero(currentDate.toLocaleDateString('en-US', { day: '2-digit' }));
+        
+        return `${localDay}/${localMonth}/${localYear}`;
     }
 
     public static getServerFormattedTimestamp(timestamp: number): string {
@@ -56,5 +63,15 @@ export default class TimeHelper {
 
     public static async delay(delayMiliseconds: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, delayMiliseconds));
+    }
+
+    private static timestampToDate(timestamp: number): Date {
+        return new Date(timestamp);
+    }
+
+    private static prependLeadingZero(datePart: string): string {
+        return datePart.length === 1
+            ? `0${datePart}`
+            : datePart;
     }
 }

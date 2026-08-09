@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
-import { getChatThreadsWithSelectedChatThread, setChatThreadList, setIsChatThreadsFilterCurrentlyChanging, setIsLastChatThreadListPage, setIsLoadingChatThreads } from "../../store/HomeSlice";
+import { getChatThreadsOnHomePage, setChatThreadList, setIsChatThreadsFilterCurrentlyChanging, setIsLastChatThreadListPage, setIsLoadingChatThreads } from "../../store/HomeSlice";
 import { setIsLoadingChatThread } from "../../store/ChatSlice";
 import useChatThreadIdParam from "../../hooks/UseChatParams";
 import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
@@ -12,6 +12,7 @@ import ChatWindow from "../../components/chatWindow/ChatWindow";
 import SliceHelper from "../../helpers/SliceHelper";
 import UrlHelper from "../../helpers/UrlHelper";
 import DeviceScreenHelper from "../../helpers/DeviceScreenHelper";
+import ChatThread from "../../classes/ChatThread";
 import CONSTANTS from "../../../Constants";
 import "./HomePage.css";
 
@@ -54,16 +55,33 @@ export default function HomePage() {
         dispatch(setIsLoadingChatThread(true));
 
         try {
-            await dispatch(getChatThreadsWithSelectedChatThread({
+            await dispatch(getChatThreadsOnHomePage({
                 chatThreadSearchFilter: queryParams.get(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER),
                 currentPageNumber: queryParams.get(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER),
-                currentlySelectedChatThreadId: chatThreadId
+                currentlySelectedChatThreadId: chatThreadId,
+                isInitialRetrieval: true,
+                isPolling: false
             }));
         } catch(err) {
             console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
         } finally {
             dispatch(setIsLoadingChatThreads(false));
             dispatch(setIsLoadingChatThread(false));
+        }
+    }
+
+    async function tryPollChatThreads(currentlySelectedChatThread: ChatThread | null) {
+        try {
+            await dispatch(getChatThreadsOnHomePage({
+                chatThreadSearchFilter: searchParams.get(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER),
+                currentPageNumber: searchParams.get(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER),
+                currentlySelectedChatThreadId: currentlySelectedChatThread !== null
+                    ? currentlySelectedChatThread.getOverview().getId() : null,
+                isInitialRetrieval: false,
+                isPolling: true
+            })).unwrap();
+        } catch (err: any) {
+            console.log("TODO: handle Error");
         }
     }
     
@@ -83,6 +101,14 @@ export default function HomePage() {
         } else {
             retrieveInitialChatThreadsPage(queryParams, setIsLoadingChatThreads);
         }
+
+        // TODO-chat: uncomment Polling
+        // if (DeviceScreenHelper.isMobileScreen() === true) {
+        //     const interval = setInterval(() => tryPollChatThreads(null), CONSTANTS.CHAT_POLLING_INTERVAL_IN_MS);
+        //     return () => {
+        //         clearInterval(interval);
+        //     }
+        // }
     }, []);
 
     // when chatThreadId Changes, and if on nonMobile Device, Retrieve the chatThread
@@ -110,6 +136,12 @@ export default function HomePage() {
 
         if (chatThread !== null) {
             SliceHelper.tryGetChatter(chatThread.getOverview().getChatterOverview().getId(), dispatch);
+
+            // TODO-chat: uncomment Polling
+            // const interval = setInterval(() => tryPollChatThreads(chatThread), CONSTANTS.CHAT_POLLING_INTERVAL_IN_MS);
+            // return () => {
+            //     clearInterval(interval);
+            // }
         }
     }, [chatThread]);
 

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
-import { clearChatState } from "../../store/ChatSlice";
+import { clearChatState, pollActiveChatThread } from "../../store/ChatSlice";
 import useChatThreadIdParam from "../../hooks/UseChatParams";
 import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
 import PageWithBackHeader from "../pageWithBackHeader/PageWithBackHeader";
@@ -27,12 +27,26 @@ export default function MobileChatPage() {
         dispatch(clearChatState());
         navigate(CONSTANTS.HOME_URL);
     }
+
+    async function tryPollActiveChatThread() {
+        try {
+            await dispatch(pollActiveChatThread({ chatThreadId: chatThreadId })).unwrap();
+        } catch (err: any) {
+            console.log("TODO: handle Error");
+        }
+    }
 	
 	useEffect(() => {
         SliceHelper.clearPageStates(dispatch);
         addUrlToHistory("");
 		SliceHelper.tryGetChatThread(chatThreadId, dispatch);
-	}, [chatThreadId]);
+
+        // TODO-chat: uncomment Polling
+        // const interval = setInterval(tryPollActiveChatThread, CONSTANTS.CHAT_POLLING_INTERVAL_IN_MS);
+        // return () => {
+        //     clearInterval(interval);
+        // }
+    }, [chatThreadId]);
 
     return <PageWithBackHeader
         backOnClickFunction={() => {

@@ -1,10 +1,11 @@
-// TODO-chat: There are cases which needs to be handled:
-    // 1. How does Confirmation of Sent Message influence currentChatMessagesListPage
-    // 2. How do Live Incoming messages influence currentChatMessagesListPage
+// NOTE: in every Reducer, consider that Client may know better than the Server!
+    // 1. Server did not yet log action by Client
+    // 2. Server returned "stale" data before it logged Client action
 
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosResponse } from "axios";
 import { AyncThunkRejectType, RootState } from "./ReduxStore";
+import { updateChatThreadOverviewFromList } from "./HomeSlice";
 import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
 import SliceHelper from "../helpers/SliceHelper";
@@ -64,12 +65,107 @@ function mergeChatThreadMessages(chatThreadMessages: ChatThreadMessage[], chatTh
     return mergedList;
 }
 
+function getCommonLastSeenMessageId(
+    chatThreadMessages: ChatThreadMessage[], clientLastSeenMessageId: string | null, serverLastSeenMessageId: string | null): string | null {
+    if (clientLastSeenMessageId === null) return serverLastSeenMessageId;
+    if (serverLastSeenMessageId === null) return clientLastSeenMessageId;
+
+    const sortedChatThreadMessages = sortChatThreadMessages(chatThreadMessages);
+    const clientLastSeenMessageIndex =
+        sortedChatThreadMessages.findIndex(chatThreadMessage => chatThreadMessage.getId() === clientLastSeenMessageId);
+    const serverLastSeenMessageIndex =
+        sortedChatThreadMessages.findIndex(chatThreadMessage => chatThreadMessage.getId() === serverLastSeenMessageId);
+    
+    // cases where at least one chatThreadMessage is not found among the chatThreadMessages
+    if (clientLastSeenMessageIndex === -1 && serverLastSeenMessageIndex === -1) {
+        return null;
+    } else if (clientLastSeenMessageIndex === -1) {
+        return sortedChatThreadMessages[serverLastSeenMessageIndex].getId();
+    } else if (serverLastSeenMessageIndex === -1) {
+        return sortedChatThreadMessages[clientLastSeenMessageIndex].getId();
+    }
+
+    return clientLastSeenMessageIndex < serverLastSeenMessageIndex
+        ? sortedChatThreadMessages[clientLastSeenMessageIndex].getId()
+        : sortedChatThreadMessages[serverLastSeenMessageIndex].getId()
+    ;
+}
+
+function getLastRegisteredChatThreadMessage(chatThreadMessages: ChatThreadMessage[]): ChatThreadMessage | null {
+    const sortedChatThreadMessages = sortChatThreadMessages(chatThreadMessages);
+    
+    if (sortedChatThreadMessages.length === 0) {
+        return null;
+    }
+
+    const lastRegisteredChatThreadMessage =
+        sortedChatThreadMessages.find(chatThreadMessage => chatThreadMessage.getStatus() === ChatThreadMessageStatus.CONFIRMED);
+    return lastRegisteredChatThreadMessage !== undefined
+        ? lastRegisteredChatThreadMessage
+        : null
+    ;
+}
+
+function setIsSeenValueOnChatThreadMessageList(chatThreadMessages: ChatThreadMessage[], lastSeenByChatterMessageId: string | null): {
+    updatedIsSeenChatThreadMessageList: ChatThreadMessage[], numberOfUnseenMessages: number} {
+    const sortedChatThreadMessages = sortChatThreadMessages(chatThreadMessages);
+    
+    let isChatThreadMessageNewerThanLastSeen = true;
+    const resultChatThreadMessageList = sortedChatThreadMessages.map(chatThreadMessage => {
+        if (chatThreadMessage.getIsMessageReceived() === false) {   // this case prevents SENDING and FAILED messages from being considered
+            chatThreadMessage.setIsMessageSeen(true);
+            return chatThreadMessage;
+        }
+
+        if (isChatThreadMessageNewerThanLastSeen === false) {
+            chatThreadMessage.setIsMessageSeen(true);
+            return chatThreadMessage;
+        }
+
+        if (chatThreadMessage.getId() === lastSeenByChatterMessageId) {
+            isChatThreadMessageNewerThanLastSeen = false;
+            chatThreadMessage.setIsMessageSeen(true);
+            return chatThreadMessage;
+        }
+
+        // chatThreadMessage is Received and is after the Last Seen (message is unseen)
+        chatThreadMessage.setIsMessageSeen(false || chatThreadMessage.getIsMessageSeen());
+        return chatThreadMessage;
+    });
+
+    return {
+        updatedIsSeenChatThreadMessageList: resultChatThreadMessageList,
+        numberOfUnseenMessages: resultChatThreadMessageList.filter(chatThreadMessage => chatThreadMessage.getIsMessageSeen() === false).length
+    };
+}
+
+export const pollActiveChatThread = createAsyncThunk<ChatThread, { chatThreadId: string }, AyncThunkRejectType>(
+    "chat/pollActiveChatThread",
+    async ({ chatThreadId }, thunkAPI) => {
+        const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
+
+        try {
+            const res = await ChatClient.getChatClient().getChatThread(chatThreadId);
+            const chatThread = Mapper.chatThreadFromDto(res.data, chatterOverview.getId());
+
+            thunkAPI.dispatch(registerPolledActiveChatThread(chatThread));
+
+            return thunkAPI.fulfillWithValue(chatThread);
+        } catch (err: any) {
+            const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
+            return thunkAPI.rejectWithValue(redirectUrlOrNull);
+        }
+    }
+);
+
 export const postChatThread = createAsyncThunk<ChatThread, { chatterId: string }, AyncThunkRejectType>(
     "chat/postChatThread",
     async ({ chatterId }, thunkAPI) => {
+        const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
+
         try {
             const res = await ChatClient.getChatClient().postChatThread(chatterId);
-            const createdChatThread = Mapper.chatThreadFromDto(res.data);
+            const createdChatThread = Mapper.chatThreadFromDto(res.data, chatterOverview.getId());
 
             return thunkAPI.fulfillWithValue(createdChatThread);
         } catch (err: any) {
@@ -82,9 +178,11 @@ export const postChatThread = createAsyncThunk<ChatThread, { chatterId: string }
 export const getChatThread = createAsyncThunk<ChatThread, { chatThreadId: string }, AyncThunkRejectType>(
     "chat/getChatThread",
     async ({ chatThreadId }, thunkAPI) => {
+        const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
+
         try {
             const res = await ChatClient.getChatClient().getChatThread(chatThreadId);
-            const chatThread = Mapper.chatThreadFromDto(res.data);
+            const chatThread = Mapper.chatThreadFromDto(res.data, chatterOverview.getId());
 
             thunkAPI.dispatch(setChatThread(chatThread));
             if (chatThread.getMessages().length < CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE) {
@@ -103,14 +201,15 @@ export const getChatThreadMessages = createAsyncThunk<ChatThreadMessage[], { cha
     "chat/getChatThreadMessages",
     async ({ chatThreadId }, thunkAPI) => {
         try {
-            const { currentChatMessagesListPage, chatThread } = (thunkAPI.getState() as RootState).chatSlice;
+            const { currentChatMessagesListPage } = (thunkAPI.getState() as RootState).chatSlice;
+            const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
 
             const queryParams = new URLSearchParams();
             queryParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, currentChatMessagesListPage.toString());
             
             const res = await ChatClient.getChatClient().getChatThreadMessages(chatThreadId, queryParams);
             const { pagedList, isLastPage } = res.data;
-            const pagedChatThreadMessages = pagedList.map(chatThreadMessageDto => Mapper.chatThreadMessageFromDto(chatThreadMessageDto));
+            const pagedChatThreadMessages = pagedList.map(chatThreadMessageDto => Mapper.chatThreadMessageFromDto(chatThreadMessageDto, chatterOverview.getId()));
 
             thunkAPI.dispatch(appendChatThreadMessagesToList(pagedChatThreadMessages));
             thunkAPI.dispatch(setIsLastChatMessagesListPage(isLastPage));
@@ -126,13 +225,17 @@ export const getChatThreadMessages = createAsyncThunk<ChatThreadMessage[], { cha
 export const updateLastSeenChatThreadMessage = createAsyncThunk<void, { chatThreadId: string, chatThreadMessageId: string }, AyncThunkRejectType>(
     "chat/updateLastSeenChatThreadMessage",
     async ({ chatThreadId, chatThreadMessageId }, thunkAPI) => {
+        const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
+
         try {
             const res = await ChatClient.getChatClient().updateLastSeenChatThreadMessage(chatThreadId, chatThreadMessageId);
             const newLastSeenChatThreadMessageDto = res.data;
-            const newLastSeenChatThreadMessage = Mapper.chatThreadMessageFromDto(newLastSeenChatThreadMessageDto);
+            const newLastSeenChatThreadMessage = Mapper.chatThreadMessageFromDto(newLastSeenChatThreadMessageDto, chatterOverview.getId());
 
-            thunkAPI.dispatch(setChatThreadMessagesToSeen(newLastSeenChatThreadMessage));
-            
+            thunkAPI.dispatch(updateSeenChatThreadMessages(newLastSeenChatThreadMessage));
+            const { chatThread } = (thunkAPI.getState() as RootState).chatSlice;    // I expect this assignment to contain chatThread updated by updateSeenChatThreadMessages Call!
+            thunkAPI.dispatch(updateChatThreadOverviewFromList(chatThread.getOverview()));
+
             return thunkAPI.fulfillWithValue(null);
         } catch (err: any) {
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
@@ -152,24 +255,24 @@ export const sendChatThreadMessage = createAsyncThunk<ChatThreadMessage, { chatT
                 newChatThreadMessageStatus: ChatThreadMessageStatus.SENDING
             }));
         } else {
-            const newChatThreadMessage = new ChatThreadMessage(
-                ChatThreadMessageStatus.SENDING, chatterOverview.getId(), chatThreadMessageForm.getMessage(), TimeHelper.getCurrentTimestamp(), true
-            );
-            newChatThreadMessage.setClientRef(chatThreadMessageForm.getChatMessageClientRef());
+            const newChatThreadMessage = ChatThreadMessage.createNewChatThreadMessage(
+                chatThreadMessageForm.getChatMessageClientRef(),
+                chatterOverview.getId(), chatThreadMessageForm.getMessage(), null, TimeHelper.getCurrentTimestamp()
+            );  // TODO-chat: attachedFile needs to be added as an argument to this constructor. The File will likely be a part of chatThreadMessageForm!
             
-            thunkAPI.dispatch(addNewChatThreadMessageToList(newChatThreadMessage));
+            thunkAPI.dispatch(appendChatThreadMessagesToList([newChatThreadMessage]));
         }
 
         thunkAPI.dispatch(setCurrentChatMessageInput(initialState.currentChatMessageInput));
 
         try {
             const res = await ChatClient.getChatClient().sendChatThreadMessage(chatThreadId, chatThreadMessageForm);
-            const sentChatThreadMessage = Mapper.chatThreadMessageFromDto(res.data);
+            const sentChatThreadMessage = Mapper.chatThreadMessageFromDto(res.data, chatterOverview.getId());
 
-            thunkAPI.dispatch(setChatThreadMessageStatus({
-                chatThreadMessageClientRef: chatThreadMessageForm.getChatMessageClientRef(),
-                newChatThreadMessageStatus: ChatThreadMessageStatus.CONFIRMED 
-            }));
+            sentChatThreadMessage.setClientRef(chatThreadMessageForm.getChatMessageClientRef());    // attaching clientRef to the server Response, so the message in Sending State can be referenced in the Reducers
+            thunkAPI.dispatch(registerSentChatThreadMessage(sentChatThreadMessage));
+            const { chatThread } = (thunkAPI.getState() as RootState).chatSlice;    // I expect this assignment to contain chatThread updated by registerSentChatThreadMessage Call!
+            thunkAPI.dispatch(updateChatThreadOverviewFromList(chatThread.getOverview()));
 
             return thunkAPI.fulfillWithValue(sentChatThreadMessage);
         } catch (err: any) {
@@ -189,9 +292,13 @@ export const clearChatThreadHistory = createAsyncThunk<void, { chatThreadId: str
     "chat/clearChatThreadHistory",
     async ({ chatThreadId }, thunkAPI) => {
         try {
-            const _ = await ChatClient.getChatClient().clearChatThreadHistory(chatThreadId);
+            const res = await ChatClient.getChatClient().clearChatThreadHistory(chatThreadId);
+            const { chatThreadHistoryClearedAt } = res.data;
+            const chatThreadHistoryClearedAtTimestamp = TimeHelper.dateStringToTimestamp(chatThreadHistoryClearedAt);
 
-            thunkAPI.dispatch(clearChatThreadMessages());
+            thunkAPI.dispatch(clearChatThreadMessages(chatThreadHistoryClearedAtTimestamp));
+            const { chatThread } = (thunkAPI.getState() as RootState).chatSlice;    // I expect this assignment to contain chatThread updated by clearChatThreadMessages Call!
+            thunkAPI.dispatch(updateChatThreadOverviewFromList(chatThread.getOverview()));
             
             return thunkAPI.fulfillWithValue(null);
         } catch (err: any) {
@@ -213,7 +320,7 @@ export const ChatSlice = createSlice({
         },
         setIsLastChatMessagesListPage: (state, action: { payload: boolean }) => {
             state.isLastChatMessagesListPage = action.payload;
-        },        
+        },
         setCurrentChatThreadMessagesListPage: (state, action: { payload: number }) => {
             state.currentChatMessagesListPage = action.payload;
         },
@@ -226,15 +333,6 @@ export const ChatSlice = createSlice({
 
             const updatedChatThread = ChatThread.getShallowCopy(state.chatThread as ChatThread);
             updatedChatThread.setMessages(sortedChatThreadMessages);
-            state.chatThread = updatedChatThread;            
-        },
-        addNewChatThreadMessageToList: (state, action: { payload: ChatThreadMessage }) => {
-            const mergedChatThreadMessages = mergeChatThreadMessages(state.chatThread.getMessages(), [action.payload]);
-            const sortedChatThreadMessages = sortChatThreadMessages(mergedChatThreadMessages);
-
-            const updatedChatThread = ChatThread.getShallowCopy(state.chatThread as ChatThread);
-            updatedChatThread.setMessages(sortedChatThreadMessages);
-
             state.chatThread = updatedChatThread;
         },
         setChatThreadMessageStatus: (state, action: { payload: { chatThreadMessageClientRef: string, newChatThreadMessageStatus: ChatThreadMessageStatus } }) => {
@@ -251,44 +349,114 @@ export const ChatSlice = createSlice({
 
             state.chatThread = updatedChatThread;
         },
-        setLastChatThreadMessage: (state, action: { payload: { newLastChatThreadMessageContent: string, newLastChatThreadMessageTimestamp: number } }) => {
-            const updatedChatThread = ChatThread.getShallowCopy(state.chatThread as ChatThread);
-            updatedChatThread.getOverview().setLastMessage(action.payload.newLastChatThreadMessageContent);
-            updatedChatThread.getOverview().setLastMessageTimestamp(action.payload.newLastChatThreadMessageTimestamp);
+        registerSentChatThreadMessage: (state, action: { payload: ChatThreadMessage}) => {
+            const registeredSentChatThreadMessage = action.payload;
 
-            state.chatThread = updatedChatThread;
-        },
-        setNumberOfUnseenChatThreadMessages: (state, action: { payload: number }) => {
-            const updatedChatThread = ChatThread.getShallowCopy(state.chatThread as ChatThread);
-            updatedChatThread.getOverview().setNumberOfUnseenMessages(action.payload);
-            state.chatThread = updatedChatThread;
-        },
-        setChatThreadMessagesToSeen: (state, action: { payload: ChatThreadMessage }) => {
-            const newLastSeenChatThreadMessage = action.payload;
-
-            // set IsmessageSeen of all messages older than newLastSeenChatThreadMessage
             const updatedChatThreadMessages = state.chatThread.getMessages().map(chatThreadMessage => {
-                if (chatThreadMessage.getMessageTimestamp() <= newLastSeenChatThreadMessage.getMessageTimestamp()) {
-                    chatThreadMessage.setIsMessageSeen(true);
+                if (chatThreadMessage.getClientRef() === registeredSentChatThreadMessage.getClientRef()) {
+                    chatThreadMessage.setStatus(ChatThreadMessageStatus.CONFIRMED);
+                    chatThreadMessage.setClientRef(null);
+                    chatThreadMessage.setId(registeredSentChatThreadMessage.getId());
+                    chatThreadMessage.setMessageTimestamp(registeredSentChatThreadMessage.getMessageTimestamp());
                 }
 
                 return chatThreadMessage;
             });
-            const newNumberOfUneseenMessages =
-                updatedChatThreadMessages.filter(chatThreadMessage => chatThreadMessage.getIsMessageSeen() === false).length;
+            const sortedChatThreadMessages = sortChatThreadMessages(updatedChatThreadMessages);
+            const lastRegisteredChatThreadMessage = getLastRegisteredChatThreadMessage(sortedChatThreadMessages);
 
             const updatedChatThread = ChatThread.getShallowCopy(state.chatThread as ChatThread);
-            updatedChatThread.setMessages(updatedChatThreadMessages);
-            updatedChatThread.getOverview().setNumberOfUnseenMessages(newNumberOfUneseenMessages);
+            updatedChatThread.setMessages(sortedChatThreadMessages);
+
+            // update lastMessage of ChatThread if the sent Message has the latest timestamp
+            if (lastRegisteredChatThreadMessage !== null) {
+                updatedChatThread.getOverview().setLastMessageTimestamp(lastRegisteredChatThreadMessage.getMessageTimestamp());
+                updatedChatThread.getOverview().setLastMessage(lastRegisteredChatThreadMessage.getMessageContent());
+            }
+
+            state.chatThread = updatedChatThread;
+        },
+        registerPolledActiveChatThread: (state, action: { payload: ChatThread }) => {
+            if (state.chatThread === null || state.chatThread.getOverview().getId() !== action.payload.getOverview().getId()) {
+                // if polled chatThread is no longer stored in state, return
+                return;
+            }
+
+            const unseenMessagesFromServer = action.payload.getMessages();
+            const mergedChatThreadMessages = mergeChatThreadMessages(state.chatThread.getMessages(), unseenMessagesFromServer);
+            const sortedChatThreadMessages = sortChatThreadMessages(mergedChatThreadMessages);
+
+            const commonLastSeenByPeerMessageId = getCommonLastSeenMessageId(
+                sortedChatThreadMessages, state.chatThread.getOverview().getLastSeenByPeerMessageId(), action.payload.getOverview().getLastSeenByPeerMessageId()
+            );
+            const commonLastSeenByChatterMessageId = getCommonLastSeenMessageId(
+                sortedChatThreadMessages, state.chatThread.getOverview().getLastSeenByChatterMessageId(), action.payload.getOverview().getLastSeenByChatterMessageId()
+            );
+            const lastRegisteredChatThreadMessage = getLastRegisteredChatThreadMessage(sortedChatThreadMessages);
+            const { updatedIsSeenChatThreadMessageList, numberOfUnseenMessages }
+                = setIsSeenValueOnChatThreadMessageList(sortedChatThreadMessages, commonLastSeenByChatterMessageId);
+
+            const updatedChatThread = ChatThread.getShallowCopy(state.chatThread as ChatThread);
+            updatedChatThread.setMessages(updatedIsSeenChatThreadMessageList);
+            updatedChatThread.getOverview().setLastSeenByPeerMessageId(commonLastSeenByPeerMessageId);
+            if (lastRegisteredChatThreadMessage !== null) {
+                updatedChatThread.getOverview().setLastMessageTimestamp(lastRegisteredChatThreadMessage.getMessageTimestamp());
+                updatedChatThread.getOverview().setLastMessage(lastRegisteredChatThreadMessage.getMessageContent());
+            }
+            updatedChatThread.getOverview().setNumberOfUnseenMessages(numberOfUnseenMessages);
+
+            state.chatThread = updatedChatThread;
+        },
+        updateSeenChatThreadMessages: (state, action: { payload: ChatThreadMessage }) => {
+            const newLastSeenChatThreadMessage = action.payload;
+            const commonLastSeenByChatterMessageId = getCommonLastSeenMessageId(
+                state.chatThread.getMessages(), state.chatThread.getOverview().getLastSeenByChatterMessageId(), newLastSeenChatThreadMessage.getId()
+            );
+            const { updatedIsSeenChatThreadMessageList, numberOfUnseenMessages }
+                = setIsSeenValueOnChatThreadMessageList(state.chatThread.getMessages(), commonLastSeenByChatterMessageId);
+
+            const updatedChatThread = ChatThread.getShallowCopy(state.chatThread as ChatThread);
+            updatedChatThread.setMessages(updatedIsSeenChatThreadMessageList);
+            updatedChatThread.getOverview().setLastSeenByChatterMessageId(commonLastSeenByChatterMessageId);
+            updatedChatThread.getOverview().setNumberOfUnseenMessages(numberOfUnseenMessages);
 
             state.chatThread = updatedChatThread;
         },
         setCurrentChatMessageInput: (state, action: { payload: string }) => {
             state.currentChatMessageInput = action.payload;
         },
-        clearChatThreadMessages: (state) => {
+        clearChatThreadMessages: (state, action: { payload: number }) => {
+            const chatThreadHistoryClearedAtTimestamp = action.payload;
+
+            const newChatThreadMessageHistory = state.chatThread.getMessages().filter(chatThreadMessage =>
+                chatThreadMessage.getMessageTimestamp() >= chatThreadHistoryClearedAtTimestamp
+                || chatThreadMessage.getStatus() === ChatThreadMessageStatus.FAILED_TO_SEND
+                || chatThreadMessage.getStatus() === ChatThreadMessageStatus.SENDING
+            );
+
+            const newLastSeenByChatterMessageId
+                = getCommonLastSeenMessageId(newChatThreadMessageHistory, state.chatThread.getOverview().getLastSeenByChatterMessageId(), null);
+            const newLastSeenByPeerMessageId
+                = getCommonLastSeenMessageId(newChatThreadMessageHistory, state.chatThread.getOverview().getLastSeenByPeerMessageId(), null);
+            const lastRegisteredChatThreadMessage = getLastRegisteredChatThreadMessage(newChatThreadMessageHistory);
+            const numberOfUnseenMessages = newChatThreadMessageHistory.filter(chatThreadMessage => chatThreadMessage.getIsMessageSeen() === false).length;
+
             const updatedChatThread = ChatThread.getShallowCopy(state.chatThread as ChatThread);
-            updatedChatThread.setMessages([]);
+            updatedChatThread.setMessages(newChatThreadMessageHistory);
+            updatedChatThread.getOverview().setChatThreadHistoryClearedAtTimestamp(chatThreadHistoryClearedAtTimestamp);
+            updatedChatThread.getOverview().setNumberOfUnseenMessages(numberOfUnseenMessages);
+            if (lastRegisteredChatThreadMessage === null) {
+                updatedChatThread.getOverview().setLastMessageTimestamp(null);
+                updatedChatThread.getOverview().setLastMessage(null);
+            }
+
+            if (newLastSeenByChatterMessageId === null) {
+                updatedChatThread.getOverview().setLastSeenByChatterMessageId(null);
+            }
+
+            if (newLastSeenByPeerMessageId === null) {
+                updatedChatThread.getOverview().setLastSeenByPeerMessageId(null);
+            }
 
             state.chatThread = updatedChatThread;
             state.currentChatMessagesListPage = initialState.currentChatMessagesListPage;
@@ -312,11 +480,10 @@ export const {
     setCurrentChatThreadMessagesListPage,
     setIsLoadingOlderMessages,
     appendChatThreadMessagesToList,
-    addNewChatThreadMessageToList,
+    registerSentChatThreadMessage,
+    registerPolledActiveChatThread,
     setChatThreadMessageStatus,
-    setLastChatThreadMessage,
-    setNumberOfUnseenChatThreadMessages,
-    setChatThreadMessagesToSeen,
+    updateSeenChatThreadMessages,
     setCurrentChatMessageInput,
     clearChatThreadMessages,
     clearChatState

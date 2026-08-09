@@ -3,7 +3,7 @@ import { GetThunkAPI } from "@reduxjs/toolkit";
 import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import { clearChatterState, getChatter, setIsLoadingChatter } from "../store/ChatterSlice";
 import { clearChatState, getChatThread, setIsLoadingChatThread } from "../store/ChatSlice";
-import { clearHomeState, getChatThreads } from "../store/HomeSlice";
+import { clearHomeState, getChatThreadsOnHomePage } from "../store/HomeSlice";
 import { clearAccountState } from "../store/AccountSlice";
 import { clearChattersState, getChatters } from "../store/ChattersSlice";
 import { clearAuthState, logout, refreshChatterOverview } from "../store/AuthSlice";
@@ -75,11 +75,13 @@ export default class SliceHelper {
         // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
 
         try {
-            const retrievedChatThreadOverviews = await dispatch(getChatThreads({
+            const retrievedChatThreadOverviews = await dispatch(getChatThreadsOnHomePage({
                 chatThreadSearchFilter: chatThreadSearchFilter,
                 currentPageNumber: currentPageNumber,
-                currentlySelectedChatThread: currentlySelectedChatThread,
-                isInitialRetrieval: isInitialRetrieval
+                currentlySelectedChatThreadId: currentlySelectedChatThread !== null
+                    ? currentlySelectedChatThread.getId() : null,
+                isInitialRetrieval: isInitialRetrieval,
+                isPolling: false,
             })).unwrap();
 
             // TODO-result-caching: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache

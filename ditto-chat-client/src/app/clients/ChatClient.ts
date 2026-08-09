@@ -83,20 +83,6 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
         return axiosResponse.data;
     }
 
-    public async getChatThreadsWithSelectedChatThread(queryParams: URLSearchParams): ChatServerResponse<{
-        selectedChatThread: ChatThreadDto,
-        chatThreadsPage: PagedListDto<ChatThreadOverviewDto>
-    }> {
-        const axiosResponse = await this.sendGetRequest<ChatServerResponse<{
-            selectedChatThread: ChatThreadDto,
-            chatThreadsPage: PagedListDto<ChatThreadOverviewDto>
-        }>>(
-            `${CONSTANTS.HOME_URL}/preselected-chat`,
-            queryParams
-        );
-        return axiosResponse.data;
-    }
-
     public async getChatters(queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatterOverviewDto>> {
         const axiosResponse = await this.sendGetRequest<ChatServerResponse<PagedListDto<ChatterOverviewDto>>>(
             `${CONSTANTS.CHATTERS_URL}`,
@@ -150,8 +136,8 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
         return axiosResponse.data;
     }
 
-    public async clearChatThreadHistory(chatThreadId: string): ChatServerResponse<void> {
-        const axiosResponse = await this.sendGetRequest<ChatServerResponse<void>>(
+    public async clearChatThreadHistory(chatThreadId: string): ChatServerResponse<{ chatThreadHistoryClearedAt: string }> {
+        const axiosResponse = await this.sendGetRequest<ChatServerResponse<{ chatThreadHistoryClearedAt: string }>>(
             `${CONSTANTS.CHAT_URL}/${chatThreadId}${CONSTANTS.CLEAR_CHAT_HISTORY_URL}`
         );
         return axiosResponse.data;

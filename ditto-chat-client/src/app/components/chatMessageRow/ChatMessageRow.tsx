@@ -40,11 +40,12 @@ export default function ChatMessageRow(props: Props) {
     }
 
     function getChatThreadMessageTime(chatThreadMessageTimestamp: number): string {
-        const { localDate, localTime } = TimeHelper.getLocalTimeAndDate(chatThreadMessageTimestamp);
-        return `${localTime} ${localDate}`;
+        const localTimeOfDay = TimeHelper.timestampToLocalTimeOfDay(chatThreadMessageTimestamp);
+        const localCalendarDay = TimeHelper.timestampToLocalCalendarDay(chatThreadMessageTimestamp);
+        return `${localTimeOfDay} ${localCalendarDay}`;
     }
 
-    const isChatMessageSent = props.chatThreadMessage.isMessageReceived(props.loggedInChatterId) === false;
+    const isChatMessageSent = props.chatThreadMessage.getIsMessageReceived() === false;
     const chatMessageSenderStyle = isChatMessageSent ? "message-sender" : "message-receiver";
     return <div className="chat-message-row margin-bottom-2">
         <div className={`chat-message ${chatMessageSenderStyle}`}>

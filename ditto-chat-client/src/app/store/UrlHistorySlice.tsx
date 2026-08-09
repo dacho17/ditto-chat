@@ -1,6 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
 import UrlHelper from "../helpers/UrlHelper";
-import CONSTANTS from "../../Constants";
 
 interface UrlHistoryState {
     urlHistoryList: string[];
@@ -14,7 +13,7 @@ const URL_HISTORY_LOCAL_STORAGE_KEYS = {
     urlHistoryList: "urlHistoryList"
 };
 
-function getUrlHistoryFromLocalStorage(): string[] {
+export function getUrlHistoryFromLocalStorage(): string[] {
     const urlHistoryListString = localStorage.getItem(URL_HISTORY_LOCAL_STORAGE_KEYS.urlHistoryList);
 
     let urlHistoryList = [];
@@ -23,16 +22,6 @@ function getUrlHistoryFromLocalStorage(): string[] {
     }
 
     return urlHistoryList;
-}
-
-export const getLatestUrlFromUrlHistory = (): string => {
-    const urlHistory = getUrlHistoryFromLocalStorage();
-
-    if (urlHistory.length !== 0) {
-        return urlHistory[0];
-    } else {
-        return CONSTANTS.HOME_URL;
-    }
 }
 
 // NOTE: Redux Toolkit supports Side Effects within Reducers and ExtraReducers

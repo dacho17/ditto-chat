@@ -32,10 +32,6 @@ export default interface ChatClientInterface {
     logout(): ChatServerResponse<{ redirectUrl: string }>;
 
     getChatThreads(queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatThreadOverviewDto>>;
-    getChatThreadsWithSelectedChatThread(queryParams: URLSearchParams): ChatServerResponse<{
-        selectedChatThread: ChatThreadDto,
-        chatThreadsPage: PagedListDto<ChatThreadOverviewDto>
-    }>;
 
     getChatters(queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatterOverviewDto>>;
 
@@ -46,7 +42,7 @@ export default interface ChatClientInterface {
     getChatThreadMessages(chatThreadId: string, queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatThreadMessageDto>>;
     updateLastSeenChatThreadMessage(chatThreadId: string, chatThreadMessageId: string): ChatServerResponse<ChatThreadMessageDto>;
     sendChatThreadMessage(chatThreadId: string, newChatThreadMessage: ChatThreadMessageForm): ChatServerResponse<ChatThreadMessageDto>;
-    clearChatThreadHistory(chatThreadId: string): ChatServerResponse<void>;
+    clearChatThreadHistory(chatThreadId: string): ChatServerResponse<{ chatThreadHistoryClearedAt: string }>;
 
     getChatter(chatterId: string): ChatServerResponse<ChatterDto>;
     getSharedFiles(chatterId: string, queryParams: URLSearchParams): ChatServerResponse<PagedListDto<SharedFileDto>>;

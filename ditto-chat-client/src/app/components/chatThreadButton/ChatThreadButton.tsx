@@ -26,9 +26,9 @@ export default function ChatThreadButton(props: Props) {
 
     function getLastMessageTime(lastMessageTimestamp: number): string {
         if (TimeHelper.isTimestampToday(lastMessageTimestamp)) {
-            return TimeHelper.getLocalTimeAndDate(lastMessageTimestamp).localTime;
+            return TimeHelper.timestampToLocalTimeOfDay(lastMessageTimestamp);
         } else {
-            return TimeHelper.getLocalTimeAndDate(lastMessageTimestamp).localDate;
+            return TimeHelper.timestampToLocalCalendarDay(lastMessageTimestamp);
         }
     }
 

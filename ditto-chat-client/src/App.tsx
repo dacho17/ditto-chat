@@ -1,7 +1,4 @@
-import { useEffect } from 'react';
-import {  Navigate, Route, Routes, useNavigate } from 'react-router-dom';
-import { useAppDispatch } from './app/store/ReduxStore';
-import { getLatestUrlFromUrlHistory, popUrlFromUrlHistory } from './app/store/UrlHistorySlice';
+import {  Navigate, Route, Routes } from 'react-router-dom';
 import AuthenticationPage from './app/pages/authenticationPage/AuthenticationPage';
 import HomePage from './app/pages/homePage/HomePage';
 import MobileChatPage from './app/pages/mobileChatPage/MobileChatPage';
@@ -12,24 +9,6 @@ import CONSTANTS from './Constants';
 import './App.css';
 
 export default function App() {
-    const dispatch = useAppDispatch();
-    const navigate = useNavigate();
-
-    function onWebBrowserBackClick(event: PopStateEvent): void {
-        dispatch(popUrlFromUrlHistory());
-
-        const targetUrl = getLatestUrlFromUrlHistory();
-        navigate(targetUrl);
-    }
-
-    useEffect(() => {
-        window.addEventListener("popstate", onWebBrowserBackClick);
-
-        return () => {
-            window.removeEventListener("popstate", onWebBrowserBackClick);
-        }
-    }, []);
-    
     return (
         <>
             <Routes>

@@ -7,6 +7,9 @@ export default class ChatThreadOverview {
     private numberOfUnseenMessages: number;
     private lastMessageTimestamp: number | null;
     private lastMessage: string | null;
+    private lastSeenByChatterMessageId: string | null;
+    private lastSeenByPeerMessageId: string | null;
+    private chatThreadHistoryClearedAtTimestamp: number | null;
 
     public constructor(
         id: string,
@@ -15,6 +18,9 @@ export default class ChatThreadOverview {
         numberOfUnseenMessages: number,
         lastMessageTimestamp: number | null,
         lastMessage: string | null,
+        lastSeenByChatterMessageId: string | null,
+        lastSeenByPeerMessageId: string | null,
+        chatThreadHistoryClearedAtTimestamp: number | null
     ) {
         this.id = id;
         this.chatterOverview = chatterOverview;
@@ -22,6 +28,9 @@ export default class ChatThreadOverview {
         this.numberOfUnseenMessages = numberOfUnseenMessages;
         this.lastMessageTimestamp = lastMessageTimestamp;
         this.lastMessage = lastMessage;
+        this.lastSeenByChatterMessageId = lastSeenByChatterMessageId;
+        this.lastSeenByPeerMessageId = lastSeenByPeerMessageId;
+        this.chatThreadHistoryClearedAtTimestamp = chatThreadHistoryClearedAtTimestamp;
     }
 
     public getId(): string {
@@ -58,5 +67,42 @@ export default class ChatThreadOverview {
 
     public setLastMessage(lastMessage: string): void {
         this.lastMessage = lastMessage;
+    }
+
+    public getLastSeenByChatterMessageId(): string | null {
+        return this.lastSeenByChatterMessageId;
+    }
+
+    public setLastSeenByChatterMessageId(lastSeenByChatterMessageId: string): void {
+        this.lastSeenByChatterMessageId = lastSeenByChatterMessageId;
+    }
+
+    public getLastSeenByPeerMessageId(): string | null {
+        return this.lastSeenByPeerMessageId;
+    }
+
+    public setLastSeenByPeerMessageId(lastSeenByPeerMessageId: string): void {
+        this.lastSeenByPeerMessageId = lastSeenByPeerMessageId;
+    }
+
+    public getChatThreadHistoryClearedAtTimestamp(): number | null {
+        return this.chatThreadHistoryClearedAtTimestamp;
+    }
+
+    public setChatThreadHistoryClearedAtTimestamp(chatThreadHistoryClearedAtTimestamp: number): void {
+        this.chatThreadHistoryClearedAtTimestamp = chatThreadHistoryClearedAtTimestamp;
+    }
+
+    public getLatestChatThreadActivityTimestamp(): number | null {
+        const setTimestamps = [this.chatThreadCreatedAtTimestamp];
+        if (this.lastMessageTimestamp !== null) {
+            setTimestamps.push(this.lastMessageTimestamp);
+        }
+
+        if (this.chatThreadHistoryClearedAtTimestamp !== null) {
+            setTimestamps.push(this.chatThreadHistoryClearedAtTimestamp);
+        }
+        
+        return Math.max(...setTimestamps);
     }
 }

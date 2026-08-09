@@ -30,7 +30,7 @@ export default function ChatFeatureList(props: Props) {
 			await dispatch(clearChatThreadHistory({ chatThreadId: chatThreadId })).unwrap();
 		} catch (err) {
 			console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
-		} finally {}					
+		} finally {}
 	}
 	
 	function getChatFeatureList(): DropdownItem[] {

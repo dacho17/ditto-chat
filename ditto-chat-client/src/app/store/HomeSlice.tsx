@@ -1,13 +1,16 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosResponse } from "axios";
-import { AyncThunkRejectType } from "./ReduxStore";
-import { setChatThread, setIsLastChatMessagesListPage } from "./ChatSlice";
-import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
+import { AyncThunkRejectType, RootState } from "./ReduxStore";
+import { registerPolledActiveChatThread, setChatThread, setIsLastChatMessagesListPage } from "./ChatSlice";
+import { ChatServerResponseBody, ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
 import SliceHelper from "../helpers/SliceHelper";
 import TypeFormatter from "../helpers/TypeFormatter";
 import Mapper from "../helpers/Mapper";
 import ChatThreadOverview from "../classes/ChatThreadOverview";
+import PagedListDto from "../interfaces/PagedListDto";
+import ChatThreadOverviewDto from "../interfaces/ChatThreadOverviewDto";
+import ChatThreadDto from "../interfaces/ChatThreadDto";
 import CONSTANTS from "../../Constants";
 
 interface HomeState {
@@ -37,12 +40,7 @@ const initialState: HomeState = {
 function sortChatThreadOverviews(chatThreadOverviews: ChatThreadOverview[]): ChatThreadOverview[] {
     // sorting ChatThreadOverviews based on the latest activity in the ChatThread (lastMessage or createdAt (if no messages were exchanged so far))
     const sortedChatThreadOverviews = chatThreadOverviews.toSorted((first, second) => {
-        const firstLatestChatThreadActivityTimestamp =
-            first.getLastMessageTimestamp() !== null ? first.getLastMessageTimestamp() : first.getChatThreadCreatedAtTimestamp();
-        const secondLatestChatThreadActivityTimestamp =
-            second.getLastMessageTimestamp() !== null ? second.getLastMessageTimestamp() : second.getChatThreadCreatedAtTimestamp();
-        
-        return secondLatestChatThreadActivityTimestamp - firstLatestChatThreadActivityTimestamp;
+        return second.getLatestChatThreadActivityTimestamp() - first.getLatestChatThreadActivityTimestamp();
     });
 
     return sortedChatThreadOverviews;
@@ -57,79 +55,89 @@ function isChatThreadOverviewInChatThreadList(queriedChatThreadOverview: ChatThr
     return isInList;
 }
 
-function mergeChatThreadOverviewPageIntoList(chatThreadList: ChatThreadOverview[], chatThreadListPage: ChatThreadOverview[]): ChatThreadOverview[] {
-    const mergedList = [...chatThreadList];
+function mergeAndUpdateChatThreadOverviews(currentChatThreadList: ChatThreadOverview[], updatedChatThreadList: ChatThreadOverview[]): ChatThreadOverview[] {
+    const mergedList = [...updatedChatThreadList];
 
-    for (let i = 0; i < chatThreadListPage.length; i++) {
-        const isAlreadyInList = isChatThreadOverviewInChatThreadList(chatThreadListPage[i], chatThreadList);
-        if (isAlreadyInList === false) {
-            mergedList.push(chatThreadListPage[i]);
+    for (let i = 0; i < currentChatThreadList.length; i++) {
+        const isAlreadyInUpdatedList = isChatThreadOverviewInChatThreadList(currentChatThreadList[i], mergedList);
+        if (isAlreadyInUpdatedList === false) {
+            mergedList.push(currentChatThreadList[i]);
         }
     }
 
     return mergedList;
 }
 
-export const getChatThreads = createAsyncThunk<ChatThreadOverview[], {
+function generateQueryParams(chatThreadSearchFilter: string, currentPageNumber: string, isInitialRetrieval: boolean, isPolling: boolean): URLSearchParams {
+    const queryParams = new URLSearchParams();
+    queryParams.set(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER, chatThreadSearchFilter);
+    queryParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, currentPageNumber);
+    queryParams.set(CONSTANTS.IS_INITIAL_RETRIEVAL_QUERY_PARAMETER, TypeFormatter.booleanToString(isInitialRetrieval));
+    queryParams.set(CONSTANTS.IS_POLLING_QUERY_PARAMTER, TypeFormatter.booleanToString(isPolling));
+
+    return queryParams;
+}
+
+// This Function differentiates Calls:
+    // a) on Mobile and Non-Mobile Devices
+    // b) initial Retrievals and non-Initial Retrievals (older ChatThreads and Polling)
+    // c) Retrieving chatThreads when there is a ChatThread Selected (Chat openned on Non-Mobile Devices)
+export const getChatThreadsOnHomePage = createAsyncThunk<ChatThreadOverview[], {
     chatThreadSearchFilter: string, currentPageNumber: string,
-    currentlySelectedChatThread: ChatThreadOverview | null, isInitialRetrieval: boolean
+    currentlySelectedChatThreadId: string | null, isInitialRetrieval: boolean, isPolling: boolean
 }, AyncThunkRejectType>(
-    "home/getChatThreads",
-    async ({ chatThreadSearchFilter, currentPageNumber, currentlySelectedChatThread, isInitialRetrieval }, thunkAPI) => {
-        try {           
-            const queryParams = new URLSearchParams();
-            queryParams.set(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER, chatThreadSearchFilter);
-            queryParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, currentPageNumber);
-            queryParams.set(CONSTANTS.IS_INITIAL_RETRIEVAL_QUERY_PARAMETER, TypeFormatter.booleanToString(isInitialRetrieval));
+    "home/getChatThreadsOnHomePage",
+    async ({ chatThreadSearchFilter, currentPageNumber, currentlySelectedChatThreadId, isInitialRetrieval, isPolling }, thunkAPI) => {
+        const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
 
-            const retrievedChatThreadOverviews = await ChatClient.getChatClient().getChatThreads(queryParams);
-            const { pagedList, isLastPage } = retrievedChatThreadOverviews.data;
+        try {
+            const queryParams = generateQueryParams(
+                chatThreadSearchFilter, currentPageNumber,
+                isInitialRetrieval, isPolling
+            );
 
+            let [chatThreadsResponse, selectedChatThreadResponse]:
+                [ChatServerResponseBody<PagedListDto<ChatThreadOverviewDto>> | null, ChatServerResponseBody<ChatThreadDto> | null] = [null, null];
+            if (currentlySelectedChatThreadId !== null) {
+                [chatThreadsResponse, selectedChatThreadResponse] = await Promise.all([
+                    ChatClient.getChatClient().getChatThreads(queryParams),
+                    ChatClient.getChatClient().getChatThread(currentlySelectedChatThreadId)
+                ]);
+            } else {
+                chatThreadsResponse = await ChatClient.getChatClient().getChatThreads(queryParams);
+            }
+
+            const selectedChatThreadFromServer = selectedChatThreadResponse !== null
+                ? Mapper.chatThreadFromDto(selectedChatThreadResponse.data, chatterOverview.getId())
+                : null;
+            const { pagedList, isLastPage } = chatThreadsResponse.data;
             const chatThreadOverviews = pagedList.map(chatThreadOverviewDto => Mapper.chatThreadOverviewFromDto(chatThreadOverviewDto));
 
+            if (selectedChatThreadFromServer !== null) {
+                if (isInitialRetrieval === true) {
+                    thunkAPI.dispatch(setChatThread(selectedChatThreadFromServer));
+                    if (selectedChatThreadFromServer.getMessages().length < CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE) {
+                        thunkAPI.dispatch(setIsLastChatMessagesListPage(true));
+                    }
+                } else if (isPolling === true) {
+                    thunkAPI.dispatch(registerPolledActiveChatThread(selectedChatThreadFromServer));
+                } else {
+                    // not an initial Retrieval nor Polling. Case of retrieving older ChatThreads on Non-Mobile Page (tryGetOlderChatThreads Call)
+                    // do nothing on selectedChatThread
+                }
+            }
+
+            const { chatThread } = (thunkAPI.getState() as RootState).chatSlice;    // chatThread contains updates after Function Calls above
+            const selectedChatThreadOverview = chatThread !== null
+                ? chatThread.getOverview() : null;
             if (isInitialRetrieval === true) {
-                thunkAPI.dispatch(setChatThreadList({ newChatThreadList: chatThreadOverviews, currentlySelectedChatThread: currentlySelectedChatThread }));
+                thunkAPI.dispatch(setChatThreadList({ newChatThreadList: chatThreadOverviews, currentlySelectedChatThread: selectedChatThreadOverview }));
+                thunkAPI.dispatch(setIsInitialLoadFinished(true));
             } else {
-                thunkAPI.dispatch(appendChatThreadsToList({ chatThreadListPage: chatThreadOverviews, currentlySelectedChatThread: currentlySelectedChatThread }));
+                thunkAPI.dispatch(appendChatThreadsToList({ chatThreadListPage: chatThreadOverviews, currentlySelectedChatThread: selectedChatThreadOverview }));
             }
             
             thunkAPI.dispatch(setIsLastChatThreadListPage(isLastPage));
-            thunkAPI.dispatch(setIsInitialLoadFinished(true));
-
-            return thunkAPI.fulfillWithValue(chatThreadOverviews);
-        } catch (err: any) {
-            const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
-            return thunkAPI.rejectWithValue(redirectUrlOrNull);
-        }
-    }
-);
-
-export const getChatThreadsWithSelectedChatThread = createAsyncThunk<ChatThreadOverview[], {
-    chatThreadSearchFilter: string, currentPageNumber: string,
-    currentlySelectedChatThreadId: string
-}, AyncThunkRejectType>(
-    "home/getChatThreadsWithSelectedChatThread",
-    async ({ chatThreadSearchFilter, currentPageNumber, currentlySelectedChatThreadId }, thunkAPI) => {
-        try {           
-            const queryParams = new URLSearchParams();
-            queryParams.set(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER, chatThreadSearchFilter);
-            queryParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, currentPageNumber);
-            queryParams.set(CONSTANTS.SELECTED_CHAT_THREAD_ID_QUERY_PARAMETER, currentlySelectedChatThreadId);
-
-            const res = await ChatClient.getChatClient().getChatThreadsWithSelectedChatThread(queryParams);            
-            const { selectedChatThread, chatThreadsPage } = res.data;
-
-            const chatThread = Mapper.chatThreadFromDto(selectedChatThread);
-            const chatThreadOverviews = chatThreadsPage.pagedList.map(chatThreadOverviewDto => Mapper.chatThreadOverviewFromDto(chatThreadOverviewDto));
-
-            thunkAPI.dispatch(setChatThread(chatThread));
-            if (chatThread.getMessages().length < CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE) {
-                thunkAPI.dispatch(setIsLastChatMessagesListPage(true));
-            }
-            
-            thunkAPI.dispatch(setChatThreadList({ newChatThreadList: chatThreadOverviews, currentlySelectedChatThread: chatThread.getOverview() }));
-            thunkAPI.dispatch(setIsLastChatThreadListPage(chatThreadsPage.isLastPage));
-            thunkAPI.dispatch(setIsInitialLoadFinished(true));
 
             return thunkAPI.fulfillWithValue(chatThreadOverviews);
         } catch (err: any) {
@@ -155,9 +163,23 @@ export const HomeSlice = createSlice({
         },
         appendChatThreadsToList: (state, action: { payload: { chatThreadListPage: ChatThreadOverview[], currentlySelectedChatThread: ChatThreadOverview | null } }) => {
             const { chatThreadListPage, currentlySelectedChatThread } = action.payload;
-            const mergedChatThreadLists = mergeChatThreadOverviewPageIntoList(state.chatThreadList as ChatThreadOverview[], chatThreadListPage);
-            if (isChatThreadOverviewInChatThreadList(currentlySelectedChatThread, mergedChatThreadLists as ChatThreadOverview[]) === false) {
-                mergedChatThreadLists.push(currentlySelectedChatThread as ChatThreadOverview);
+            const mergedChatThreadLists = mergeAndUpdateChatThreadOverviews(state.chatThreadList as ChatThreadOverview[], chatThreadListPage);
+
+            // add or update currently selected ChatThread in ChatThread List, if a ChatThread is selected
+            if (currentlySelectedChatThread !== null) {
+                if (isChatThreadOverviewInChatThreadList(currentlySelectedChatThread, mergedChatThreadLists as ChatThreadOverview[]) === false) {
+                    mergedChatThreadLists.push(currentlySelectedChatThread as ChatThreadOverview);
+                } else {
+                    // if the activeChatThread is in the list, store up-to-date data from selectedChatThread to the chatThreadList
+                    // this logic depends on prior execution of registerPolledActiveChatThread Function
+                    mergedChatThreadLists.map(chatThreadOverview => {
+                        if (chatThreadOverview.getId() === currentlySelectedChatThread.getId()) {
+                            return currentlySelectedChatThread; // this is more up-to-date data!
+                        }
+
+                        return chatThreadOverview;
+                    });
+                }
             }
 
             const sortedNewChatThreadList = sortChatThreadOverviews(mergedChatThreadLists as ChatThreadOverview[]);
@@ -184,6 +206,22 @@ export const HomeSlice = createSlice({
         setIsActiveChatThreadPanelExpanded: (state, action: { payload: boolean }) => {
             state.isActiveChatThreadPanelExpanded = action.payload;
         },
+        updateChatThreadOverviewFromList: (state, action: { payload: ChatThreadOverview }) => {
+            const updatedChatThreadOverview = action.payload;
+            
+            if (isChatThreadOverviewInChatThreadList(updatedChatThreadOverview, state.chatThreadList as ChatThreadOverview[]) === false) {
+                return;
+            }
+
+            const updatedChatThreadOverviews = state.chatThreadList.map(chatThreadOverview => {
+                return chatThreadOverview.getId() === updatedChatThreadOverview.getId()
+                    ? updatedChatThreadOverview
+                    : chatThreadOverview
+                ;
+            });
+
+            state.chatThreadList = sortChatThreadOverviews(updatedChatThreadOverviews as ChatThreadOverview[]);
+        },
         clearHomeState: (state) => {
             state.chatThreadList = initialState.chatThreadList;
             state.isLoadingChatThreads = initialState.isLoadingChatThreads;
@@ -207,5 +245,6 @@ export const {
     setIsLastChatThreadListPage,
     setIsDropdownOpen,
     setIsActiveChatThreadPanelExpanded,
+    updateChatThreadOverviewFromList,
     clearHomeState
 } = HomeSlice.actions;

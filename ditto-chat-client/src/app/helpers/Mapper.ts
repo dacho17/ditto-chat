@@ -11,7 +11,6 @@ import ChatThreadDto from "../interfaces/ChatThreadDto";
 import ChatThreadOverviewDto from "../interfaces/ChatThreadOverviewDto";
 import ChatThreadMessageDto from "../interfaces/ChatThreadMessageDto";
 import SharedFileDto from "../interfaces/SharedFileDto";
-import { ChatThreadMessageStatus } from "../enums/ChatThreadMessageStatus";
 
 
 export default class Mapper {
@@ -36,7 +35,11 @@ export default class Mapper {
             Mapper.getValueOrNull(chatThreadOverviewDto.lastMessageTime) !== null
                 ? TimeHelper.dateStringToTimestamp(chatThreadOverviewDto.lastMessageTime) : null,
             Mapper.getValueOrNull(chatThreadOverviewDto.lastMessageContent),
-        )
+            chatThreadOverviewDto.lastSeenByChatterMessageId,
+            chatThreadOverviewDto.lastSeenByPeerMessageId,
+            Mapper.getValueOrNull(chatThreadOverviewDto.chatThreadHistoryClearedAt) !== null
+                ? TimeHelper.dateStringToTimestamp(chatThreadOverviewDto.chatThreadHistoryClearedAt) : null
+        );
     }
 
     public static chatterFromDto(chatterDto: ChatterDto): Chatter {
@@ -54,21 +57,24 @@ export default class Mapper {
         );
     }
 
-    public static chatThreadFromDto(chatThreadDto: ChatThreadDto): ChatThread {
+    public static chatThreadFromDto(chatThreadDto: ChatThreadDto, loggedInChatterId: string): ChatThread {
         return new ChatThread(
             Mapper.chatThreadOverviewFromDto(chatThreadDto.chatThreadOverview),
-            chatThreadDto.chatThreadMessages.map(chatThreadMessageDto => Mapper.chatThreadMessageFromDto(chatThreadMessageDto))
+            chatThreadDto.chatThreadMessages.map(chatThreadMessageDto => Mapper.chatThreadMessageFromDto(chatThreadMessageDto, loggedInChatterId))
         );
     }
 
-    public static chatThreadMessageFromDto(chatThreadMessageDto: ChatThreadMessageDto): ChatThreadMessage {
-        return new ChatThreadMessage(
-            ChatThreadMessageStatus.CONFIRMED,
+    public static chatThreadMessageFromDto(chatThreadMessageDto: ChatThreadMessageDto, loggedInChatterId: string): ChatThreadMessage {
+        return ChatThreadMessage.createChatThreadMessageFromDto(
+            chatThreadMessageDto.id,
             chatThreadMessageDto.messageSenderId,
             chatThreadMessageDto.messageContent,
+            Mapper.getValueOrNull(chatThreadMessageDto.attachedFile)
+                ? Mapper.sharedFileFromDto(chatThreadMessageDto.attachedFile) : null,
             TimeHelper.dateStringToTimestamp(chatThreadMessageDto.messageRegisteredAt),
-            true
-        )
+            loggedInChatterId !== chatThreadMessageDto.messageSenderId,
+            chatThreadMessageDto.isMessageSeen
+        );
     }
 
     private static getValueOrNull<T>(candidate: T): T | null {
