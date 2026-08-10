@@ -91,9 +91,9 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
         return axiosResponse.data;
     }
 
-    public async requestAccountImageUploadUrl(uploadFileIntent: UploadFileIntent): ChatServerResponse<S3PreSignedUrlDto> {
+    public async requestFileUploadUrl(uploadFileIntent: UploadFileIntent): ChatServerResponse<S3PreSignedUrlDto> {
         const axiosResponse = await this.sendPostRequest<ChatServerResponse<S3PreSignedUrlDto>>(
-            `${CONSTANTS.ACCOUNT_URL}${CONSTANTS.REQUEST_UPLOAD_IMAGE_URL}`,
+            `${CONSTANTS.ACCOUNT_URL}${CONSTANTS.REQUEST_UPLOAD_FILE_URL}`,
             uploadFileIntent
         );
         return axiosResponse.data;

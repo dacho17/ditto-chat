@@ -25,7 +25,7 @@ export default class AwsClient extends AxiosClient implements AwsClientInterface
         }
     }
 
-    public async uploadAccountImageToS3(s3PreSignedUploadUrl: S3PreSignedUrlDto, fileContentStream: ReadableStream): Promise<S3UploadFileResponseDto> {
+    public async uploadFileToS3(s3PreSignedUploadUrl: S3PreSignedUrlDto, fileContentStream: ReadableStream): Promise<S3UploadFileResponseDto> {
         const targetUrl = s3PreSignedUploadUrl.url;
         const axiosResponse = await this.sendPutRequest<Promise<S3UploadFileResponseDto>>(
             targetUrl,

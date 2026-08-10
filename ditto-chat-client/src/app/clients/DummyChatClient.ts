@@ -21,8 +21,8 @@ import CONSTANTS from "../../Constants";
 const DUMMY_ACCOUNT_REGISTRATION_SUCCESS_MESSAGE = "You have registered successfully.";
 const DUMMY_LOGIN_SUCCESS_MESSAGE = "You are logged in.";
 const DUMMY_LOGOUT_SUCCESS_MESSAGE = "You are logged out.";
-const DUMMY_ACCOUNT_IMAGE_UPLOAD_STARTED_MESSAGE = "Image Upload Started.";
-const DUMMY_ACCOUNT_IMAGE_UPLOAD_SUCCESS_MESSAGE = "Your Image has been Changed!";
+const DUMMY_ACCOUNT_FILE_UPLOAD_STARTED_MESSAGE = "File Upload Started.";
+const DUMMY_ACCOUNT_FILE_UPLOAD_SUCCESS_MESSAGE = "Your File has been Uploaded!";
 
 export default class DummyChatClient implements ChatClientInterface, AwsClientInterface {
     private static dummyChatClientSingletonReference: DummyChatClient | null = null;
@@ -94,24 +94,24 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
         });
     }
 
-    public async requestAccountImageUploadUrl(uploadFileIntent: UploadFileIntent): ChatServerResponse<S3PreSignedUrlDto> {
-        console.log(`Received AccountImageUploadUrl Request with UploadFileIntent: ${JSON.stringify(uploadFileIntent)}`);
+    public async requestFileUploadUrl(uploadFileIntent: UploadFileIntent): ChatServerResponse<S3PreSignedUrlDto> {
+        console.log(`Received requestFileUploadUrl Request with UploadFileIntent: ${JSON.stringify(uploadFileIntent)}`);
 
         const dummyS3PreSignedUrl = this.dummyChatService.generateDummyS3PreSignedUrl();
         console.log(`Responding with S3PreSignedUrlDto: ${JSON.stringify(dummyS3PreSignedUrl)}`);
         return Promise.resolve({
-            message: DUMMY_ACCOUNT_IMAGE_UPLOAD_STARTED_MESSAGE,
+            message: DUMMY_ACCOUNT_FILE_UPLOAD_STARTED_MESSAGE,
             data: dummyS3PreSignedUrl
         });
     }
 
-    public async uploadAccountImageToS3(s3PreSignedUploadUrl: S3PreSignedUrlDto, fileContentStream: ReadableStream): Promise<S3UploadFileResponseDto> {
-        console.log(`Received AccountImageUploadToS3Bucket Request with S3PreSignedUrlDto: ${JSON.stringify(s3PreSignedUploadUrl)}`);
+    public async uploadFileToS3(s3PreSignedUploadUrl: S3PreSignedUrlDto, fileContentStream: ReadableStream): Promise<S3UploadFileResponseDto> {
+        console.log(`Received uploadFileToS3 Request with S3PreSignedUrlDto: ${JSON.stringify(s3PreSignedUploadUrl)}`);
 
         const dummyS3UploadResponse = this.dummyChatService.generateDummyS3UploadFileResponse();
         console.log(`Respdnding with S3UploadFileResponseDto: ${JSON.stringify(dummyS3UploadResponse)}`);
         return Promise.resolve({
-            message: DUMMY_ACCOUNT_IMAGE_UPLOAD_SUCCESS_MESSAGE,
+            message: DUMMY_ACCOUNT_FILE_UPLOAD_SUCCESS_MESSAGE,
             data: dummyS3UploadResponse
         });
     }

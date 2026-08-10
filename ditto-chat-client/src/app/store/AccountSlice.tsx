@@ -23,7 +23,7 @@ export const requestAccountImageUploadUrl = createAsyncThunk<S3PreSignedUrlDto, 
     "account/requestAccountImageUploadUrl",
     async ({ uploadFileIntent } , thunkAPI) => {
         try {
-            const res = await ChatClient.getChatClient().requestAccountImageUploadUrl(uploadFileIntent);
+            const res = await ChatClient.getChatClient().requestFileUploadUrl(uploadFileIntent);
             return thunkAPI.fulfillWithValue(res.data);
         } catch (err: any) {
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
@@ -32,15 +32,13 @@ export const requestAccountImageUploadUrl = createAsyncThunk<S3PreSignedUrlDto, 
     }
 );
 
-// TODO-image-upload: Image Content needs to be passed as another Argument to this Function and sent to AWS
-    // Check what does AWS Expect from their side in the Request
-    // https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#API_PutObject_RequestSyntax
+// https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#API_PutObject_RequestSyntax
 export const uploadAccountImageToS3 = createAsyncThunk<S3UploadFileResponseDto, { s3PreSignedUploadUrl: S3PreSignedUrlDto, fileContentStream: ReadableStream }, AyncThunkRejectType>(
     "account/uploadAccountImageToS3",
     async ({ s3PreSignedUploadUrl, fileContentStream } , thunkAPI) => {
         try {
             // const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
-            const res = await AwsClient.getAwsClient().uploadAccountImageToS3(s3PreSignedUploadUrl, fileContentStream);
+            const res = await AwsClient.getAwsClient().uploadFileToS3(s3PreSignedUploadUrl, fileContentStream);
             
             // TODO-toasting: likely, show success Message to the Client that they changed their Image
             

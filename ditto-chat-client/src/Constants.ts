@@ -9,7 +9,7 @@ const CONSTANTS = {
     CHATS_URL: "/chats",
     CHATTERS_URL: "/chatters",
     ACCOUNT_URL: "/account",
-    REQUEST_UPLOAD_IMAGE_URL: "/request-upload-image-url",
+    REQUEST_UPLOAD_FILE_URL: "/request-upload-file-url",
     CHAT_URL: "/chat",
     GET_LATEST_CHAT_MESSAGES_URL: "/get-latest-messages",
     UPDATE_LAST_SEEN_CHAT_MESSAGE_URL: "/update-last-seen-message",

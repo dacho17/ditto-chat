@@ -41,7 +41,9 @@ export default function ChatWindowMessagesList() {
             .find(chatThreadMessage => chatThreadMessage.getClientRef() === chatMessageClientRef
                 && chatThreadMessage.getStatus() === ChatThreadMessageStatus.FAILED_TO_SEND);
         if (failedChatMessage !== undefined) {
-            const failedToSendChatThreadMessage = new ChatThreadMessageForm(failedChatMessage.getMessageContent(), failedChatMessage.getClientRef(), true);
+            const failedToSendChatThreadMessage = new ChatThreadMessageForm(
+                failedChatMessage.getMessageContent(), failedChatMessage.getAttachedFile(), failedChatMessage.getClientRef(), true
+            );
 
             try {
                 await dispatch(sendChatThreadMessage({ chatThreadId: chatThreadId, chatThreadMessageForm: failedToSendChatThreadMessage })).unwrap();

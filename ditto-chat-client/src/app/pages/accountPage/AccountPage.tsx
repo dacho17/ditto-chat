@@ -10,6 +10,7 @@ import UploadImageButton from "../../components/uploadImageButton/UploadImageBut
 import LoadingSpinner from "../../components/loadingSpinner/LoadingSpinner";
 import SliceHelper from "../../helpers/SliceHelper";
 import FileHelper from "../../helpers/FileHelper";
+import Validator from "../../helpers/Validator";
 import ChatterOverview from "../../classes/ChatterOverview";
 import UploadFileIntent from "../../classes/UploadFileIntent";
 import "./AccountPage.css";
@@ -29,25 +30,8 @@ export default function AccountPage() {
         dispatch(setIsLoadingChatterOverview(false));
     }, []);
 
-    const VALID_ACCOUNT_IMAGE_FILE_TYPES = ["image/png", "image/jpeg"];
-    const MAXIMUM_ACCOUNT_IMAGE_FILE_SIZE_IN_BYTES = 2097152; // Number of Bytes in 2 MB
-    function validateUploadFileIntent(uploadFileIntent: UploadFileIntent): boolean {
-        const fileType = uploadFileIntent.getFileType();
-        if (VALID_ACCOUNT_IMAGE_FILE_TYPES.includes(fileType) === false) {
-            console.log("TODO-toasting: Notify user that they are attepmting to upload unsupported File Type. Tell them what passes");
-            return false;
-        }
-
-        if (MAXIMUM_ACCOUNT_IMAGE_FILE_SIZE_IN_BYTES < uploadFileIntent.getFileSize()) {
-            console.log("TODO-toasting: Notify user that they are attepmting to upload File of size over 2 MBs.");
-            return false;
-        }
-
-        return true;
-    }
-
     async function uploadChatterImage(fileMetadata: UploadFileIntent, fileContentStream: ReadableStream): Promise<void> {
-        if (validateUploadFileIntent(fileMetadata) === false) {
+        if (Validator.validateUploadChatterImage(fileMetadata) === false) {
             return;
         }
 
@@ -98,8 +82,9 @@ export default function AccountPage() {
                                     />
                                 </div>
                                 <div className="account-page-edit-chatter-image-container">
-                                    <UploadImageButton 
+                                    <UploadImageButton
                                         buttonText={CHANGE_IMAGE_TEXT}
+                                        buttonIcon={null}
                                         uploadFunction={(fileMetadata: UploadFileIntent, fileContentStream: ReadableStream) =>
                                             uploadChatterImage(fileMetadata, fileContentStream)
                                         }

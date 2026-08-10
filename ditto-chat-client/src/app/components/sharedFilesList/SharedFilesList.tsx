@@ -44,6 +44,7 @@ export default function SharedFilesList() {
                             <SharedFileButton
                                 key={sharedFile.getFileUrl()}
                                 sharedFile={sharedFile}
+                                isShownInChatThreadMessage={false}
                             />
                         </div>
                     </>

@@ -1,6 +1,7 @@
 import TimeHelper from "./TimeHelper";
 import CryptoHelper from "./CryptoHelper";
 import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
+import SharedFile from "../classes/SharedFile";
 import ChatterOverviewDto from "../interfaces/ChatterOverviewDto";
 import ChatThreadMessageDto from "../interfaces/ChatThreadMessageDto";
 import SharedFileDto from "../interfaces/SharedFileDto";
@@ -78,11 +79,20 @@ export default class DummyChatService {
     public addNewChatThreadMessage(chatThreadId: string, newChatThreadMessageForm: ChatThreadMessageForm): ChatThreadMessageDto {
         const chatThreadIndex = this.dummyChatThreads.findIndex(chatThread => chatThread.chatThreadOverview.id === chatThreadId);
 
+        let attachedFile  = null;
+        if (newChatThreadMessageForm.getAttachedFile() !== null) {
+            attachedFile = new SharedFile(
+                newChatThreadMessageForm.getAttachedFile().getFileName(),
+                ChatterIconImage,
+                TimeHelper.getCurrentTimestamp()
+            );
+        }
+
         const registeredChatThreadMessage = {
             id: `new-message-from-chatter-${this.dummyLoggedInChatter.id}-randomguid-${CryptoHelper.generateUuid()}`,
             messageSenderId: `${this.dummyLoggedInChatter.id}`,
             messageContent: `${newChatThreadMessageForm.getMessage()} (Newly sent Message)`,
-            attachedFile: null, // TODO-image-upload: this needs to be set
+            attachedFile: attachedFile,
             messageRegisteredAt: TimeHelper.getServerFormattedTimestamp(TimeHelper.getCurrentTimestamp()),
             isMessageSeen: true
         } as ChatThreadMessageDto;
@@ -94,7 +104,7 @@ export default class DummyChatService {
         this.dummyChatThreads[chatThreadIndex].chatThreadOverview.lastMessageContent = registeredChatThreadMessage.messageContent;
         this.dummyChatThreads[chatThreadIndex].chatThreadOverview.lastMessageTime = registeredChatThreadMessage.messageRegisteredAt;
 
-        // Updating sharedFiles on ChatterDto if File was attached to the ChatThreadMessage (TODO-image-upload: check if this code is correct after functionality is implemented!)
+        // Updating sharedFiles on ChatterDto if File was attached to the ChatThreadMessage
         if (registeredChatThreadMessage.attachedFile !== null) {
             const peerChatterDtoIndex = this.dummyChatters.findIndex(chatter =>
                 chatter.chatterOverview.id === this.dummyChatThreads[chatThreadIndex].chatThreadOverview.chatterOverview.id);
@@ -123,7 +133,7 @@ export default class DummyChatService {
             id: `new-polled-message-from-chatter-${peerChatterId}-randomguid-${CryptoHelper.generateUuid()}`,
             messageSenderId: `${peerChatterId}`,
             messageContent: `This is a simulated new message which was polled.`,
-            attachedFile: null, // TODO-image-upload: this needs to be set
+            attachedFile: null,
             messageRegisteredAt: TimeHelper.getServerFormattedTimestamp(TimeHelper.getCurrentTimestamp()),
             isMessageSeen: false
         } as ChatThreadMessageDto;
@@ -134,15 +144,6 @@ export default class DummyChatService {
 
         this.dummyChatThreads[chatThreadIndex].chatThreadOverview.lastMessageContent = newPeerSentChatThreadMessage.messageContent;
         this.dummyChatThreads[chatThreadIndex].chatThreadOverview.lastMessageTime = newPeerSentChatThreadMessage.messageRegisteredAt;
-
-        // Updating sharedFiles on ChatterDto if File was attached to the ChatThreadMessage (TODO-image-upload: check if this code is correct after functionality is implemented!)
-        if (newPeerSentChatThreadMessage.attachedFile !== null) {
-            const peerChatterDtoIndex = this.dummyChatters.findIndex(chatter =>
-                chatter.chatterOverview.id === this.dummyChatThreads[chatThreadIndex].chatThreadOverview.chatterOverview.id);
-            
-            this.dummyChatters[peerChatterDtoIndex].sharedFiles.push(newPeerSentChatThreadMessage.attachedFile);
-            this.dummyChatters[peerChatterDtoIndex].sharedFiles = DummyChatService.sortSharedFileDtoList(this.dummyChatters[peerChatterDtoIndex].sharedFiles);
-        }
     }
 
     public clearChatThreadHistory(chatThreadId: string): { chatThreadHistoryClearedAt: string } {

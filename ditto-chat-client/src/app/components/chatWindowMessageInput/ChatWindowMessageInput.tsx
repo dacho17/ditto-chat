@@ -1,26 +1,33 @@
 import { IoAttachOutline, IoSendOutline } from "react-icons/io5";
 import { BsEmojiSmileUpsideDown } from "react-icons/bs";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
-import { sendChatThreadMessage, setCurrentChatMessageInput, updateLastSeenChatThreadMessage } from "../../store/ChatSlice";
+import { appendChatThreadMessagesToList, requestChatThreadMessageAttachedFileUploadUrl, sendChatThreadMessage, setCurrentChatMessageInput, updateLastSeenChatThreadMessage, uploadChatThreadMessageAttachedFileToS3 } from "../../store/ChatSlice";
 import useChatThreadIdParam from "../../hooks/UseChatParams";
+import UploadImageButton from "../uploadImageButton/UploadImageButton";
 import IconButton from "../iconButton/IconButton";
+import Validator from "../../helpers/Validator";
+import TimeHelper from "../../helpers/TimeHelper";
 import CryptoHelper from "../../helpers/CryptoHelper";
 import ChatThreadMessageForm from "../../classes/ChatThreadMessageForm";
+import ChatThreadMessage from "../../classes/ChatThreadMessage";
+import UploadFileIntent from "../../classes/UploadFileIntent";
+import SharedFile from "../../classes/SharedFile";
 import CONSTANTS from "../../../Constants";
 import "./ChatWindowMessageInput.css";
+import DummyAttachedFile from '../../../assets/david-chat-image.jpg';
 
 const INPUT_PLACEHOLDER_VALUE = "Message";
 
 export default function ChatWindowMessageInput() {
     const { currentChatMessageInput, chatThread } = useAppSelector(state => state.chatSlice);
+    const { chatterOverview } = useAppSelector(state => state.authSlice);
     const dispatch = useAppDispatch();
 	const chatThreadId = useChatThreadIdParam();
 
-    async function trySendChatThreadMessage(): Promise<void> {
-        const newChatThreadMessage = new ChatThreadMessageForm(currentChatMessageInput, CryptoHelper.generateUuid(), false);
-        
+    async function trySendChatThreadMessage(newChatThreadMessageForm: ChatThreadMessageForm): Promise<ChatThreadMessage> {
         try {
-            await dispatch(sendChatThreadMessage({ chatThreadId: chatThreadId, chatThreadMessageForm: newChatThreadMessage })).unwrap();
+            const sentChatThreadMessage = await dispatch(sendChatThreadMessage({ chatThreadId: chatThreadId, chatThreadMessageForm: newChatThreadMessageForm })).unwrap();
+            return sentChatThreadMessage;
         } catch (err) {
             console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
         }
@@ -40,6 +47,39 @@ export default function ChatWindowMessageInput() {
         } finally {}
     }
 
+    async function trySendChatThreadMessageAttachedFile(fileMetadata: UploadFileIntent, fileContentStream: ReadableStream): Promise<void> {
+        if (Validator.validateUploadChatThreadMessageAttachedFile(fileMetadata) === false) {
+            return;
+        }
+
+        // Adding the chatThreadMessage early, to show indication of the File being uploaded!
+        const chatThreadMessageWithAttachedFile = ChatThreadMessage.createNewChatThreadMessage(
+            CryptoHelper.generateUuid(),
+            chatterOverview.getId(), currentChatMessageInput, null, TimeHelper.getCurrentTimestamp(), true
+        );
+        dispatch(appendChatThreadMessagesToList([chatThreadMessageWithAttachedFile]));
+
+        try {
+            const s3UploadUrlDto = await dispatch(requestChatThreadMessageAttachedFileUploadUrl({ uploadFileIntent: fileMetadata })).unwrap();
+            console.log(`Retrieved s3UploadUrlDto: ${s3UploadUrlDto}`);
+
+            const res = await dispatch(uploadChatThreadMessageAttachedFileToS3(
+                { s3PreSignedUploadUrl: s3UploadUrlDto, fileContentStream: fileContentStream }
+            )).unwrap();
+
+            // TODO-attachment: set correct URL instead of dummy
+            const uploadedAttachedFile = new SharedFile(fileMetadata.getFileName(), DummyAttachedFile, null);
+            // recreating the Form, based on the early created chatThreadMessage. Setting uploadedAttachedFile so that the UploadedFile gets related to the ChatThreadMessage
+            const chatThreadMessageWithAttachedFileForm = new ChatThreadMessageForm(
+                chatThreadMessageWithAttachedFile.getMessageContent(), uploadedAttachedFile, chatThreadMessageWithAttachedFile.getClientRef(), false
+            );
+
+            const sentChatThreadMessage = await trySendChatThreadMessage(chatThreadMessageWithAttachedFileForm);
+        } catch (err) {
+            console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
+        }
+    }
+
     return <div className="chat-window-message-input">
         <input
             className="chat-window-message-input-field"
@@ -54,9 +94,11 @@ export default function ChatWindowMessageInput() {
             onFocus={() => tryUpdateLastSeenChatThreadMessage()}
         />
         <div className="chat-window-message-input-additions">
-            <IconButton
-                icon={<IoAttachOutline size={CONSTANTS.ICON_SIZE} />}
-                onClick={() => console.log("TODO-attachment")} 
+            <UploadImageButton
+                buttonIcon={<IoAttachOutline size={CONSTANTS.ICON_SIZE} />}
+                buttonText={null}
+                uploadFunction={trySendChatThreadMessageAttachedFile}
+                isCurrentlyUploading={false}
             />
             <IconButton
                 icon={<BsEmojiSmileUpsideDown size={CONSTANTS.ICON_SIZE} />}
@@ -65,7 +107,10 @@ export default function ChatWindowMessageInput() {
         </div>
         <div className="chat-window-message-input-send-button-container">
             <button className="chat-window-message-input-send-button"
-                onClick={() => trySendChatThreadMessage()}
+                onClick={() => {
+                    const newChatThreadMessage = new ChatThreadMessageForm(currentChatMessageInput, null, CryptoHelper.generateUuid(), false);
+                    trySendChatThreadMessage(newChatThreadMessage);
+                }}
                 disabled={currentChatMessageInput.trim() === ""}
             >
                 <IoSendOutline size={CONSTANTS.ICON_SIZE} />

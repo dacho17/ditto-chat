@@ -41,7 +41,7 @@ export default function MobileChatPage() {
         addUrlToHistory("");
 		SliceHelper.tryGetChatThread(chatThreadId, dispatch);
 
-        // TODO-chat: uncomment Polling
+        // TODO-polling: uncomment Polling
         // const interval = setInterval(tryPollActiveChatThread, CONSTANTS.CHAT_POLLING_INTERVAL_IN_MS);
         // return () => {
         //     clearInterval(interval);

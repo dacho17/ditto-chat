@@ -102,7 +102,7 @@ export default function HomePage() {
             retrieveInitialChatThreadsPage(queryParams, setIsLoadingChatThreads);
         }
 
-        // TODO-chat: uncomment Polling
+        // TODO-polling: uncomment Polling
         // if (DeviceScreenHelper.isMobileScreen() === true) {
         //     const interval = setInterval(() => tryPollChatThreads(null), CONSTANTS.CHAT_POLLING_INTERVAL_IN_MS);
         //     return () => {
@@ -137,7 +137,7 @@ export default function HomePage() {
         if (chatThread !== null) {
             SliceHelper.tryGetChatter(chatThread.getOverview().getChatterOverview().getId(), dispatch);
 
-            // TODO-chat: uncomment Polling
+            // TODO-polling: uncomment Polling
             // const interval = setInterval(() => tryPollChatThreads(chatThread), CONSTANTS.CHAT_POLLING_INTERVAL_IN_MS);
             // return () => {
             //     clearInterval(interval);

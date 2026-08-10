@@ -35,7 +35,7 @@ export default interface ChatClientInterface {
 
     getChatters(queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatterOverviewDto>>;
 
-    requestAccountImageUploadUrl(uploadFileIntent: UploadFileIntent): ChatServerResponse<S3PreSignedUrlDto>;
+    requestFileUploadUrl(uploadFileIntent: UploadFileIntent): ChatServerResponse<S3PreSignedUrlDto>;
 
     postChatThread(chatterId: string): ChatServerResponse<ChatThreadDto>;
     getChatThread(chatThreadId: string): ChatServerResponse<ChatThreadDto>;

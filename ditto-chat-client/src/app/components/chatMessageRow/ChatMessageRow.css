@@ -73,9 +73,15 @@
 }
 
 .chat-message-bubble {
+    --chat-message-bubble-border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+
     max-width: 50%;
     padding: 12px;
-    border-radius: 12px;
+    border-radius: var(--chat-message-bubble-border-radius);
 
     &.message-sender {
         background-color: var(--ditto-purple);
@@ -90,6 +96,31 @@
 
 .chat-message-content {
     overflow-wrap: break-word;
+}
+
+.chat-message-bubble-attached-file-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    height: 200px;
+    width: 200px;
+
+    border-radius: var(--chat-message-bubble-border-radius);
+}
+
+.chat-message-bubble-attached-file-uploading-background {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    width: 100%;
+    height: 100%;
+
+    background-color: var(--text-main);
+    border-radius: var(--chat-message-bubble-border-radius);
 }
 
 .tooltip:hover .tooltip-text {
@@ -128,5 +159,12 @@
     &.message-receiver {
         padding-left: 1%;
         align-self: flex-start;
+    }
+}
+
+@media (max-width: 720px) {
+    .chat-message-bubble-attached-file-container {
+        height: 100px;
+        width: 100px;
     }
 }

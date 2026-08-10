@@ -8,12 +8,17 @@ import { AyncThunkRejectType, RootState } from "./ReduxStore";
 import { updateChatThreadOverviewFromList } from "./HomeSlice";
 import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
+import AwsClient from "../clients/AwsClient";
 import SliceHelper from "../helpers/SliceHelper";
 import TimeHelper from "../helpers/TimeHelper";
 import Mapper from "../helpers/Mapper";
 import ChatThread from "../classes/ChatThread";
 import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
 import ChatThreadMessage from "../classes/ChatThreadMessage";
+import UploadFileIntent from "../classes/UploadFileIntent";
+import SharedFile from "../classes/SharedFile";
+import S3UploadFileResponseDto from "../interfaces/S3UploadFileResponseDto";
+import S3PreSignedUrlDto from "../interfaces/S3PreSignedUrlDto";
 import { ChatThreadMessageStatus } from "../enums/ChatThreadMessageStatus";
 import CONSTANTS from "../../Constants";
 
@@ -255,12 +260,20 @@ export const sendChatThreadMessage = createAsyncThunk<ChatThreadMessage, { chatT
                 newChatThreadMessageStatus: ChatThreadMessageStatus.SENDING
             }));
         } else {
-            const newChatThreadMessage = ChatThreadMessage.createNewChatThreadMessage(
-                chatThreadMessageForm.getChatMessageClientRef(),
-                chatterOverview.getId(), chatThreadMessageForm.getMessage(), null, TimeHelper.getCurrentTimestamp()
-            );  // TODO-chat: attachedFile needs to be added as an argument to this constructor. The File will likely be a part of chatThreadMessageForm!
-            
-            thunkAPI.dispatch(appendChatThreadMessagesToList([newChatThreadMessage]));
+            const isMessageWithAttachedFile = chatThreadMessageForm.getAttachedFile() !== null;
+            if (isMessageWithAttachedFile === false) {
+                const newChatThreadMessage = ChatThreadMessage.createNewChatThreadMessage(
+                    chatThreadMessageForm.getChatMessageClientRef(),
+                    chatterOverview.getId(), chatThreadMessageForm.getMessage(), null, TimeHelper.getCurrentTimestamp(), false
+                );
+                
+                thunkAPI.dispatch(appendChatThreadMessagesToList([newChatThreadMessage]));
+            } else {    // message carries an attachedFile and is already within ChatThreadMessagesList
+                thunkAPI.dispatch(attachFileToSendingChatThreadMessage({
+                    chatThreadMessageClientRef: chatThreadMessageForm.getChatMessageClientRef(),
+                    attachedFile: chatThreadMessageForm.getAttachedFile()
+                }));
+            }
         }
 
         thunkAPI.dispatch(setCurrentChatMessageInput(initialState.currentChatMessageInput));
@@ -308,6 +321,37 @@ export const clearChatThreadHistory = createAsyncThunk<void, { chatThreadId: str
     }
 );
 
+export const requestChatThreadMessageAttachedFileUploadUrl = createAsyncThunk<S3PreSignedUrlDto, { uploadFileIntent: UploadFileIntent }, AyncThunkRejectType>(
+    "account/requestChatThreadMessageAttachedFileUploadUrl",
+    async ({ uploadFileIntent } , thunkAPI) => {
+        try {
+            const res = await ChatClient.getChatClient().requestFileUploadUrl(uploadFileIntent);
+            return thunkAPI.fulfillWithValue(res.data);
+        } catch (err: any) {
+            const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
+            return thunkAPI.rejectWithValue(redirectUrlOrNull);
+        }
+    }
+);
+
+// https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#API_PutObject_RequestSyntax
+export const uploadChatThreadMessageAttachedFileToS3 = createAsyncThunk<S3UploadFileResponseDto, { s3PreSignedUploadUrl: S3PreSignedUrlDto, fileContentStream: ReadableStream }, AyncThunkRejectType>(
+    "account/uploadChatThreadMessageAttachedFileToS3",
+    async ({ s3PreSignedUploadUrl, fileContentStream } , thunkAPI) => {
+        try {
+            const res = await AwsClient.getAwsClient().uploadFileToS3(s3PreSignedUploadUrl, fileContentStream);
+            
+            // TODO-toasting: likely, show success Message to the Client that they changed their Image
+
+            return thunkAPI.fulfillWithValue(res);
+        } catch (err: any) {
+            // TODO-toasting: possibly AWS Sends special Error Types Back on S3 Image Upload. I may not be able to use ChatClientResponseErrorBody. Look into this!
+            const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
+            return thunkAPI.rejectWithValue(redirectUrlOrNull);
+        }
+    }
+);
+
 export const ChatSlice = createSlice({
     name: "chat",
     initialState,
@@ -349,6 +393,22 @@ export const ChatSlice = createSlice({
 
             state.chatThread = updatedChatThread;
         },
+        attachFileToSendingChatThreadMessage: (state, action: { payload: { chatThreadMessageClientRef: string, attachedFile: SharedFile }}) => {
+            const { chatThreadMessageClientRef, attachedFile } = action.payload;
+
+            const updatedChatThreadMessages = state.chatThread.getMessages().map(chatThreadMessage => {
+                if (chatThreadMessage.getClientRef() === chatThreadMessageClientRef) {
+                    chatThreadMessage.setAttachedFile(attachedFile);
+                }
+
+                return chatThreadMessage;
+            });
+
+            const updatedChatThread = ChatThread.getShallowCopy(state.chatThread as ChatThread);
+            updatedChatThread.setMessages(updatedChatThreadMessages);
+
+            state.chatThread = updatedChatThread;
+        },
         registerSentChatThreadMessage: (state, action: { payload: ChatThreadMessage}) => {
             const registeredSentChatThreadMessage = action.payload;
 
@@ -358,6 +418,9 @@ export const ChatSlice = createSlice({
                     chatThreadMessage.setClientRef(null);
                     chatThreadMessage.setId(registeredSentChatThreadMessage.getId());
                     chatThreadMessage.setMessageTimestamp(registeredSentChatThreadMessage.getMessageTimestamp());
+                    
+                    chatThreadMessage.setIsAttachingFile(false);
+                    chatThreadMessage.setAttachedFile(registeredSentChatThreadMessage.getAttachedFile());   // attaching null or File with certainly set Timestamp!
                 }
 
                 return chatThreadMessage;
@@ -480,6 +543,7 @@ export const {
     setCurrentChatThreadMessagesListPage,
     setIsLoadingOlderMessages,
     appendChatThreadMessagesToList,
+    attachFileToSendingChatThreadMessage,
     registerSentChatThreadMessage,
     registerPolledActiveChatThread,
     setChatThreadMessageStatus,

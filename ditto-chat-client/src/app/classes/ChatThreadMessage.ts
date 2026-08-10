@@ -11,6 +11,7 @@ export default class ChatThreadMessage {
     private messageTimestamp: number;
     private isMessageReceived: boolean;
     private isMessageSeen: boolean;
+    private isAttachingFile: boolean;
 
     private constructor(
         clientRef: string | null,
@@ -21,7 +22,9 @@ export default class ChatThreadMessage {
         attachedFile: SharedFile | null,
         messageTimestamp: number,
         isMessageReceived: boolean,
-        isMessageSeen: boolean
+        isMessageSeen: boolean,
+        isAttachingFile: boolean
+
     ) {
         this.clientRef = clientRef;
         this.status = status;
@@ -32,6 +35,7 @@ export default class ChatThreadMessage {
         this.messageTimestamp = messageTimestamp;
         this.isMessageReceived = isMessageReceived;
         this.isMessageSeen = isMessageSeen;
+        this.isAttachingFile = isAttachingFile;
     }
 
     // called when mapping ChatThreadMessageDto received from the Server
@@ -45,7 +49,7 @@ export default class ChatThreadMessage {
         isMessageSeen: boolean
     ): ChatThreadMessage {
         return new ChatThreadMessage(
-            null, ChatThreadMessageStatus.CONFIRMED, id, messageSenderId, messageContent, attachedFile, messageTimestamp, isMessageReceived, isMessageSeen
+            null, ChatThreadMessageStatus.CONFIRMED, id, messageSenderId, messageContent, attachedFile, messageTimestamp, isMessageReceived, isMessageSeen, false
         );
     }
 
@@ -56,9 +60,10 @@ export default class ChatThreadMessage {
         messageContent: string,
         attachedFile: SharedFile | null,
         messageTimestamp: number,
+        isAttachingFile: boolean,
     ): ChatThreadMessage {
         return new ChatThreadMessage(
-            clientRef, ChatThreadMessageStatus.SENDING, null, messageSenderId, messageContent, attachedFile, messageTimestamp, false, true
+            clientRef, ChatThreadMessageStatus.SENDING, null, messageSenderId, messageContent, attachedFile, messageTimestamp, false, true, isAttachingFile
         );
     }
 
@@ -94,6 +99,14 @@ export default class ChatThreadMessage {
         return this.messageContent;
     }
 
+    public getAttachedFile(): SharedFile | null {
+        return this.attachedFile;
+    }
+
+    public setAttachedFile(attachedFile: SharedFile): void {
+        this.attachedFile = attachedFile;
+    }
+
     public getMessageTimestamp(): number {
         return this.messageTimestamp;
     }
@@ -112,5 +125,13 @@ export default class ChatThreadMessage {
 
     public setIsMessageSeen(isMessageSeen: boolean): void {
         this.isMessageSeen = isMessageSeen;
+    }
+
+    public getIsAttachingFile(): boolean {
+        return this.isAttachingFile;
+    }
+
+    public setIsAttachingFile(isAttachingFile: boolean): void {
+        this.isAttachingFile = isAttachingFile;
     }
 }

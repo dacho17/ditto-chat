@@ -14,6 +14,10 @@
 
 	border: none;
 	cursor: pointer;
+
+	&.in-chat-thread-message {
+		--button-size: 192px;
+	}
 }
 .shared-file-button-thumbnail {
 	display: flex;
@@ -30,6 +34,10 @@
 	.shared-file-button {
 		--button-size: 108px;
 		--border-radius: 16px;
+
+		&.in-chat-thread-message {
+			--button-size: 108px;
+		}
 	}
 }
 
@@ -37,5 +45,9 @@
 	.shared-file-button {
 		--button-size: 192px;
 		--border-radius: 16px;
+
+		&.in-chat-thread-message {
+			--button-size: 192px;
+		}
 	}
 }

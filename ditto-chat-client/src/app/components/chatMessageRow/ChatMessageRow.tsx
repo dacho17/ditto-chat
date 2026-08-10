@@ -1,4 +1,5 @@
 import { LuMessageCircleWarning } from "react-icons/lu";
+import SharedFileButton from "../sharedFileButton/SharedFileButton";
 import LoadingSpinner from "../loadingSpinner/LoadingSpinner";
 import TimeHelper from "../../helpers/TimeHelper";
 import ChatThreadMessage from "../../classes/ChatThreadMessage";
@@ -45,6 +46,26 @@ export default function ChatMessageRow(props: Props) {
         return `${localTimeOfDay} ${localCalendarDay}`;
     }
 
+    function getChatThreadMessageAttachedFileContent(): React.JSX.Element {
+        if (props.chatThreadMessage.getIsAttachingFile() === true) {
+            return <div className="chat-message-bubble-attached-file-container">
+                <div className="chat-message-bubble-attached-file-uploading-background">
+                    <LoadingSpinner />
+                </div>
+            </div>
+        } else if (props.chatThreadMessage.getAttachedFile() !== null) {
+            return <div className="chat-message-bubble-attached-file-container">
+                <SharedFileButton
+                    key={props.chatThreadMessage.getAttachedFile().getFileUrl()}
+                    sharedFile={props.chatThreadMessage.getAttachedFile()}
+                    isShownInChatThreadMessage={true}
+                />                        
+            </div>
+        } else {
+            return <></>
+        }
+    }
+
     const isChatMessageSent = props.chatThreadMessage.getIsMessageReceived() === false;
     const chatMessageSenderStyle = isChatMessageSent ? "message-sender" : "message-receiver";
     return <div className="chat-message-row margin-bottom-2">
@@ -70,6 +91,7 @@ export default function ChatMessageRow(props: Props) {
             }
             <div className={`chat-message-bubble ${chatMessageSenderStyle}`}>
                 <div className="chat-message-content bold-text">{props.chatThreadMessage.getMessageContent()}</div>
+                { getChatThreadMessageAttachedFileContent() }
             </div>
         </div>
         <span className={`chat-message-details ${chatMessageSenderStyle}`}>
