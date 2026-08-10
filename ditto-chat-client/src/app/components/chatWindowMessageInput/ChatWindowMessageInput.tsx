@@ -1,10 +1,9 @@
 import { IoAttachOutline, IoSendOutline } from "react-icons/io5";
-import { BsEmojiSmileUpsideDown } from "react-icons/bs";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { appendChatThreadMessagesToList, requestChatThreadMessageAttachedFileUploadUrl, sendChatThreadMessage, setCurrentChatMessageInput, updateLastSeenChatThreadMessage, uploadChatThreadMessageAttachedFileToS3 } from "../../store/ChatSlice";
 import useChatThreadIdParam from "../../hooks/UseChatParams";
 import UploadImageButton from "../uploadImageButton/UploadImageButton";
-import IconButton from "../iconButton/IconButton";
+import EmojiPopup from "../emojiPopup/EmojiPopup";
 import Validator from "../../helpers/Validator";
 import TimeHelper from "../../helpers/TimeHelper";
 import CryptoHelper from "../../helpers/CryptoHelper";
@@ -13,8 +12,8 @@ import ChatThreadMessage from "../../classes/ChatThreadMessage";
 import UploadFileIntent from "../../classes/UploadFileIntent";
 import SharedFile from "../../classes/SharedFile";
 import CONSTANTS from "../../../Constants";
-import "./ChatWindowMessageInput.css";
 import DummyAttachedFile from '../../../assets/david-chat-image.jpg';
+import "./ChatWindowMessageInput.css";
 
 const INPUT_PLACEHOLDER_VALUE = "Message";
 
@@ -100,10 +99,9 @@ export default function ChatWindowMessageInput() {
                 uploadFunction={trySendChatThreadMessageAttachedFile}
                 isCurrentlyUploading={false}
             />
-            <IconButton
-                icon={<BsEmojiSmileUpsideDown size={CONSTANTS.ICON_SIZE} />}
-                onClick={() => console.log("TODO-emoji")} 
-            />
+            <div>
+                <EmojiPopup />
+            </div>
         </div>
         <div className="chat-window-message-input-send-button-container">
             <button className="chat-window-message-input-send-button"

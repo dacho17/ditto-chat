@@ -1,0 +1,43 @@
+.emoji-popup {
+    position: relative;
+    
+    display: flex;
+}
+
+.emoji-popup-box {
+    position: absolute;
+    bottom: 40px;
+    right: -60px;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    align-items: flex-start;
+
+    box-sizing: border-box;
+    width: 200px;
+    height: 200px;
+    padding: 12px;
+    border-radius: 12px;
+
+    background-color: var(--side-menu-menu-color);
+
+    scrollbar-width: thin;
+    z-index: 2;
+
+    transition: opacity 0.3s ease-in-out;
+    &.open {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    &.closed {
+        visibility: hidden;
+        opacity: 0;
+    }
+}
+
+.emoji-icon {
+    font-size: 28px;	/* Used when Icon is an Emoji, which is encoded using Text. Emoji's size is determined by font-size */
+}
