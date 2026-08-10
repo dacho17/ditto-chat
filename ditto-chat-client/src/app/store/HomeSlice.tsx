@@ -20,7 +20,6 @@ interface HomeState {
     isFilterCurrentlyChanging: boolean;
     isLoadingOlderChatThreads: boolean;
     isLastChatThreadListPage: boolean;
-    isDropdownOpen: boolean;
 
     isActiveChatThreadPanelExpanded: boolean;
 }
@@ -32,7 +31,6 @@ const initialState: HomeState = {
     isFilterCurrentlyChanging: false,
     isLoadingOlderChatThreads: false,
     isLastChatThreadListPage: false,
-    isDropdownOpen: false,
 
     isActiveChatThreadPanelExpanded: false
 };
@@ -200,9 +198,6 @@ export const HomeSlice = createSlice({
         setIsLastChatThreadListPage: (state, action: { payload: boolean }) => {
             state.isLastChatThreadListPage = action.payload;
         },
-        setIsDropdownOpen: (state, action: { payload: boolean }) => {
-            state.isDropdownOpen = action.payload;
-        },
         setIsActiveChatThreadPanelExpanded: (state, action: { payload: boolean }) => {
             state.isActiveChatThreadPanelExpanded = action.payload;
         },
@@ -229,7 +224,6 @@ export const HomeSlice = createSlice({
             state.isFilterCurrentlyChanging = initialState.isFilterCurrentlyChanging;
             state.isLoadingOlderChatThreads = initialState.isLoadingOlderChatThreads;
             state.isLastChatThreadListPage = initialState.isLastChatThreadListPage;
-            state.isDropdownOpen = initialState.isDropdownOpen;
             state.isActiveChatThreadPanelExpanded = initialState.isActiveChatThreadPanelExpanded;
         }
     }
@@ -243,7 +237,6 @@ export const {
     setIsChatThreadsFilterCurrentlyChanging,
     setIsLoadingOlderChatThreads,
     setIsLastChatThreadListPage,
-    setIsDropdownOpen,
     setIsActiveChatThreadPanelExpanded,
     updateChatThreadOverviewFromList,
     clearHomeState

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { requestAccountImageUploadUrl, setIsChatterImageBeingUploaded, uploadAccountImageToS3 } from "../../store/AccountSlice";
-import { setIsLoadingChatterOverview } from "../../store/AuthSlice";
+import { setIsLoadingChatterOverview, setNewLoggedInChatterImageUrl } from "../../store/AuthSlice";
 import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
 import PageWithSideMenu from "../pageWithSideMenu/PageWithSideMenu";
 import PageWithBackHeader from "../pageWithBackHeader/PageWithBackHeader";
@@ -52,7 +52,7 @@ export default function AccountPage() {
                 { s3PreSignedUploadUrl: s3UploadUrlDto, fileContentStream: fileContentStream }
             )).unwrap();
             
-            // TODO-image-upload: set AuthSlice.chatterOverview.chatterImageUrl to the received URL (both in AuthSlice State and Browser Local Storage)
+            dispatch(setNewLoggedInChatterImageUrl({ newLoggedInChatterImageUrl: imageUrl })); // TODO-image-upload: set the URL on which the Image can be Retrived, ADditionally, consider moving this Call to the Slice 
         } catch (err) {
         } finally {
             dispatch(setIsChatterImageBeingUploaded(false));

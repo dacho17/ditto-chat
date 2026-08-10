@@ -49,11 +49,27 @@ export default class ChatterOverview {
         return this.chatterImageUrl;
     }
 
+    public setChatterImageUrl(chatterImageUrl: string): void {
+        this.chatterImageUrl = chatterImageUrl;
+    }
+
     public getIsChatterOnline(): boolean {
         return this.isChatterOnline;
     }
 
     public getChatThreadId(): string | null {
         return this.chatThreadId;
+    }
+
+    public static getShallowCopy(chatterOverview: ChatterOverview): ChatterOverview {
+        return new ChatterOverview(
+            chatterOverview.id,
+            chatterOverview.chatterName,
+            chatterOverview.chatterSurname,
+            chatterOverview.chatterUsername,
+            chatterOverview.chatterImageUrl,
+            chatterOverview.isChatterOnline,
+            chatterOverview.chatThreadId
+        );
     }
 }

@@ -11,12 +11,10 @@ import S3UploadFileResponseDto from "../interfaces/S3UploadFileResponseDto";
 
 interface AccountState {
     isChatterImageBeingUploaded: boolean;
-    imageBeingUploadedUrl: string | null;  // TODO-image-upload: or something similar. I need to be able to show Image before it is stored in S3 Bucket
 }
 
 const initialState: AccountState = {
     isChatterImageBeingUploaded: false,
-    imageBeingUploadedUrl: null
 };
 
 export const requestAccountImageUploadUrl = createAsyncThunk<S3PreSignedUrlDto, { uploadFileIntent: UploadFileIntent }, AyncThunkRejectType>(
@@ -37,13 +35,9 @@ export const uploadAccountImageToS3 = createAsyncThunk<S3UploadFileResponseDto, 
     "account/uploadAccountImageToS3",
     async ({ s3PreSignedUploadUrl, fileContentStream } , thunkAPI) => {
         try {
-            // const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
             const res = await AwsClient.getAwsClient().uploadFileToS3(s3PreSignedUploadUrl, fileContentStream);
             
             // TODO-toasting: likely, show success Message to the Client that they changed their Image
-            
-            // TODO-image-upload: set chatterOverview ImageUrl to the URL of the uploaded Image
-            // thunkAPI.dispatch(setChatterOverview())
 
             return thunkAPI.fulfillWithValue(res);
         } catch (err: any) {
@@ -62,11 +56,8 @@ export const AccountSlice = createSlice({
             state.isChatterImageBeingUploaded = action.payload;
         },
         clearAccountState: (state) => {
-            state.imageBeingUploadedUrl = null;
             state.isChatterImageBeingUploaded = false;
         }
-        // setChatterAccountImage: (state, action: { payload:  }) => {}
-            // NOTE: If I will need to Register Uploaded Image in the State, I can use this Reducer
     }
 });
 

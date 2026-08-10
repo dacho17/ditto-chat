@@ -3,6 +3,20 @@
     background-color: inherit;
 
     cursor: pointer;
+
+    &:disabled {
+        cursor: not-allowed;
+    }
+}
+
+.upload-image-button-loading-spinner-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+
+    width: 100%;
+    height: 100px;
 }
 
 .upload-image-button-text {

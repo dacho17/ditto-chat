@@ -34,10 +34,12 @@ export default function UploadImageButton(props: Props) {
     return <button
         className="upload-image-button"
         onClick={() => onClickOpenUploadFileWindow()}
-        disabled={props.isCurrentlyUploading}
+        disabled={props.isCurrentlyUploading === true}
     >
         { props.isCurrentlyUploading === true 
-            ? <LoadingSpinner />
+            ? <div className="upload-image-button-loading-spinner-container">
+                <LoadingSpinner />
+            </div>
             : getButtonContent()
         }
         <input

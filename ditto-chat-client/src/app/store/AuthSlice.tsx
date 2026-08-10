@@ -104,6 +104,14 @@ export const AuthSlice = createSlice({
 
             state.chatterOverview = chatterOverview;
         },
+        setNewLoggedInChatterImageUrl: (state, action: { payload: { newLoggedInChatterImageUrl: string }}) => {
+            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterImageUrl, action.payload.newLoggedInChatterImageUrl);
+
+            const updatedLoggedInChatter = ChatterOverview.getShallowCopy(state.chatterOverview as ChatterOverview);
+            updatedLoggedInChatter.setChatterImageUrl(action.payload.newLoggedInChatterImageUrl);
+
+            state.chatterOverview = updatedLoggedInChatter;
+        },
         clearAuthState: (state) => {            
             localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterId);
             localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterName);
@@ -123,5 +131,6 @@ export const {
     setIsLoadingChatterOverview,
     setChatterOverview,
     refreshChatterOverview,
+    setNewLoggedInChatterImageUrl,
     clearAuthState
 } = AuthSlice.actions;
