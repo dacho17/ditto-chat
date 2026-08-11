@@ -3,12 +3,14 @@ import ChatterOverviewInfo from "../chatterOverviewInfo/ChatterOverviewInfo";
 import ChatFeatureList from "../chatFeatureList/ChatFeatureList";
 import ChatWindowMessagesList from "../chatWindowMessagesList/ChatWindowMessagesList";
 import ChatWindowMessageInput from "../chatWindowMessageInput/ChatWindowMessageInput";
+import SharedFileOverlay from "../sharedFileOverlay/SharedFileOverlay";
 import LoadingSpinner from "../loadingSpinner/LoadingSpinner";
 import { ListType } from "../../enums/ListType";
 import "./ChatWindow.css";
 
 export default function ChatWindow() {
 	const { chatThread, isLoadingChatThread } = useAppSelector(state => state.chatSlice);
+	const { chatSharedFileInOverlay } = useAppSelector(state => state.chatSlice);
 
     return <div className="chat-window">
 		{isLoadingChatThread === true
@@ -30,7 +32,8 @@ export default function ChatWindow() {
 				<div className="chat-window-message-input-container">
 					<ChatWindowMessageInput />
 				</div>
-			</> 		
+				{ chatSharedFileInOverlay !== null && <SharedFileOverlay /> }
+			</>
 		}
 	</div>
 }

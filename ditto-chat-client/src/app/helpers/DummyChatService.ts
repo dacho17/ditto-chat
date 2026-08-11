@@ -1,7 +1,6 @@
 import TimeHelper from "./TimeHelper";
 import CryptoHelper from "./CryptoHelper";
 import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
-import SharedFile from "../classes/SharedFile";
 import ChatterOverviewDto from "../interfaces/ChatterOverviewDto";
 import ChatThreadMessageDto from "../interfaces/ChatThreadMessageDto";
 import SharedFileDto from "../interfaces/SharedFileDto";
@@ -9,6 +8,7 @@ import ChatterDto from "../interfaces/ChatterDto";
 import ChatThreadDto from "../interfaces/ChatThreadDto";
 import S3PreSignedUrlDto from "../interfaces/S3PreSignedUrlDto";
 import S3UploadFileResponseDto from "../interfaces/S3UploadFileResponseDto";
+import { SharedFileType } from "../enums/SharedFileType";
 import DittoConsultingLogo from '../../assets/ditto-consulting-logo.png';
 import ChatterIconImage from '../../assets/david-chat-image.jpg';
 
@@ -81,11 +81,13 @@ export default class DummyChatService {
 
         let attachedFile  = null;
         if (newChatThreadMessageForm.getAttachedFile() !== null) {
-            attachedFile = new SharedFile(
-                newChatThreadMessageForm.getAttachedFile().getFileName(),
-                ChatterIconImage,
-                TimeHelper.getCurrentTimestamp()
-            );
+            attachedFile = {
+                fileName: newChatThreadMessageForm.getAttachedFile().getFileName(),
+                fileType: newChatThreadMessageForm.getAttachedFile().getFileType(),
+                fileUrl: ChatterIconImage,
+                fileSharedAt: TimeHelper.getServerFormattedTimestamp(TimeHelper.getCurrentTimestamp()),
+                fileSharedByChatterId: this.dummyLoggedInChatter.id
+            } as SharedFileDto;
         }
 
         const registeredChatThreadMessage = {
@@ -276,12 +278,14 @@ export default class DummyChatService {
         } as ChatterOverviewDto;
     }
 
+    // fileSharedByChatterId is not set in this Function. It is set in generateDummyChatThreadMessages when Files are attached to the sent Messages and the sender is known
     private static generateDummySharedFiles(): SharedFileDto[] {
         const DUMMY_NUMBER_OF_GENERATED_SHARED_FILES = 24;
         return Array.from({ length: DUMMY_NUMBER_OF_GENERATED_SHARED_FILES }, (_, index) => {
             const fileIndex = index + 1;
             return {
                 fileName: `Shared File ${fileIndex}/${DUMMY_NUMBER_OF_GENERATED_SHARED_FILES}`,
+                fileType: index % 2 === 0 ? SharedFileType.PNG : SharedFileType.JPEG,
                 fileSharedAt: DummyChatService.getFileSharedAtDate(fileIndex),
                 fileUrl: index % 2 === 0 ? DittoConsultingLogo : ChatterIconImage
             } as SharedFileDto;
@@ -371,6 +375,10 @@ export default class DummyChatService {
             
             const attachedFile = index === 0
                 ? generatedDummySharedFiles[index] : null;
+            if (attachedFile !== null) {
+                attachedFile.fileSharedByChatterId = messageSenderChatterId;
+            }
+
             const messageIndex = index + 1;
             return {
                 id: `message-from-chatter-${messageSenderChatterId}-randomguid-${CryptoHelper.generateUuid()}`,

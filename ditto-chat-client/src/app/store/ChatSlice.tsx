@@ -30,6 +30,8 @@ interface ChatState {
     isLastChatMessagesListPage: boolean;
     isLoadingOlderMessages: boolean;
     currentChatMessageInput: string;
+
+    chatSharedFileInOverlay: SharedFile | null;
 }
 
 const initialState: ChatState = {
@@ -38,7 +40,9 @@ const initialState: ChatState = {
     currentChatMessagesListPage: 0,
     isLastChatMessagesListPage: false,
     isLoadingOlderMessages: false,
-    currentChatMessageInput: ""
+    currentChatMessageInput: "",
+
+    chatSharedFileInOverlay: null
 };
 
 function sortChatThreadMessages(chatThreadMessages: ChatThreadMessage[]): ChatThreadMessage[] {
@@ -525,6 +529,9 @@ export const ChatSlice = createSlice({
             state.currentChatMessagesListPage = initialState.currentChatMessagesListPage;
             state.isLastChatMessagesListPage = true;
         },
+        setChatSharedFileInOverlay: (state, action: { payload: SharedFile | null}) => {
+            state.chatSharedFileInOverlay = action.payload;
+        },
         clearChatState: (state) => {
             state.chatThread = initialState.chatThread;
             state.isLoadingChatThread = initialState.isLoadingChatThread;
@@ -532,6 +539,7 @@ export const ChatSlice = createSlice({
             state.isLastChatMessagesListPage = initialState.isLastChatMessagesListPage;
             state.isLoadingOlderMessages = initialState.isLoadingOlderMessages;
             state.currentChatMessageInput = initialState.currentChatMessageInput;
+            state.chatSharedFileInOverlay = initialState.chatSharedFileInOverlay;
         }
     }
 });
@@ -550,5 +558,6 @@ export const {
     updateSeenChatThreadMessages,
     setCurrentChatMessageInput,
     clearChatThreadMessages,
+    setChatSharedFileInOverlay,
     clearChatState
 } = ChatSlice.actions;

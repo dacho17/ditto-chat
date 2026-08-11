@@ -10,6 +10,7 @@ import UploadImageButton from "../../components/uploadImageButton/UploadImageBut
 import LoadingSpinner from "../../components/loadingSpinner/LoadingSpinner";
 import SliceHelper from "../../helpers/SliceHelper";
 import FileHelper from "../../helpers/FileHelper";
+import Mapper from "../../helpers/Mapper";
 import Validator from "../../helpers/Validator";
 import ChatterOverview from "../../classes/ChatterOverview";
 import UploadFileIntent from "../../classes/UploadFileIntent";
@@ -30,10 +31,18 @@ export default function AccountPage() {
         dispatch(setIsLoadingChatterOverview(false));
     }, []);
 
-    async function uploadChatterImage(fileMetadata: UploadFileIntent, fileContentStream: ReadableStream): Promise<void> {
-        if (Validator.validateUploadChatterImage(fileMetadata) === false) {
+    async function uploadChatterImage(fileName: string, inputFileType: string, fileSize: number, fileContentStream: ReadableStream): Promise<void> {
+        if (Validator.validateUploadAccountImageFileType(inputFileType) === false) {
+            console.log("TODO-toasting: Notify user that they are attepmting to upload unsupported File Type. Tell them what passes");
             return;
         }
+
+        if (Validator.validateSharedFileSize(fileSize) === false) {
+            console.log("TODO-toasting: Notify user that they are attepmting to upload File of size over 2 MBs.");
+            return;
+        }
+
+        const fileMetadata = new UploadFileIntent(fileName, Mapper.inputFileTypeToSharedFileType(inputFileType), fileSize);
 
         dispatch(setIsChatterImageBeingUploaded(true));
 
@@ -85,9 +94,7 @@ export default function AccountPage() {
                                     <UploadImageButton
                                         buttonText={CHANGE_IMAGE_TEXT}
                                         buttonIcon={null}
-                                        uploadFunction={(fileMetadata: UploadFileIntent, fileContentStream: ReadableStream) =>
-                                            uploadChatterImage(fileMetadata, fileContentStream)
-                                        }
+                                        uploadFunction={uploadChatterImage}
                                         isCurrentlyUploading={isChatterImageBeingUploaded}
                                     />
                                 </div>

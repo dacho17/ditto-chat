@@ -15,7 +15,8 @@ interface ChatterState {
     currentSharedFilesListPage: number;
     isLastSharedFilesListPage: boolean;
     isLoadingOlderSharedFiles: boolean;
-    isImageEnlarged: boolean;
+
+    chatterSharedFileInOverlay: SharedFile | null;
 }
 
 const initialState: ChatterState = {
@@ -24,7 +25,7 @@ const initialState: ChatterState = {
     currentSharedFilesListPage: 0,
     isLastSharedFilesListPage: false,
     isLoadingOlderSharedFiles: false,
-    isImageEnlarged: false
+    chatterSharedFileInOverlay: null
 };
 
 function mergeSharedFilePageToList(sharedFileList: SharedFile[], sharedFilesPage: SharedFile[]): SharedFile[] {
@@ -116,8 +117,8 @@ export const ChatterSlice = createSlice({
         setIsLastSharedFilesListPage: (state, action: { payload: boolean }) => {
             state.isLastSharedFilesListPage = action.payload;
         },
-        setIsImageEnlarged: (state, action: { payload: boolean }) => {
-            state.isImageEnlarged = action.payload;
+        setChatterSharedFileInOverlay: (state, action: { payload: SharedFile | null }) => {
+            state.chatterSharedFileInOverlay = action.payload;
         },
         clearChatterState: (state) => {
             state.chatter = initialState.chatter;
@@ -125,7 +126,7 @@ export const ChatterSlice = createSlice({
             state.currentSharedFilesListPage = initialState.currentSharedFilesListPage;
             state.isLastSharedFilesListPage = initialState.isLastSharedFilesListPage;
             state.isLoadingOlderSharedFiles = initialState.isLoadingOlderSharedFiles;
-            state.isImageEnlarged = initialState.isImageEnlarged;
+            state.chatterSharedFileInOverlay = initialState.chatterSharedFileInOverlay;
         }
     }
 });
@@ -137,6 +138,6 @@ export const {
     appendSharedFilesToList,
     setCurrentSharedFilesListPage,
     setIsLastSharedFilesListPage,
-    setIsImageEnlarged,
+    setChatterSharedFileInOverlay,
     clearChatterState
 } = ChatterSlice.actions;

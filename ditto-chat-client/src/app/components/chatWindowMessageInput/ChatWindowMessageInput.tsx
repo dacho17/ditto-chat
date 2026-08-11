@@ -7,6 +7,7 @@ import EmojiPopup from "../emojiPopup/EmojiPopup";
 import Validator from "../../helpers/Validator";
 import TimeHelper from "../../helpers/TimeHelper";
 import CryptoHelper from "../../helpers/CryptoHelper";
+import Mapper from "../../helpers/Mapper";
 import ChatThreadMessageForm from "../../classes/ChatThreadMessageForm";
 import ChatThreadMessage from "../../classes/ChatThreadMessage";
 import UploadFileIntent from "../../classes/UploadFileIntent";
@@ -46,10 +47,18 @@ export default function ChatWindowMessageInput() {
         } finally {}
     }
 
-    async function trySendChatThreadMessageAttachedFile(fileMetadata: UploadFileIntent, fileContentStream: ReadableStream): Promise<void> {
-        if (Validator.validateUploadChatThreadMessageAttachedFile(fileMetadata) === false) {
+    async function trySendChatThreadMessageAttachedFile(fileName: string, inputFileType: string, fileSize: number, fileContentStream: ReadableStream): Promise<void> {
+        if (Validator.validateUploadChatThreadMessageAttachedFileType(inputFileType) === false) {
+            console.log("TODO-toasting: Notify user that they are attepmting to upload unsupported File Type. Tell them what passes");
             return;
         }
+
+        if (Validator.validateSharedFileSize(fileSize) === false) {
+            console.log("TODO-toasting: Notify user that they are attepmting to upload File of size over 2 MBs.");
+            return;
+        }
+
+        const fileMetadata = new UploadFileIntent(fileName, Mapper.inputFileTypeToSharedFileType(inputFileType), fileSize);
 
         // Adding the chatThreadMessage early, to show indication of the File being uploaded!
         const chatThreadMessageWithAttachedFile = ChatThreadMessage.createNewChatThreadMessage(
@@ -67,7 +76,7 @@ export default function ChatWindowMessageInput() {
             )).unwrap();
 
             // TODO-attachment: set correct URL instead of dummy
-            const uploadedAttachedFile = new SharedFile(fileMetadata.getFileName(), DummyAttachedFile, null);
+            const uploadedAttachedFile = new SharedFile(fileMetadata.getFileName(), fileMetadata.getFileType(), DummyAttachedFile, null, chatterOverview.getId());
             // recreating the Form, based on the early created chatThreadMessage. Setting uploadedAttachedFile so that the UploadedFile gets related to the ChatThreadMessage
             const chatThreadMessageWithAttachedFileForm = new ChatThreadMessageForm(
                 chatThreadMessageWithAttachedFile.getMessageContent(), uploadedAttachedFile, chatThreadMessageWithAttachedFile.getClientRef(), false

@@ -25,6 +25,11 @@ const CONSTANTS = {
     CHAT_POLLING_INTERVAL_IN_MS: 10000,
     CONTENT_TYPE_STREAM: "application/octet-stream",
 
+    INPUT_FILE_TYPE_PDF: "application/pdf",
+    INPUT_FILE_TYPE_TEXT: "text/plain",
+    INPUT_FILE_TYPE_PNG: "image/png",
+    INPUT_FILE_TYPE_JPEG: "image/jpeg",
+
     SEARCH_FILTER_QUERY_PARAMETER: "searchFilter",
     PAGE_NUMBER_QUERY_PARAMETER: "pageNumber",
     IS_INITIAL_RETRIEVAL_QUERY_PARAMETER: "isInitialRetrieval",

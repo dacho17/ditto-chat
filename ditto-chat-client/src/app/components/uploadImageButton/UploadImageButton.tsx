@@ -1,14 +1,13 @@
 import { ChangeEvent, useRef } from "react";
 import IconContainer from "../iconContainer/IconContainer";
 import LoadingSpinner from "../loadingSpinner/LoadingSpinner";
-import UploadFileIntent from "../../classes/UploadFileIntent";
 import "./UploadImageButton.css";
 
 // Button is imagined to have either Text or Icon content
 interface Props {
     buttonText: string | null;
     buttonIcon: React.JSX.Element | null;
-    uploadFunction: (fileMetadata: UploadFileIntent, fileContentStream: ReadableStream) => Promise<void>;
+    uploadFunction: (fileName: string, inputFileType: string, fileSize: number, fileContentStream: ReadableStream) => Promise<void>;
     isCurrentlyUploading: boolean;
 }
 
@@ -60,8 +59,7 @@ export default function UploadImageButton(props: Props) {
                 const fileSize = uploadImageInput.current.files.item(0).size;
                 const fileContentStream = uploadImageInput.current.files.item(0).stream();
 
-                const selectedFileMetadata = new UploadFileIntent(fileName, fileType, fileSize);
-                props.uploadFunction(selectedFileMetadata, fileContentStream);
+                props.uploadFunction(fileName, fileType, fileSize, fileContentStream);
             }}
         />
     </button>

@@ -59,7 +59,7 @@ export default function ChatMessageRow(props: Props) {
                     key={props.chatThreadMessage.getAttachedFile().getFileUrl()}
                     sharedFile={props.chatThreadMessage.getAttachedFile()}
                     isShownInChatThreadMessage={true}
-                />                        
+                />
             </div>
         } else {
             return <></>

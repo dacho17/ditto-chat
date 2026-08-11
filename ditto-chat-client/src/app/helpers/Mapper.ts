@@ -11,6 +11,8 @@ import ChatThreadDto from "../interfaces/ChatThreadDto";
 import ChatThreadOverviewDto from "../interfaces/ChatThreadOverviewDto";
 import ChatThreadMessageDto from "../interfaces/ChatThreadMessageDto";
 import SharedFileDto from "../interfaces/SharedFileDto";
+import { SharedFileType } from "../enums/SharedFileType";
+import CONSTANTS from "../../Constants";
 
 
 export default class Mapper {
@@ -52,8 +54,10 @@ export default class Mapper {
     public static sharedFileFromDto(sharedFileDto: SharedFileDto): SharedFile {
         return new SharedFile(
             sharedFileDto.fileName,
+            sharedFileDto.fileType,
             sharedFileDto.fileUrl,
-            TimeHelper.dateStringToTimestamp(sharedFileDto.fileSharedAt)
+            TimeHelper.dateStringToTimestamp(sharedFileDto.fileSharedAt),
+            sharedFileDto.fileSharedByChatterId
         );
     }
 
@@ -75,6 +79,21 @@ export default class Mapper {
             loggedInChatterId !== chatThreadMessageDto.messageSenderId,
             chatThreadMessageDto.isMessageSeen
         );
+    }
+
+    public static inputFileTypeToSharedFileType(inputFileType: string): SharedFileType {
+        switch (inputFileType) {
+            case CONSTANTS.INPUT_FILE_TYPE_PNG:
+                return SharedFileType.PNG;
+            case CONSTANTS.INPUT_FILE_TYPE_JPEG:
+                return SharedFileType.JPEG;
+            case CONSTANTS.INPUT_FILE_TYPE_TEXT:
+                return SharedFileType.TXT;
+            case CONSTANTS.INPUT_FILE_TYPE_PDF:
+                return SharedFileType.PDF;
+            default:
+                throw new Error("Mapping should not be Called for invalid inputFileType!");
+        }
     }
 
     private static getValueOrNull<T>(candidate: T): T | null {

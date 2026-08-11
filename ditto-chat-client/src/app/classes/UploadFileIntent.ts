@@ -1,9 +1,11 @@
+import { SharedFileType } from "../enums/SharedFileType";
+
 export default class UploadFileIntent {
     private fileName: string;
-    private fileType: string;
+    private fileType: SharedFileType;
     private fileSize: number;
 
-    public constructor(fileName: string, fileType: string, fileSize: number) {
+    public constructor(fileName: string, fileType: SharedFileType, fileSize: number) {
         this.fileName = fileName;
         this.fileType = fileType;
         this.fileSize = fileSize;
@@ -13,7 +15,7 @@ export default class UploadFileIntent {
         return this.fileName;
     }
 
-    public getFileType(): string {
+    public getFileType(): SharedFileType {
         return this.fileType;
     }
 

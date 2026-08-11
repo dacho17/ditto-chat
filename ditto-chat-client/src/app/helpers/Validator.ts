@@ -1,30 +1,19 @@
-import UploadFileIntent from "../classes/UploadFileIntent";
+import CONSTANTS from "../../Constants";
 
 export default class Validator {
-    public static validateUploadChatThreadMessageAttachedFile(uploadFileIntent: UploadFileIntent): boolean {
-        const VALID_ATTACHED_FILE_TYPES = ["application/pdf", "text/plain", "image/png", "image/jpeg"];
-        return Validator.validateUploadFileIntent(uploadFileIntent, VALID_ATTACHED_FILE_TYPES);
+    public static validateUploadChatThreadMessageAttachedFileType(inputFileType: string): boolean {
+        const VALID_ATTACHED_FILE_TYPES = [CONSTANTS.INPUT_FILE_TYPE_PDF, CONSTANTS.INPUT_FILE_TYPE_TEXT, CONSTANTS.INPUT_FILE_TYPE_PNG, CONSTANTS.INPUT_FILE_TYPE_JPEG];
+        return VALID_ATTACHED_FILE_TYPES.includes(inputFileType);
     }
 
-    public static validateUploadChatterImage(uploadFileIntent: UploadFileIntent): boolean {
-        const VALID_ACCOUNT_IMAGE_FILE_TYPES = ["image/png", "image/jpeg"];
-        return Validator.validateUploadFileIntent(uploadFileIntent, VALID_ACCOUNT_IMAGE_FILE_TYPES);
+    public static validateUploadAccountImageFileType(inputFileType: string): boolean {
+        const VALID_ACCOUNT_IMAGE_FILE_TYPES = [CONSTANTS.INPUT_FILE_TYPE_PNG, CONSTANTS.INPUT_FILE_TYPE_JPEG];
+        return VALID_ACCOUNT_IMAGE_FILE_TYPES.includes(inputFileType);
     }
 
-    private static validateUploadFileIntent(uploadFileIntent: UploadFileIntent, validFileTypes: string[]): boolean {        
+    public static validateSharedFileSize(fileSizeInBytes: number): boolean {
         const MAXIMUM_ACCOUNT_IMAGE_FILE_SIZE_IN_BYTES = 2097152; // Number of Bytes in 2 MB
-
-        const fileType = uploadFileIntent.getFileType();
-        if (validFileTypes.includes(fileType) === false) {
-            console.log("TODO-toasting: Notify user that they are attepmting to upload unsupported File Type. Tell them what passes");
-            return false;
-        }
-
-        if (MAXIMUM_ACCOUNT_IMAGE_FILE_SIZE_IN_BYTES < uploadFileIntent.getFileSize()) {
-            console.log("TODO-toasting: Notify user that they are attepmting to upload File of size over 2 MBs.");
-            return false;
-        }
-
-        return true;
+        return MAXIMUM_ACCOUNT_IMAGE_FILE_SIZE_IN_BYTES >= fileSizeInBytes;
     }
 }
+

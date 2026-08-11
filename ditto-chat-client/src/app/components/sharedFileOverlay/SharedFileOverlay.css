@@ -1,0 +1,115 @@
+.shared-file-overlay {
+    --shared-file-overlay-file-image-container-size: 400px;
+    --shared-file-overlay-header-height: 10%;
+    --shared-file-overlay-file-container-height: 90%;
+    
+    --shared-file-overlay-header-sender-info-width: 70%;
+    --shared-file-overlay-header-options-width: 30%;
+    
+    --shared-file-overlay-header-sender-icon-width: 10%;
+    --shared-file-overlay-header-sender-details-width: 90%;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    height: 100dvh;
+    width: 100dvw;
+
+    background-color: var(--side-menu-menu-color);
+
+    z-index: 4;
+}
+
+.shared-file-overlay-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+
+    width: 100%;
+    height: 100%;
+}
+
+.shared-file-overlay-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--shared-file-overlay-header-height);
+    padding-left: 3%;
+    padding-right: 3%;
+}
+.shared-file-overlay-header-sender-info {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+
+    width: var(--shared-file-overlay-header-sender-info-width);
+}
+.shared-file-overlay-header-sender-icon {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: var(--shared-file-overlay-header-sender-icon-width);
+}
+.shared-file-overlay-header-sender-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    box-sizing: border-box;
+    width: var(--shared-file-overlay-header-sender-details-width);
+    height: 40px;
+}
+
+.shared-file-overlay-header-options {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+
+    width: var(--shared-file-overlay-header-options-width);
+}
+.shared-file-overlay-download-anchor {
+    display: none;
+}
+
+.shared-file-overlay-file-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    width: 100%;
+    height: var(--shared-file-overlay-file-container-height);
+}
+.shared-file-overlay-file-image-container {
+    width: var(--shared-file-overlay-file-image-container-size);
+}
+.shared-file-overlay-file-image {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+}
+
+@media (max-width: 720px) {
+    .shared-file-overlay {
+        --shared-file-overlay-file-image-container-size: 200px;
+        --shared-file-overlay-header-sender-icon-width: 30%;
+        --shared-file-overlay-header-sender-details-width: 70%;
+    }
+}

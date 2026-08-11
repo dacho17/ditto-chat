@@ -3,13 +3,15 @@ import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import useChatterId from "../../hooks/UseChatterId";
 import LoadingSpinner from "../loadingSpinner/LoadingSpinner";
 import SharedFileButton from "../sharedFileButton/SharedFileButton";
+import SharedFileOverlay from "../sharedFileOverlay/SharedFileOverlay";
 import ShowMoreButton from "../showMoreButton/ShowMoreButton";
 import "./SharedFilesList.css";
 
 const SHARED_FILES_TITLE = "Shared Files";
 
 export default function SharedFilesList() {
-    const { chatter, currentSharedFilesListPage, isLastSharedFilesListPage, isLoadingOlderSharedFiles } = useAppSelector(state => state.chatterSlice);
+    const { chatter, currentSharedFilesListPage, isLastSharedFilesListPage, isLoadingOlderSharedFiles, chatterSharedFileInOverlay }
+        = useAppSelector(state => state.chatterSlice);
     const dispatch = useAppDispatch();
     const chatterId = useChatterId();
 
@@ -49,6 +51,7 @@ export default function SharedFilesList() {
                         </div>
                     </>
                 })}
+                { chatterSharedFileInOverlay !== null && <SharedFileOverlay />}
             </div>
             { isLastSharedFilesListPage === false
                 ? isLoadingOlderSharedFiles === true
