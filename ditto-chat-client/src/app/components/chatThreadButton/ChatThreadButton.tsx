@@ -42,6 +42,7 @@ export default function ChatThreadButton(props: Props) {
                 chatterFullName={props.chatThreadOverview.getChatterOverview().getChatterFullName()}
                 chatterImageUrl={props.chatThreadOverview.getChatterOverview().getChatterImageUrl()}
                 isOnline={props.chatThreadOverview.getChatterOverview().getIsChatterOnline()}
+                isShownAsAccountImage={false}
             />
         </div>
         <div className="chat-thread-button-summary">

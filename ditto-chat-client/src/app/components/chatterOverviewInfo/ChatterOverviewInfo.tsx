@@ -16,6 +16,7 @@ export default function ChatterOverviewInfo(props: Props) {
                 chatterFullName={props.chatterOverview.getChatterFullName()}
                 chatterImageUrl={props.chatterOverview.getChatterImageUrl()}
                 isOnline={props.chatterOverview.getIsChatterOnline()}
+                isShownAsAccountImage={false}
             />
         </div>
         <div className="chatter-overview-info-chatter-summary">

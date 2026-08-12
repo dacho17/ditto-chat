@@ -84,6 +84,7 @@ export default function SharedFileOverlay() {
                             chatterFullName={sharedFileOverlayInfo.sharedFileSender.getChatterFullName()}
                             chatterImageUrl={sharedFileOverlayInfo.sharedFileSender.getChatterImageUrl()}
                             isOnline={sharedFileOverlayInfo.sharedFileSender.getIsChatterOnline()}
+                            isShownAsAccountImage={false}
                         />
                     </div>
                     <div className="shared-file-overlay-header-sender-details">

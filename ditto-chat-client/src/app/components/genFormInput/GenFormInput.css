@@ -1,0 +1,99 @@
+.gen-form-input {
+    --gen-form-input-border-radius: 5px;
+    --gen-form-input-error-msg-height: 40px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+
+    width: 100%;
+    min-width: 150px;
+}
+
+.gen-form-input-content {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+
+    box-sizing: border-box;
+    width: 100%;
+    padding-left: 4%;
+    padding-right: 4%;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    height: 60px;
+
+    background-color: var(--dark-panel-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--gen-form-input-border-radius);
+    color: var(--text-main);
+
+    -webkit-transition: border 0.6s;
+    -moz-transition: border 0.6s;
+    -ms-transition: border 0.6s;
+    -o-transition: border 0.6s;
+    transition: border 0.6s;
+
+    &.invalid-input {
+        border: 1px solid var(--alert-red);
+        color: var(--alert-red);
+    }
+
+    &:not(.invalid-input) {
+        margin-bottom: var(--gen-form-input-error-msg-height);
+    }
+
+    &:disabled {
+        background-color: var(--input-background);
+    }
+}
+
+.gen-form-input-value {
+    width: 100%;
+    height: 100%;
+
+    border: none;
+    font-size: var(--bold-font-size);
+    color: var(--text-main);
+    background-color: inherit;
+    
+    outline: none;
+}
+.gen-form-input-placeholder {
+    position: absolute;
+    top: 33%;
+
+    padding-left: 0px;
+    font-size: var(--bold-font-size);
+    color: var(--text-faded);
+
+    -webkit-transition: 0.6s;
+    -moz-transition: 0.6s;
+    -ms-transition: 0.6s;
+    -o-transition: 0.6s;
+    transition: 0.6s;
+
+    cursor: text;
+}
+.gen-form-input-value:focus ~ .gen-form-input-placeholder,
+.gen-form-input-value:not([value=""]) ~ .gen-form-input-placeholder {
+    top: 10%;
+
+    padding-left: 2px;
+
+    font-size: 12px;
+    cursor: default;
+}
+
+.gen-form-input-error-msg {
+    box-sizing: border-box;
+    height: var(--gen-form-input-error-msg-height);
+    padding-top: 5px;
+
+    color: var(--alert-red);
+    font-size: var(--regular-font-size);
+}

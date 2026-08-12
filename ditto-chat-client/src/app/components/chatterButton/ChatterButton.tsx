@@ -20,6 +20,7 @@ export default function ChatterButton(props: Props) {
                 chatterFullName={props.chatterOverview.getChatterFullName()}
                 chatterImageUrl={props.chatterOverview.getChatterImageUrl()}
                 isOnline={props.chatterOverview.getIsChatterOnline()}
+                isShownAsAccountImage={false}
             />
         </div>
         <div className="chatter-button-summary">

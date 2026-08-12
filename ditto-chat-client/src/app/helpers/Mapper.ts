@@ -22,6 +22,7 @@ export default class Mapper {
             chatterOverviewDto.chatterName,
             chatterOverviewDto.chatterSurname,
             chatterOverviewDto.chatterUsername,
+            chatterOverviewDto.chatterEmail,
             chatterOverviewDto.chatterImageUrl,
             chatterOverviewDto.isChatterOnline,
             Mapper.getValueOrNull(chatterOverviewDto.chatThreadId)

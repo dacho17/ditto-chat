@@ -1,0 +1,96 @@
+.authentication-page {
+    --authentication-page-header-height: 10%;
+    --authentication-page-content-height: 90%;
+    --authentication-page-header-ditto-chat-container-width: 70%;
+    --authentication-page-header-options-container-width: 30%;
+
+    --authentication-page-header-contact-us-button-container-width: 200px;
+    --authentication-page-content-padding-top: 60px;
+    --horizontal-padding: 6%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+
+    box-sizing: border-box;
+    width: 100dvw;
+    height: 100dvh;
+
+    background-color: var(--dark-background);
+}
+
+.authentication-page-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--authentication-page-header-height);
+	padding-left: var(--horizontal-padding);
+	padding-right: var(--horizontal-padding);
+    border-bottom: var(--divider-border-style);
+}
+.authentication-page-header-ditto-chat-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: var(--authentication-page-header-ditto-chat-container-width);
+    height: 100%;
+}
+
+.authentication-page-header-options-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: var(--authentication-page-header-options-container-width);
+    height: 100%;
+}
+.authentication-page-header-contact-us-button-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: var(--authentication-page-header-contact-us-button-container-width);
+    height: 100%;
+}
+
+.authentication-page-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--authentication-page-content-height);
+    padding-top: var(--authentication-page-content-padding-top);
+	padding-left: var(--horizontal-padding);
+	padding-right: var(--horizontal-padding);
+}
+.authentication-page-content-loading-spinner-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+
+    box-sizing: content-box;
+    width: 200px;
+    height: 200px;
+}
+
+@media (max-width: 720px) {
+    .authentication-page {
+        --authentication-page-header-contact-us-button-container-width: 120px;
+        --authentication-page-content-padding-top: 0px;
+    }
+}

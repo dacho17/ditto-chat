@@ -6,6 +6,8 @@ import UploadFileIntent from "../classes/UploadFileIntent";
 import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
 import ChatterRegistrationForm from "../classes/ChatterRegistrationForm";
 import LoginForm from "../classes/LoginForm";
+import ForgotPasswordForm from "../classes/ForgotPasswordForm";
+import ResetPasswordForm from "../classes/ResetPasswordForm";
 import PagedListDto from "../interfaces/PagedListDto";
 import LoginDto from "../interfaces/LoginDto";
 import ChatterOverviewDto from "../interfaces/ChatterOverviewDto";
@@ -40,7 +42,7 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
         return DummyChatClient.dummyChatClientSingletonReference;
     }
 
-    public async getRegister(): ChatServerResponse<void> {
+    public async getRegister(): ChatServerResponse<{ redirectUrl: string } | null> {
         console.log(`Received getRegister Request.`);
         console.log(`Responding with null`);
         return Promise.resolve({ 
@@ -51,6 +53,8 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
 
     public async register(registrationForm: ChatterRegistrationForm): ChatServerResponse<{ redirectUrl: string; }> {
         console.log(`Received register Request with registrationForm=${JSON.stringify(registrationForm)}.`);
+
+        this.dummyChatService.addNewDummyChatter(registrationForm);
         console.log(`Responding with message and RedirectUrl to Login Page`);
         return Promise.resolve({ 
             message: DUMMY_ACCOUNT_REGISTRATION_SUCCESS_MESSAGE,
@@ -60,7 +64,7 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
         });
     }
 
-    public async getLogin(): ChatServerResponse<void> {
+    public async getLogin(): ChatServerResponse<{ redirectUrl: string } | null> {
         console.log(`Received getLogin Request.`);
         console.log(`Responding with null`);
         return Promise.resolve({ 
@@ -79,6 +83,44 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
             data: {
                 chatterOverview: dummyLoggedInChatter,
                 redirectUrl: CONSTANTS.HOME_URL
+            }
+        });
+    }
+
+    public async getForgotPasswordPage(): ChatServerResponse<{ redirectUrl: string } | null> {
+        console.log(`Received getForgotPasswordPage Request.`);
+        console.log(`Responding with null`);
+        return Promise.resolve({ 
+            message: null,
+            data: null
+        });
+    }
+
+    public async forgotPassword(forgotPasswordForm: ForgotPasswordForm): ChatServerResponse<{ redirectUrl: string } | null> {
+        console.log(`Received forgotPassword Request with forgotPasswordForm=${JSON.stringify(forgotPasswordForm)}.`);
+        console.log(`Responding with null`);
+        return Promise.resolve({ 
+            message: null,
+            data: null
+        });
+    }
+
+    public async getResetPasswordPage(): ChatServerResponse<{ redirectUrl: string; } | null> {
+        console.log(`Received getResetPasswordPage Request.`);
+        console.log(`Responding with null`);
+        return Promise.resolve({ 
+            message: null,
+            data: null
+        });
+    }
+
+    public async resetPassword(passwordResetToken: string, resetPasswordForm: ResetPasswordForm): ChatServerResponse<{ redirectUrl: string }> {
+        console.log(`Received resetPassword Request with passwordResetToken=${passwordResetToken} and resetPasswordForm=${JSON.stringify(resetPasswordForm)}.`);
+        console.log(`Responding with null`);
+        return Promise.resolve({ 
+            message: null,
+            data: {
+                redirectUrl: CONSTANTS.LOGIN_URL
             }
         });
     }

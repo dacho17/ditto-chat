@@ -1,5 +1,7 @@
 import ChatterRegistrationForm from "../classes/ChatterRegistrationForm";
 import LoginForm from "../classes/LoginForm";
+import ForgotPasswordForm from "../classes/ForgotPasswordForm";
+import ResetPasswordForm from "../classes/ResetPasswordForm";
 import UploadFileIntent from "../classes/UploadFileIntent";
 import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
 import ChatterDto from "../interfaces/ChatterDto";
@@ -25,10 +27,14 @@ export type ChatServerResponseErrorBody = ChatServerResponseBody<{
 export type ChatServerResponse<T> = Promise<ChatServerResponseBody<T>>;
 
 export default interface ChatClientInterface {
-    getRegister(): ChatServerResponse<void>;
+    getRegister(): ChatServerResponse<{ redirectUrl: string } | null>;
     register(registrationForm: ChatterRegistrationForm): ChatServerResponse<{ redirectUrl: string }>;
-    getLogin(): ChatServerResponse<void>;
+    getLogin(): ChatServerResponse<{ redirectUrl: string } | null>;
     login(loginForm: LoginForm): ChatServerResponse<LoginDto>;
+    getForgotPasswordPage(): ChatServerResponse<{ redirectUrl: string } | null>;
+    forgotPassword(forgotPasswordForm: ForgotPasswordForm): ChatServerResponse<{ redirectUrl: string } | null>;
+    getResetPasswordPage(): ChatServerResponse<{ redirectUrl: string } | null>;
+    resetPassword(passwordResetToken: string, resetPasswordForm: ResetPasswordForm): ChatServerResponse<{ redirectUrl: string }>;
     logout(): ChatServerResponse<{ redirectUrl: string }>;
 
     getChatThreads(queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatThreadOverviewDto>>;

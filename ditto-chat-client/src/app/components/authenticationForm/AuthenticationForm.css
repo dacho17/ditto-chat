@@ -1,0 +1,171 @@
+.authentication-form {
+    --form-border-radius: 12px;
+    --authentication-form-title-font-size: 30px;
+    --authentication-form-min-width: 400px;
+    --authentication-form-input-item-min-width: 250px;
+
+    --authentication-form-title-height: 15%;
+    --authentication-form-content-height: 85%;
+    --authentication-form-input-groups-container-height: 90%;
+    --authentication-form-submit-button-row-height: 5%;
+    --authentication-form-links-container-height: 5%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+
+    box-sizing: border-box;
+    min-width: var(--authentication-form-min-width);
+    min-height: 600px;
+    height: 90%;    /* on non-mobile Pages form is in the card whose length should be shorter than the screen size */
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-left: 30px;
+    padding-right: 30px;
+
+    border-radius: var(--form-border-radius);
+    background-color: var(--dark-panel-color);
+}
+
+.authentication-form-title {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+
+    width: 100%;
+    height: var(--authentication-form-title-height);
+
+    font-size: var(--authentication-form-title-font-size);
+    font-weight: 900;
+    color: var(--text-main);
+}
+
+.authentication-form-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--authentication-form-content-height);
+    padding-top: 20px;
+}
+
+.authentication-form-input-groups-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+
+    box-sizing: border-box;
+    width: 100%;
+    max-height: var(--authentication-form-input-groups-container-height);
+}
+.authentication-form-submit-button-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--authentication-form-submit-button-row-height);
+}
+.authentication-form-submit-button-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 50%;
+    height: 100%;
+}
+.authentication-form-links-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--authentication-form-links-container-height);
+    padding-top: 30px;
+}
+
+.authentication-form-input-group {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: flex-start;
+
+    box-sizing: border-box;
+    width: 100%;
+}
+.authentication-form-input-item {
+    box-sizing: border-box;
+    min-width: var(--authentication-form-input-item-min-width);
+
+    &.full-row-input-item {
+        width: 100%;
+    }
+
+    &.half-row-input-item {
+        width: 50%;
+
+        &.left-item {
+            padding-right: 10px;
+        }
+
+        &.right-item {
+            padding-left: 10px;
+        }
+    }
+}
+
+.authentication-form-link {
+    color: var(--ditto-pink);
+    font-size: var(--bold-font-size);
+    font-weight: 900;
+    text-decoration: underline;
+}
+
+@media (max-width: 720px) {
+    .authentication-form {
+        --authentication-form-min-width: 300px;
+        --authentication-form-title-font-size: 24px;
+        
+        box-sizing: border-box;
+        width: 100%;
+        padding-top: 20px;
+        padding-bottom: 20px;
+        padding-left: 5%;
+        padding-right: 5%;
+        border-radius: 0px;
+
+        background-color: inherit;
+    }
+
+    .authentication-form-input-group {
+        flex-direction: column;
+
+        width: 100%;
+    }
+
+    .authentication-form-input-item {
+        &.half-row-input-item {
+            width: 100%;
+    
+            &.left-item {
+                padding-right: 0px;
+            }
+
+            &.right-item {
+                padding-left: 0px;
+            }
+        }
+    }
+}

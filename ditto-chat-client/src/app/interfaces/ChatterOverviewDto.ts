@@ -3,7 +3,8 @@ export default interface ChatterOverviewDto {
     chatterName: string;
     chatterSurname: string;
     chatterUsername: string;
-    chatterImageUrl: string;
+    chatterEmail: string;
+    chatterImageUrl: string | null;
     isChatterOnline: boolean;
     chatThreadId: string | null;
 }

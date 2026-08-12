@@ -1,20 +1,44 @@
 .chatter-icon {
+	--online-status-indicator-background-size: 16px; 
+	--online-status-indicator-size: 10px;
+
 	position: relative;		/* enables positioning child element relative to parent using absolute positioning! */
 
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
+
+	&.account-image {
+		--online-status-indicator-background-size: 48px;
+		--online-status-indicator-size: 40px;
+	}
 }
 .chatter-icon-image {
+	--chatter-icon-size: 35px;
+	--default-chatter-icon-image-font-size: 24px;
+
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
 
-	width: 35px;
-	height: 35px;
-	border-radius: 35px;
+    box-sizing: border-box;
+	width: var(--chatter-icon-size);
+	height: var(--chatter-icon-size);
+	border-radius: var(--chatter-icon-size);
+
+	&.default-image {
+		background-color: var(--ditto-purple);
+		color: var(--ditto-pink);
+		font-size: var(--default-chatter-icon-image-font-size);
+		font-weight: 900;
+	}
+
+	&.account-image {
+		--chatter-icon-size: 144px;
+		--default-chatter-icon-image-font-size: 98px;
+	}
 }
 
 .online-status-indicator-background {
@@ -22,9 +46,9 @@
     bottom: -3px; /* Adjust vertical position */
     right: -3px; /* Adjust horizontal position */
 
-	width: 16px;
-	height: 16px;
-	border-radius: 16px;
+	width: var(--online-status-indicator-background-size);
+	height: var(--online-status-indicator-background-size);
+	border-radius: var(--online-status-indicator-background-size);
 	background-color: var(--dark-panel-color);
 
 	z-index: 2;
@@ -35,9 +59,9 @@
     bottom: 0px; /* Adjust vertical position */
     right: 0px; /* Adjust horizontal position */
 
-	width: 10px;
-	height: 10px;
-	border-radius: 10px;
+	width: var(--online-status-indicator-size);
+	height: var(--online-status-indicator-size);
+	border-radius: var(--online-status-indicator-size);
 
 	z-index: 3;
 
@@ -47,5 +71,20 @@
 
 	&.offline {
 		background-color: var(--ditto-pink);
+	}
+}
+
+@media (min-width: 721px) and (max-width: 1024px) {
+	.chatter-icon {
+		&.account-image {
+			--online-status-indicator-background-size: 64px;
+			--online-status-indicator-size: 56px;
+		}
+	}
+
+	.chatter-icon-image {
+		&.account-image {
+			--chatter-icon-size: 192px;
+		}
 	}
 }

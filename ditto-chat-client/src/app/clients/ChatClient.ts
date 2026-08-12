@@ -4,6 +4,8 @@ import DummyChatClient from "./DummyChatClient";
 import ViteHelper from "../helpers/ViteHelper";
 import ChatterRegistrationForm from "../classes/ChatterRegistrationForm";
 import LoginForm from "../classes/LoginForm";
+import ForgotPasswordForm from "../classes/ForgotPasswordForm";
+import ResetPasswordForm from "../classes/ResetPasswordForm";
 import UploadFileIntent from "../classes/UploadFileIntent";
 import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
 import PagedListDto from "../interfaces/PagedListDto";
@@ -38,8 +40,8 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
         }
     }
 
-    public async getRegister(): ChatServerResponse<void> {
-        const axiosResponse = await this.sendGetRequest<ChatServerResponse<void>>(
+    public async getRegister(): ChatServerResponse<{ redirectUrl: string } | null> {
+        const axiosResponse = await this.sendGetRequest<ChatServerResponse<{ redirectUrl: string } | null>>(
             `${CONSTANTS.REGISTER_URL}`
         );
         return axiosResponse.data;
@@ -53,17 +55,47 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
         return axiosResponse.data;
     }
 
-    public async getLogin(): ChatServerResponse<void> {
-        const axiosResponse = await this.sendGetRequest<ChatServerResponse<void>>(
+    public async getLogin(): ChatServerResponse<{ redirectUrl: string } | null> {
+        const axiosResponse = await this.sendGetRequest<ChatServerResponse<{ redirectUrl: string } | null>>(
             `${CONSTANTS.LOGIN_URL}`
         );
-        return axiosResponse.data;        
+        return axiosResponse.data;
     }
 
     public async login(loginForm: LoginForm): ChatServerResponse<LoginDto> {
         const axiosResponse = await this.sendPostRequest<ChatServerResponse<LoginDto>>(
             `${CONSTANTS.LOGIN_URL}`,
             loginForm
+        );
+        return axiosResponse.data;
+    }
+
+    public async getForgotPasswordPage(): ChatServerResponse<{ redirectUrl: string } | null> {
+        const axiosResponse = await this.sendGetRequest<ChatServerResponse<{ redirectUrl: string } | null>>(
+            `${CONSTANTS.FORGOT_PASSWORD_URL}`
+        );
+        return axiosResponse.data;
+    }
+
+    public async forgotPassword(forgotPasswordForm: ForgotPasswordForm): ChatServerResponse<{ redirectUrl: string } | null> {
+        const axiosResponse = await this.sendPostRequest<ChatServerResponse<{ redirectUrl: string } | null>>(
+            `${CONSTANTS.FORGOT_PASSWORD_URL}`,
+            forgotPasswordForm
+        );
+        return axiosResponse.data;
+    }
+
+    public async getResetPasswordPage(): ChatServerResponse<{ redirectUrl: string; } | null> {
+        const axiosResponse = await this.sendGetRequest<ChatServerResponse<{ redirectUrl: string } | null>>(
+            `${CONSTANTS.RESET_PASSWORD_URL}`
+        );
+        return axiosResponse.data;
+    }
+
+    public async resetPassword(passwordResetToken: string, resetPasswordForm: ResetPasswordForm): ChatServerResponse<{ redirectUrl: string }> {
+        const axiosResponse = await this.sendPostRequest<ChatServerResponse<{ redirectUrl: string }>>(
+            `${CONSTANTS.RESET_PASSWORD_URL}/${passwordResetToken}`,
+            resetPasswordForm
         );
         return axiosResponse.data;
     }

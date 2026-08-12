@@ -3,7 +3,8 @@ export default class ChatterOverview {
     private chatterName: string;
     private chatterSurname: string;
     private chatterUsername: string;
-    private chatterImageUrl: string;
+    private chatterEmail: string;
+    private chatterImageUrl: string | null;
     private isChatterOnline: boolean;
     private chatThreadId: string | null;
 
@@ -12,7 +13,8 @@ export default class ChatterOverview {
         chatterName: string,
         chatterSurname: string,
         chatterUsername: string,
-        chatterImageUrl: string,
+        chatterEmail: string,
+        chatterImageUrl: string | null,
         isChatterOnline: boolean,
         chatThreadId: string | null
     ) {
@@ -20,6 +22,7 @@ export default class ChatterOverview {
         this.chatterName = chatterName;
         this.chatterSurname = chatterSurname;
         this.chatterUsername = chatterUsername;
+        this.chatterEmail = chatterEmail;
         this.chatterImageUrl = chatterImageUrl;
         this.isChatterOnline = isChatterOnline;
         this.chatThreadId = chatThreadId;
@@ -45,7 +48,11 @@ export default class ChatterOverview {
         return this.chatterUsername;
     }
 
-    public getChatterImageUrl(): string {
+    public getChatterEmail(): string {
+        return this.chatterEmail;
+    }
+
+    public getChatterImageUrl(): string | null{
         return this.chatterImageUrl;
     }
 
@@ -67,6 +74,7 @@ export default class ChatterOverview {
             chatterOverview.chatterName,
             chatterOverview.chatterSurname,
             chatterOverview.chatterUsername,
+            chatterOverview.chatterEmail,
             chatterOverview.chatterImageUrl,
             chatterOverview.isChatterOnline,
             chatterOverview.chatThreadId

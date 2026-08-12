@@ -18,4 +18,24 @@ export default class ChatterRegistrationForm {
         this.email = email;
         this.password = password;
     }
+
+    public getName(): string {
+        return this.name;
+    }
+
+    public getSurname(): string {
+        return this.surname;
+    }
+
+    public getUsername(): string {
+        return this.username;
+    }
+
+    public getEmail(): string {
+        return this.email;
+    }
+
+    public getPassword(): string {
+        return this.password;
+    }
 }

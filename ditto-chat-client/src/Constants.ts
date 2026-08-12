@@ -1,10 +1,13 @@
 const CONSTANTS = {
+    COMPANY_URL: "https://ditto-consulting.com",
     APPLICATION_NAME: "DittoChat",
 
     ROOT_URL: "/",
     REGISTER_URL: "/register",
     LOGIN_URL: "/login",
     LOGOUT_URL: "/logout",
+    FORGOT_PASSWORD_URL: "/forgot-password",
+    RESET_PASSWORD_URL: "/reset-password",
     HOME_URL: "/home",
     CHATS_URL: "/chats",
     CHATTERS_URL: "/chatters",
@@ -34,6 +37,19 @@ const CONSTANTS = {
     PAGE_NUMBER_QUERY_PARAMETER: "pageNumber",
     IS_INITIAL_RETRIEVAL_QUERY_PARAMETER: "isInitialRetrieval",
     IS_POLLING_QUERY_PARAMTER: "isPolling",
+    PASSWORD_RESET_TOKEN_QUERY_PARAMETER: "passwordResetToken",
+
+    INVALID_NAME_INPUT_CLIENT_MESSAGE: "Name must be at least 2 characters long",
+    INVALID_SURNAME_INPUT_CLIENT_MESSAGE: "Surname must be at least 2 characters long",
+    INVALID_USERNAME_INPUT_CLIENT_MESSAGE: "Username must be at least 6 characters long",
+    INVALID_EMAIL_INPUT_CLIENT_MESSAGE: "Please provide a valid Email",
+    INVALID_PASSWORD_INPUT_CLIENT_MESSAGE: "Password must be at least 6 characters long",
+    INVALID_REPEATED_PASSWORD_INPUT_CLIENT_MESSAGE: "Passwords do not match",
+
+    CTA_BUTTON_CONTACT_US_LABEL: "Contact Us",
+    CTA_BUTTON_LOGIN_LABEL: "Log In",
+    CTA_BUTTON_REGISTER_LABEL: "Register",
+    CTA_BUTTON_SUBMIT_LABEL: "Submit",
 }
 
 export default CONSTANTS;

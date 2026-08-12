@@ -8,6 +8,7 @@ import SearchBar from "../searchBar/SearchBar";
 import ChatThreadButton from "../chatThreadButton/ChatThreadButton";
 import IconButtonDropdown from "../iconButtonDropdown/IconButtonDropdown";
 import NewChatButton from "../newChatButton/NewChatButton";
+import DittoLogoAndTitle from "../dittoLogoAndTitle/DittoLogoAndTitle";
 import ShowMoreButton from "../showMoreButton/ShowMoreButton";
 import LoadingSpinner from "../loadingSpinner/LoadingSpinner";
 import SliceHelper from "../../helpers/SliceHelper";
@@ -16,7 +17,6 @@ import DeviceScreenHelper from "../../helpers/DeviceScreenHelper";
 import TypeFormatter from "../../helpers/TypeFormatter";
 import DropdownItem from "../../classes/DropdownItem";
 import ChatThreadOverview from "../../classes/ChatThreadOverview";
-import DittoConsultingLogo from '../../../assets/ditto-consulting-logo.png';
 import CONSTANTS from "../../../Constants";
 import "./ChatThreadsPanel.css";
 
@@ -84,12 +84,8 @@ export default function ChatThreadsPanel() {
     return <div className="chat-threads-panel">
 		<div className="panel-header">
 			<div className="chat-threads-panel-header-ditto-chat-title-container">
-				<div className="ditto-logo-container">
-					<img className="ditto-logo" src={DittoConsultingLogo} alt={CONSTANTS.APPLICATION_NAME}/>
-				</div>
-				<div className="margin-right-2" />
-				<div className="ditto-chat-title">
-					{CONSTANTS.APPLICATION_NAME}
+				<div className="chat-threads-panel-header-ditto-chat-container">
+					<DittoLogoAndTitle />
 				</div>
 				<div className="account-feature-list-container">
 					<IconButtonDropdown

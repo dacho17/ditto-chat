@@ -70,13 +70,12 @@
 	}
 
 	.chat-threads-panel-header-ditto-chat-title-container {
-		--ditto-logo-container-width: 10%;
-		--ditto-chat-title-width: 80%;
+		--chat-threads-panel-header-ditto-chat-container-width: 90%;
 		--account-feature-list-container-width: 10%;
 
 		display: flex;
 		flex-direction: row;
-		justify-content: flex-start;
+		justify-content: space-between;
 		align-items: center;
 
 		box-sizing: border-box;
@@ -88,28 +87,15 @@
 		padding-right: var(--horizontal-padding);
 	}
 
-	.ditto-logo-container {
+	.chat-threads-panel-header-ditto-chat-container {
 		display: flex;
-		flex-direction: column;
-		justify-content: center;
+		flex-direction: row;
+		justify-content: flex-start;
 		align-items: center;
 
 		box-sizing: border-box;
-		width: var(--ditto-logo-container-width);
-	}
-
-	.ditto-logo {
-		max-height: 36px;
-		background-color: var(--side-menu-menu-color);
-	}
-	
-	.ditto-chat-title {
-		box-sizing: border-box;
-		width: var(--ditto-chat-title-width);
-
-		color: var(--text-main);
-		font-size: 24px;
-		font-weight: 900;
+		width: var(--chat-threads-panel-header-ditto-chat-container-width);
+		height: 100%;
 	}
 
 	.account-feature-list-container {

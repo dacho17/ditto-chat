@@ -1,7 +1,6 @@
 .account-details {
     --chatter-image-section-height: 20%;
     --chatter-name-section-height: 70%;
-    --chatter-image-size: 144px;
 
     display: flex;
     flex-direction: column;
@@ -28,24 +27,6 @@
     width: 100%;
     height: var(--chatter-image-section-height);
     padding-top: 30px;
-}
-
-.account-details-chatter-image-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-.account-details-chatter-image {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-
-    box-sizing: border-box;
-    width: var(--chatter-image-size);
-    height: var(--chatter-image-size);
-    border-radius: var(--chatter-image-size);
 }
 
 .account-details-chatter-name-section {
@@ -82,6 +63,5 @@
     .account-details {
         --chatter-image-section-height: 50%;
         --chatter-name-section-height: 30%;
-        --chatter-image-size: 192px;
     }
 }

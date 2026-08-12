@@ -1,6 +1,7 @@
 import TimeHelper from "./TimeHelper";
 import CryptoHelper from "./CryptoHelper";
 import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
+import ChatterRegistrationForm from "../classes/ChatterRegistrationForm";
 import ChatterOverviewDto from "../interfaces/ChatterOverviewDto";
 import ChatThreadMessageDto from "../interfaces/ChatThreadMessageDto";
 import SharedFileDto from "../interfaces/SharedFileDto";
@@ -47,6 +48,27 @@ export default class DummyChatService {
 
     public getDummyChatThreads(): ChatThreadDto[] {
         return this.dummyChatThreads;
+    }
+
+    public addNewDummyChatter(newChatterRegistrationForm: ChatterRegistrationForm): ChatterDto {
+        const newlyRegisteredChatter = {
+            chatterOverview: {
+                id: `new-chatter-id-${this.dummyChatters.length + 1}`,
+                chatterName: newChatterRegistrationForm.getName(),
+                chatterSurname: newChatterRegistrationForm.getSurname(),
+                chatterUsername: newChatterRegistrationForm.getUsername(),
+                chatterEmail: newChatterRegistrationForm.getEmail(),
+                chatterImageUrl: null,
+                isChatterOnline: true,
+                chatThreadId: null,
+            },
+            sharedFiles: []
+        } as ChatterDto;
+
+        this.dummyChatters.push(newlyRegisteredChatter);
+        this.dummyChatters = DummyChatService.sortChatterDtoList(this.dummyChatters);
+
+        return newlyRegisteredChatter;
     }
 
     public addNewDummyChatThread(peerChatterId: string): ChatThreadDto {
@@ -306,6 +328,7 @@ export default class DummyChatService {
                     chatterName: "David",
                     chatterSurname: "Dosenovic",
                     chatterUsername: "david.dosenovic",
+                    chatterEmail: "david.dosenovic@gmail.com",
                     chatterImageUrl: ChatterIconImage,
                     isChatterOnline: true,
                     chatThreadId: null
@@ -318,7 +341,8 @@ export default class DummyChatService {
                     chatterName: "Keyser",
                     chatterSurname: "Soze",
                     chatterUsername: "keyser.soze",
-                    chatterImageUrl: ChatterIconImage,
+                    chatterEmail: "keyser.soze@gmail.com",
+                    chatterImageUrl: null,
                     isChatterOnline: false,
                     chatThreadId: null
                 },
@@ -330,6 +354,7 @@ export default class DummyChatService {
                     chatterName: "Mr.",
                     chatterSurname: "X",
                     chatterUsername: "mr.x",
+                    chatterEmail: "mr.x@gmail.com",
                     chatterImageUrl: ChatterIconImage,
                     isChatterOnline: true,
                     chatThreadId: null
@@ -342,6 +367,7 @@ export default class DummyChatService {
                     chatterName: "Jehova",
                     chatterSurname: "Witness",
                     chatterUsername: "jehova.witness",
+                    chatterEmail: "jehova.witness@gmail.com",
                     chatterImageUrl: ChatterIconImage,
                     isChatterOnline: true,
                     chatThreadId: null
@@ -356,6 +382,7 @@ export default class DummyChatService {
                         chatterName: "Generated",
                         chatterSurname: `Chatter Number${chatterIndex}/${DUMMY_TOTAL_NUMBER_OF_CHATTERS}`,
                         chatterUsername: `generated.chatternumber${chatterIndex}`,
+                        chatterEmail: `generated.chatternumber${chatterIndex}@gmail.com`,
                         chatterImageUrl: index % 2 === 0 ? ChatterIconImage : DittoConsultingLogo,
                         isChatterOnline: index % 3 === 0 ? true : false,
                         chatThreadId: null

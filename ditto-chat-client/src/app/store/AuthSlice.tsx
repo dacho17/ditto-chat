@@ -5,7 +5,10 @@ import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
 import SliceHelper from "../helpers/SliceHelper";
 import Mapper from "../helpers/Mapper";
+import ChatterRegistrationForm from "../classes/ChatterRegistrationForm";
 import LoginForm from "../classes/LoginForm";
+import ForgotPasswordForm from "../classes/ForgotPasswordForm";
+import ResetPasswordForm from "../classes/ResetPasswordForm";
 import ChatterOverview from "../classes/ChatterOverview";
 
 interface AuthState {
@@ -26,14 +29,52 @@ const AUTH_LOCAL_STORAGE_KEYS = {
     chatterName: "chatterName",
     chatterSurname: "chatterSurname",
     chatterUsername: "chatterUsername",
+    chatterEmail: "chatterEmail",
     chatterImageUrl: "chatterImageUrl",
 };
 
-// TODO-auth: All of the Functions bellow need to be Implemented yet. These versions were used for testing.
+export const getRegisterPage = createAsyncThunk<{ redirectUrl: string } | null, void, AyncThunkRejectType>(
+    "auth/getRegisterPage",
+    async (_, thunkAPI) => {
+        try {
+            const res = await ChatClient.getChatClient().getRegister();
+            return thunkAPI.fulfillWithValue(res.data);
+        } catch (err: any) {
+            const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
+            return thunkAPI.rejectWithValue(redirectUrlOrNull);
+        }
+    }
+);
 
-export const login = createAsyncThunk<{ redirectUrl: string }, LoginForm, AyncThunkRejectType>(
+export const register = createAsyncThunk<{ redirectUrl: string }, { registrationForm: ChatterRegistrationForm }, AyncThunkRejectType>(
+    "auth/register",
+    async ({ registrationForm } , thunkAPI) => {
+        try {
+            const res = await ChatClient.getChatClient().register(registrationForm);
+            return thunkAPI.fulfillWithValue(res.data);
+        } catch (err: any) {
+            const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
+            return thunkAPI.rejectWithValue(redirectUrlOrNull);
+        }
+    }
+);
+
+export const getLoginPage = createAsyncThunk<{ redirectUrl: string } | null, void, AyncThunkRejectType>(
+    "auth/getLoginPage",
+    async (_, thunkAPI) => {
+        try {
+            const res = await ChatClient.getChatClient().getLogin();
+            return thunkAPI.fulfillWithValue(res.data);
+        } catch (err: any) {
+            const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
+            return thunkAPI.rejectWithValue(redirectUrlOrNull);
+        }
+    }
+);
+
+export const login = createAsyncThunk<{ redirectUrl: string }, { loginForm: LoginForm }, AyncThunkRejectType>(
     "auth/login",
-    async (loginForm , thunkAPI) => {
+    async ({ loginForm } , thunkAPI) => {
         try {
             const res = await ChatClient.getChatClient().login(loginForm);            
             const retrievedChatterOverview = Mapper.chatterOverviewFromDto(res.data.chatterOverview);
@@ -41,6 +82,58 @@ export const login = createAsyncThunk<{ redirectUrl: string }, LoginForm, AyncTh
             thunkAPI.dispatch(setChatterOverview(retrievedChatterOverview));
 
             return thunkAPI.fulfillWithValue({ redirectUrl: res.data.redirectUrl });
+        } catch (err: any) {
+            const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
+            return thunkAPI.rejectWithValue(redirectUrlOrNull);
+        }
+    }
+);
+
+export const getForgotPasswordPage = createAsyncThunk<{ redirectUrl: string } | null, void, AyncThunkRejectType>(
+    "auth/getForgotPasswordPage",
+    async (_, thunkAPI) => {
+        try {
+            const res = await ChatClient.getChatClient().getForgotPasswordPage();
+            return thunkAPI.fulfillWithValue(res.data);
+        } catch (err: any) {
+            const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
+            return thunkAPI.rejectWithValue(redirectUrlOrNull);
+        }
+    }
+);
+
+export const forgotPassword = createAsyncThunk<{ redirectUrl: string } | null, { forgotPasswordForm: ForgotPasswordForm }, AyncThunkRejectType>(
+    "auth/forgotPassword",
+    async ({ forgotPasswordForm } , thunkAPI) => {
+        try {
+            const res = await ChatClient.getChatClient().forgotPassword(forgotPasswordForm);
+            return thunkAPI.fulfillWithValue(res.data);
+        } catch (err: any) {
+            const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
+            return thunkAPI.rejectWithValue(redirectUrlOrNull);
+        }
+    }
+);
+
+export const getResetPasswordPage = createAsyncThunk<{ redirectUrl: string } | null, void, AyncThunkRejectType>(
+    "auth/getResetPasswordPage",
+    async (_, thunkAPI) => {
+        try {
+            const res = await ChatClient.getChatClient().getResetPasswordPage();
+            return thunkAPI.fulfillWithValue(res.data);
+        } catch (err: any) {
+            const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
+            return thunkAPI.rejectWithValue(redirectUrlOrNull);
+        }
+    }
+);
+
+export const resetPassword = createAsyncThunk<{ redirectUrl: string }, { passwordResetToken: string, resetPasswordForm: ResetPasswordForm }, AyncThunkRejectType>(
+    "auth/resetPassword",
+    async ({ passwordResetToken, resetPasswordForm } , thunkAPI) => {
+        try {
+            const res = await ChatClient.getChatClient().resetPassword(passwordResetToken, resetPasswordForm);
+            return thunkAPI.fulfillWithValue(res.data);
         } catch (err: any) {
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             return thunkAPI.rejectWithValue(redirectUrlOrNull);
@@ -79,6 +172,7 @@ export const AuthSlice = createSlice({
             localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterName, action.payload.getChatterName());
             localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterSurname, action.payload.getChatterSurname());
             localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterUsername, action.payload.getChatterUsername());
+            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterEmail, action.payload.getChatterEmail());
             localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterImageUrl, action.payload.getChatterImageUrl());
 
             state.chatterOverview = action.payload;
@@ -97,9 +191,10 @@ export const AuthSlice = createSlice({
             const chatterName = localStorage.getItem(AUTH_LOCAL_STORAGE_KEYS.chatterName);
             const chatterSurname = localStorage.getItem(AUTH_LOCAL_STORAGE_KEYS.chatterSurname);
             const chatterUsername = localStorage.getItem(AUTH_LOCAL_STORAGE_KEYS.chatterUsername);
+            const chatterEmail = localStorage.getItem(AUTH_LOCAL_STORAGE_KEYS.chatterEmail);
             const chatterImageUrl = localStorage.getItem(AUTH_LOCAL_STORAGE_KEYS.chatterImageUrl);
             const chatterOverview = new ChatterOverview(
-                chatterId, chatterName, chatterSurname, chatterUsername, chatterImageUrl, true, null
+                chatterId, chatterName, chatterSurname, chatterUsername, chatterEmail, chatterImageUrl, true, null
             );
 
             state.chatterOverview = chatterOverview;
@@ -117,6 +212,7 @@ export const AuthSlice = createSlice({
             localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterName);
             localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterSurname);
             localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterUsername);
+            localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterEmail);
             localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterImageUrl);
 
             state.chatterOverview = initialState.chatterOverview;
