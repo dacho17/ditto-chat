@@ -293,14 +293,13 @@ export const sendChatThreadMessage = createAsyncThunk<ChatThreadMessage, { chatT
 
             return thunkAPI.fulfillWithValue(sentChatThreadMessage);
         } catch (err: any) {
-            // const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
-            console.log(`Error occurred: ${JSON.stringify(err)}`)
+            const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             thunkAPI.dispatch(setChatThreadMessageStatus({
                 chatThreadMessageClientRef: chatThreadMessageForm.getChatMessageClientRef(),
                 newChatThreadMessageStatus: ChatThreadMessageStatus.FAILED_TO_SEND
             }));
             
-            return thunkAPI.rejectWithValue(null);
+            return thunkAPI.rejectWithValue(redirectUrlOrNull);
         }
     }
 );

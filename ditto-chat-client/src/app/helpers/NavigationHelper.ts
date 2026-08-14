@@ -1,4 +1,4 @@
-import DeviceScreenHelper from "./DeviceScreenHelper";
+import { DeviceType } from "../enums/DeviceType";
 import CONSTANTS from "../../Constants";
 
 export default class NavigationHelper {
@@ -10,10 +10,8 @@ export default class NavigationHelper {
         NavigationHelper.navigateIfNotOnPage(navigate, CONSTANTS.ACCOUNT_URL, currentUrl);        
     }
 
-    public static navigateToChat(navigate: Function, targetChatThreadId: string, currentlySelectedChatThreadId: string | null, queryParams: URLSearchParams): void {
-        const isChatThreadsPanelIndependentPage = DeviceScreenHelper.isMobileScreen();
-
-        if (isChatThreadsPanelIndependentPage === true) {
+    public static navigateToChat(navigate: Function, targetChatThreadId: string, currentlySelectedChatThreadId: string | null, queryParams: URLSearchParams, deviceType: DeviceType): void {
+        if (deviceType === DeviceType.MOBILE_PHONE) {
             navigate(`${CONSTANTS.CHAT_URL}/${targetChatThreadId}`);
         } else {
             // if already on the target chat, do nothing

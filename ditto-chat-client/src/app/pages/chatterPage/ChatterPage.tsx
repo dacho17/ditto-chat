@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
-import { clearChatterState } from "../../store/ChatterSlice";
 import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
 import PageWithSideMenu from "../pageWithSideMenu/PageWithSideMenu";
@@ -10,23 +9,25 @@ import PageContent from "../../components/pageContent/PageContent";
 import AccountDetails from "../../components/accountDetails/AccountDetails";
 import SharedFilesList from "../../components/sharedFilesList/SharedFilesList";
 import SliceHelper from "../../helpers/SliceHelper";
-import DeviceScreenHelper from "../../helpers/DeviceScreenHelper";
+import { DeviceType } from "../../enums/DeviceType";
 import CONSTANTS from "../../../Constants";
 import "./ChatterPage.css";
 
 export default function ChatterPage() {
     const { chatter, isLoadingChatter } = useAppSelector(state => state.chatterSlice);
+    const { currentDeviceType } = useAppSelector(state => state.deviceTypeSlice);
     const dispatch = useAppDispatch();
     const { chatterId } = useParams();
     const [sendTryToGetChatter, didUnhandledServerErrorOccur] = useTryToSendRequest<null>();
     const { addUrlToHistory, navigateBack } = useUrlHistoryNavigate();
     const navigate = useNavigate();
 
-    // TODO-dynamical-resizing: revise this!
-    if (DeviceScreenHelper.isPcScreen() === true) {
-        dispatch(clearChatterState());
-        navigate(CONSTANTS.HOME_URL);
-    }
+    useEffect(() => {
+        if (currentDeviceType === DeviceType.PC) {
+            navigate(CONSTANTS.HOME_URL);
+            return;
+        }
+    }, [currentDeviceType]);
 
     useEffect(() => {
         SliceHelper.clearPageStates(dispatch);

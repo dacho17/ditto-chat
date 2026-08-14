@@ -5,8 +5,8 @@ import ChatFeatureList from "../chatFeatureList/ChatFeatureList";
 import ChatWindowMessagesList from "../chatWindowMessagesList/ChatWindowMessagesList";
 import ChatWindowMessageInput from "../chatWindowMessageInput/ChatWindowMessageInput";
 import SharedFileOverlay from "../sharedFileOverlay/SharedFileOverlay";
-import DeviceScreenHelper from "../../helpers/DeviceScreenHelper";
 import { ListType } from "../../enums/ListType";
+import { DeviceType } from "../../enums/DeviceType";
 import "./ChatWindow.css";
 
 interface Props {
@@ -16,6 +16,7 @@ interface Props {
 export default function ChatWindow(props: Props) {
 	const { chatThread, isLoadingChatThread } = useAppSelector(state => state.chatSlice);
 	const { chatSharedFileInOverlay } = useAppSelector(state => state.chatSlice);
+	const { currentDeviceType } = useAppSelector(state => state.deviceTypeSlice);
 
 	function getChatWindowContent(): React.JSX.Element {
 		if (chatThread === null) {
@@ -46,13 +47,12 @@ export default function ChatWindow(props: Props) {
 		</>
 	}
 
-	const showResponseErrorCard = DeviceScreenHelper.isMobileScreen() === true;
     return <div className="chat-window">
 		<PageContent
 			regularPageContent={getChatWindowContent()}
 			isLoadingPage={isLoadingChatThread === true}
 			didUnhandledServerErrorOccur={props.didUnhandledServerErrorOccur}
-			showResponseErrorCard={showResponseErrorCard}
+			showResponseErrorCard={currentDeviceType === DeviceType.MOBILE_PHONE}
 		/>
 	</div>
 }

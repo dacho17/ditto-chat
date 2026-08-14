@@ -26,6 +26,7 @@ const SEARCH_INPUT_PLACEHOLDER_VALUE = "Search Chatters";
 
 export default function ChattersPage() {
     const { chatterOverviewList, isLastChatterOverviewListPage, isLoadingChatterOverviews, isFilterCurrentlyChanging } = useAppSelector(state => state.chattersSlice);
+    const { currentDeviceType } = useAppSelector(state => state.deviceTypeSlice);
     const dispatch = useAppDispatch();
     const [searchParams, setSearchParams] = useSearchParams();
     const [sendTryToGetChatters, didUnhandledServerErrorOccur] = useTryToSendRequest<null>();
@@ -109,7 +110,7 @@ export default function ChattersPage() {
         }
 
         if (redirectChatThreadId !== null) {
-            NavigationHelper.navigateToChat(navigate, redirectChatThreadId, null, new URLSearchParams());
+            NavigationHelper.navigateToChat(navigate, redirectChatThreadId, null, new URLSearchParams(), currentDeviceType);
         }
     }
 

@@ -14,10 +14,10 @@ import ShowMoreButton from "../showMoreButton/ShowMoreButton";
 import LoadingSpinner from "../loadingSpinner/LoadingSpinner";
 import SliceHelper from "../../helpers/SliceHelper";
 import NavigationHelper from "../../helpers/NavigationHelper";
-import DeviceScreenHelper from "../../helpers/DeviceScreenHelper";
 import TypeFormatter from "../../helpers/TypeFormatter";
 import DropdownItem from "../../classes/DropdownItem";
 import ChatThreadOverview from "../../classes/ChatThreadOverview";
+import { DeviceType } from "../../enums/DeviceType";
 import CONSTANTS from "../../../Constants";
 import "./ChatThreadsPanel.css";
 
@@ -32,6 +32,7 @@ export default function ChatThreadsPanel(props: Props) {
 	const { chatThread } = useAppSelector(state => state.chatSlice);
 	const { chatThreadList, isLastChatThreadListPage, isFilterCurrentlyChanging }
 		= useAppSelector(state => state.homeSlice);
+	const { currentDeviceType } = useAppSelector(state => state.deviceTypeSlice);
 	const dispatch = useAppDispatch();
 	const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -40,17 +41,13 @@ export default function ChatThreadsPanel(props: Props) {
 	const { addUrlToHistory } = useUrlHistoryNavigate();
 	const navigate = useNavigate();
 
-	const isTabletScreen = DeviceScreenHelper.isTabletScreen();
-	const isPcScreen = DeviceScreenHelper.isPcScreen();
-	const isChatWindowOnHomePage = isTabletScreen || isPcScreen;
-	const isChatThreadsPanelIndependentPage = DeviceScreenHelper.isMobileScreen();
-
 	async function tryToGetOlderChatThreads(): Promise<void> {
 		const newPage = TypeFormatter.stringToInt(searchParams.get(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER)) + 1;
 		searchParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, newPage.toString());
 		setSearchParams(searchParams);
 		addUrlToHistory(searchParams.toString());
 
+		const isChatWindowOnHomePage = currentDeviceType !== DeviceType.MOBILE_PHONE;
 		const currentlySelectedChatThread =
 			isChatWindowOnHomePage === true && chatThread !== null ? chatThread.getOverview() : null;
 		await SliceHelper.tryToGetChatThreads(searchParams, currentlySelectedChatThread, false, sendTryToGetOlderChatThreads, setIsLoadingOlderChatThreads, dispatch);
@@ -91,7 +88,7 @@ export default function ChatThreadsPanel(props: Props) {
 				{/* If chatThread is Selected, show it above loading spinner while the Filter is Changing */}
 				{chatThread !== null && <ChatThreadButton
 					chatThreadOverview={chatThread.getOverview()}
-					openChatFunction={() => NavigationHelper.navigateToChat(navigate, activeChatThreadId, activeChatThreadId, searchParams)}
+					openChatFunction={() => NavigationHelper.navigateToChat(navigate, activeChatThreadId, activeChatThreadId, searchParams, currentDeviceType)}
 					isSelected={true}
 				/>}
 				<LoadingSpinner />
@@ -101,9 +98,9 @@ export default function ChatThreadsPanel(props: Props) {
 					return <ChatThreadButton
 						key={chatThreadOverview.getId()}
 						chatThreadOverview={chatThreadOverview as ChatThreadOverview}
-						openChatFunction={() => NavigationHelper.navigateToChat(navigate, chatThreadOverview.getId(), activeChatThreadId, searchParams)}
+						openChatFunction={() => NavigationHelper.navigateToChat(navigate, chatThreadOverview.getId(), activeChatThreadId, searchParams, currentDeviceType)}
 						isSelected={
-							(isChatThreadsPanelIndependentPage === false)
+							(currentDeviceType !== DeviceType.MOBILE_PHONE)
 							&& (chatThreadOverview.getId() === activeChatThreadId)
 						}
 					/>

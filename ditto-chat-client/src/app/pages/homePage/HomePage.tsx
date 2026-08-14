@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
-import { getChatThreadsOnHomePage, setChatThreadList, setIsChatThreadsFilterCurrentlyChanging, setIsLastChatThreadListPage, setIsLoadingChatThreads } from "../../store/HomeSlice";
+import { getChatThreadsOnHomePage, setChatThreadList, setIsChatThreadsFilterCurrentlyChanging, setIsInitialLoadFinished, setIsLastChatThreadListPage, setIsLoadingChatThreads } from "../../store/HomeSlice";
 import { setIsLoadingChatThread } from "../../store/ChatSlice";
 import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
 import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
@@ -12,15 +12,16 @@ import ChatThreadsPanel from "../../components/chatThreadsPanel/ChatThreadsPanel
 import ChatWindow from "../../components/chatWindow/ChatWindow";
 import SliceHelper from "../../helpers/SliceHelper";
 import UrlHelper from "../../helpers/UrlHelper";
-import DeviceScreenHelper from "../../helpers/DeviceScreenHelper";
 import ChatThread from "../../classes/ChatThread";
 import ChatThreadOverview from "../../classes/ChatThreadOverview";
+import { DeviceType } from "../../enums/DeviceType";
 import CONSTANTS from "../../../Constants";
 import "./HomePage.css";
 
 export default function HomePage() {
     const { isActiveChatThreadPanelExpanded, isInitialLoadFinished, isFilterCurrentlyChanging } = useAppSelector(state => state.homeSlice);
     const { chatThread } = useAppSelector(state => state.chatSlice);
+    const { currentDeviceType } = useAppSelector(state => state.deviceTypeSlice);
     const dispatch = useAppDispatch();
     const { chatThreadId } = useParams();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -32,12 +33,9 @@ export default function HomePage() {
     const { addUrlToHistory } = useUrlHistoryNavigate();
     const navigate = useNavigate();
 
-    const isTabletScreen = DeviceScreenHelper.isTabletScreen();
-    const isPcScreen = DeviceScreenHelper.isPcScreen();
-    const isChatWindowOnHomePage = isTabletScreen || isPcScreen;
-    const isChatterDisplayedOnHomePage = isPcScreen;
-
     async function tryToRetrieveInitialChatThreadsPage(queryParams: URLSearchParams, isLoadingReducer: Function): Promise<void> {
+        const isChatWindowOnHomePage = currentDeviceType !== DeviceType.MOBILE_PHONE;
+        // console.log(`currentDeviceType=${currentDeviceType}`);
         let currentlySelectedChatThread = isChatWindowOnHomePage === true && chatThread !== null
             ? chatThread.getOverview() : null;
         
@@ -47,6 +45,7 @@ export default function HomePage() {
 
         if (isChatWindowOnHomePage === true && chatThreadId === undefined) {
             if (chatThreadOverviews !== null) {
+                // console.log(`NAVIGATING WHEN IT SHOULNT`)
                 navigate(`${CONSTANTS.HOME_URL}/${chatThreadOverviews[0].getId()}?${queryParams.toString()}`);
             }
         }
@@ -104,16 +103,21 @@ export default function HomePage() {
     }
     
     useEffect(() => {
-        if (isInitialLoadFinished === true) {
-            return;
-        }
+        // if (isInitialLoadFinished === true) {    // NOTE: not sure when this case occurs
+        //     return;
+        // }
 
         SliceHelper.clearPageStates(dispatch);
+        setIsInitialLoadFinished(false);
         const queryParams = UrlHelper.constructInitialHomePageQueryParams(searchParams);
         setSearchParams(queryParams);
         addUrlToHistory(queryParams.toString());
-
-        if (chatThreadId !== undefined) {
+        
+        const isOpenedOnMobileDeviceWithChatThreadIdPathParameter = currentDeviceType === DeviceType.MOBILE_PHONE && chatThreadId !== undefined;
+        if (isOpenedOnMobileDeviceWithChatThreadIdPathParameter === true) {
+            navigate(`${CONSTANTS.HOME_URL}?${queryParams.toString()}`);
+            tryToRetrieveInitialChatThreadsPage(queryParams, setIsLoadingChatThreads);
+        } else if (chatThreadId !== undefined) {
             // Function used to retrieve both chatThreadsPage and pre-selected chatThread when Page is initially visited
             tryToRetrieveInitialChatThreadsPageWithSelectedChatThread(queryParams);
         } else {
@@ -127,12 +131,12 @@ export default function HomePage() {
         //         clearInterval(interval);
         //     }
         // }
-    }, []);
+    }, [currentDeviceType]);
 
     // when chatThreadId Changes, and if on nonMobile Device, Retrieve the chatThread
     useEffect(() => {
+        const isChatWindowOnHomePage = currentDeviceType !== DeviceType.MOBILE_PHONE;
         if (isChatWindowOnHomePage === false || isInitialLoadFinished === false) {
-            // Function is called only on non Mobile Devices and if InitialLoadFinished
             return;
         }
 
@@ -143,12 +147,11 @@ export default function HomePage() {
             addUrlToHistory(searchParams.toString());
             SliceHelper.tryToGetChatThread(chatThreadId, sendTryToGetChatThread, dispatch);
         }
-    }, [chatThreadId]);
+    }, [chatThreadId, currentDeviceType]);
 
     // when chatThread is Retrieved, and if on PC, Retrieve the Chatter
     useEffect(() => {
-        if (isChatterDisplayedOnHomePage === false || isInitialLoadFinished === false) {
-            // Function is called only on PC Devices and if InitialLoadFinished
+        if (currentDeviceType !== DeviceType.PC || isInitialLoadFinished === false) {
             return;
         }
 
@@ -160,7 +163,7 @@ export default function HomePage() {
             //     clearInterval(interval);
             // }
         }
-    }, [chatThread]);
+    }, [chatThread, currentDeviceType]);
 
     // NOTE: Retrieve Initial ChatThreads Page whenever searchFilter queryParam value is changed in URL
     useEffect(() => {
@@ -168,7 +171,7 @@ export default function HomePage() {
             return;
         }
 
-        if (isChatWindowOnHomePage === true) {
+        if (currentDeviceType !== DeviceType.MOBILE_PHONE) {
             dispatch(setChatThreadList({ newChatThreadList: [], currentlySelectedChatThread: chatThread.getOverview() }));
         } else {
             dispatch(setChatThreadList({ newChatThreadList: [], currentlySelectedChatThread: null }));
@@ -196,12 +199,12 @@ export default function HomePage() {
                         didUnhandledServerErrorOccur={didUnhandledServerErrorOccurOnInitialRetrieval}
                     />
                 </div>
-                { (isChatWindowOnHomePage) && 
+                { (currentDeviceType !== DeviceType.MOBILE_PHONE) && 
                     <div className={`chat-window-container ${chatWindowExpendedStyle}`}>
                         <ChatWindow didUnhandledServerErrorOccur={didUnhandledServerErrorOnGetChatThread} />
                     </div>
                 }
-                { isPcScreen &&
+                { currentDeviceType === DeviceType.PC &&
                     <div className={`active-chat-thread-panel-container ${activeChatThreadPanelExpandedStyle}`}>
                         <ActiveChatThreadPanel didUnhandledServerErrorOccur={didUnhandledServerErrorOnGetChatter} />
                     </div>

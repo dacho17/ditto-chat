@@ -8,10 +8,10 @@ import { setIsActiveChatThreadPanelExpanded } from "../../store/HomeSlice";
 import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import IconButtonDropdown from "../iconButtonDropdown/IconButtonDropdown";
 import IconButton from "../iconButton/IconButton";
-import DeviceScreenHelper from "../../helpers/DeviceScreenHelper";
 import ChatThread from "../../classes/ChatThread";
 import DropdownItem from "../../classes/DropdownItem";
 import { ListType } from "../../enums/ListType";
+import { DeviceType } from "../../enums/DeviceType";
 import CONSTANTS from "../../../Constants";
 import "./ChatFeatureList.css";
 
@@ -22,6 +22,7 @@ interface Props {
 
 export default function ChatFeatureList(props: Props) {
 	const { isActiveChatThreadPanelExpanded } = useAppSelector(state => state.homeSlice);
+    const { currentDeviceType } = useAppSelector(state => state.deviceTypeSlice);
 	const dispatch = useAppDispatch();
 	const [sendTryToClearChatThreadHistory, _] = useTryToSendRequest<null>();
 	const navigate = useNavigate();
@@ -35,7 +36,7 @@ export default function ChatFeatureList(props: Props) {
 	
 	function getChatFeatureList(): DropdownItem[] {
 		const CHAT_FEATURE_LIST: DropdownItem[] = [];
-		if (DeviceScreenHelper.isPcScreen() === false) {
+		if (currentDeviceType !== DeviceType.PC) {
 			CHAT_FEATURE_LIST.push(new DropdownItem(
 				"View Contact",
 				() => {

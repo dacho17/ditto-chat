@@ -2,17 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { IoCloseOutline, IoDownloadOutline } from "react-icons/io5";
 import { AiOutlineFilePdf } from "react-icons/ai";
 import { GrDocumentTxt } from "react-icons/gr";
-import { useAppDispatch } from "../../store/ReduxStore";
+import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import useSharedFileOverlayInfo from "../../hooks/UseSharedFileOverlayInfo";
 import IconButton from "../iconButton/IconButton";
 import ChatterIcon from "../chatterIcon/ChatterIcon";
 import TimeHelper from "../../helpers/TimeHelper";
-import DeviceScreenHelper from "../../helpers/DeviceScreenHelper";
 import { SharedFileType } from "../../enums/SharedFileType";
+import { DeviceType } from "../../enums/DeviceType";
 import CONSTANTS from "../../../Constants";
 import "./SharedFileOverlay.css";
 
 export default function SharedFileOverlay() {
+    const { currentDeviceType } = useAppSelector(state => state.deviceTypeSlice);
     const [sharedFileOverlayInfo, setSharedFileInOverlay] = useSharedFileOverlayInfo();
     const dispatch = useAppDispatch();
     const [isInitialClick, setIsInitialClick] = useState(true);
@@ -58,7 +59,7 @@ export default function SharedFileOverlay() {
         // Image Size is also set in CSS Style of this Component to the same values
         const MOBILE_SCREEN_OVERLAY_IMAGE_SIZE = 200;
         const NON_MOBILE_SCREEN_OVERLAY_IMAGE_SIZE = 400;
-        return DeviceScreenHelper.isMobileScreen() === true
+        return currentDeviceType === DeviceType.MOBILE_PHONE
             ? MOBILE_SCREEN_OVERLAY_IMAGE_SIZE : NON_MOBILE_SCREEN_OVERLAY_IMAGE_SIZE;
     }
 
@@ -102,7 +103,7 @@ export default function SharedFileOverlay() {
                         icon={<IoDownloadOutline size={CONSTANTS.LARGER_ICON_SIZE} />}
                         onClick={() => onDownloadButtonClick()}
                     />
-                    { DeviceScreenHelper.isMobileScreen() === true
+                    { currentDeviceType === DeviceType.MOBILE_PHONE
                         ? <div className="margin-left-1" /> : <div className="margin-left-2" />
                     }
                     <IconButton

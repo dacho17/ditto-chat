@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
-import { clearChatState, pollActiveChatThread } from "../../store/ChatSlice";
+import { pollActiveChatThread } from "../../store/ChatSlice";
 import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
 import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import PageWithBackHeader from "../pageWithBackHeader/PageWithBackHeader";
@@ -11,13 +11,14 @@ import ChatterOverviewInfo from "../../components/chatterOverviewInfo/ChatterOve
 import ChatFeatureList from "../../components/chatFeatureList/ChatFeatureList";
 import ChatWindow from "../../components/chatWindow/ChatWindow";
 import SliceHelper from "../../helpers/SliceHelper";
-import DeviceScreenHelper from "../../helpers/DeviceScreenHelper";
 import { ListType } from "../../enums/ListType";
+import { DeviceType } from "../../enums/DeviceType";
 import CONSTANTS from "../../../Constants";
 import "./MobileChatPage.css";
 
 export default function MobileChatPage() {
     const { chatThread, isLoadingChatThread } = useAppSelector(state => state.chatSlice);
+    const { currentDeviceType } = useAppSelector(state => state.deviceTypeSlice);
     const dispatch = useAppDispatch();
 	const { chatThreadId } = useParams();
     const [sendTryToGetChatThread, didUnhandledServerErrorOccur] = useTryToSendRequest<null>();
@@ -25,11 +26,14 @@ export default function MobileChatPage() {
     const { addUrlToHistory, navigateBack } = useUrlHistoryNavigate();
     const navigate = useNavigate();
 
-    // TODO-dynamical-resizing: revise this!
-    if (DeviceScreenHelper.isMobileScreen() === false) {
-        dispatch(clearChatState());
-        navigate(CONSTANTS.HOME_URL);
-    }
+    useEffect(() => {
+        if (currentDeviceType !== DeviceType.MOBILE_PHONE) {
+            let inheritedChatThreadId = chatThreadId !== undefined
+                ? chatThreadId : "";
+            navigate(`${CONSTANTS.HOME_URL}/${inheritedChatThreadId}`);
+            return;
+        }
+    }, [currentDeviceType]);
 
     async function tryToPollActiveChatThread() {
         if (chatThreadId === undefined) {

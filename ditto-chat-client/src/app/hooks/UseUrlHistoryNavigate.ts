@@ -14,9 +14,10 @@ export default function useUrlHistoryNavigate(): { addUrlToHistory: (urlQueryPar
         dispatch(addUrlToUrlHistory(urlToAdd));
     }
 
-    function navigateBack() {
+    function navigateBack(): void {
         if (urlHistoryList.length <= 1) {
             navigate(CONSTANTS.HOME_URL);
+            return;
         }
         const targetUrl = urlHistoryList[1];
 

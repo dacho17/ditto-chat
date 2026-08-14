@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+import { DeviceTypeSlice } from "./DeviceTypeSlice";
 import { AuthSlice } from "./AuthSlice";
 import { UrlHistorySlice } from "./UrlHistorySlice";
 import { HomeSlice } from "./HomeSlice";
@@ -10,6 +11,7 @@ import { ChatterSlice } from "./ChatterSlice";
 
 export const reduxStore = configureStore({
     reducer: {
+        deviceTypeSlice: DeviceTypeSlice.reducer,
         authSlice: AuthSlice.reducer,
         urlHistorySlice: UrlHistorySlice.reducer,
         homeSlice: HomeSlice.reducer,
