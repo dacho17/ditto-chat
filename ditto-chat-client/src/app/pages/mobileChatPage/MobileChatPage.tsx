@@ -1,24 +1,27 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { clearChatState, pollActiveChatThread } from "../../store/ChatSlice";
-import useChatThreadIdParam from "../../hooks/UseChatParams";
 import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
+import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import PageWithBackHeader from "../pageWithBackHeader/PageWithBackHeader";
+import PageContent from "../../components/pageContent/PageContent";
 import ChatterOverviewInfo from "../../components/chatterOverviewInfo/ChatterOverviewInfo";
 import ChatFeatureList from "../../components/chatFeatureList/ChatFeatureList";
 import ChatWindow from "../../components/chatWindow/ChatWindow";
-import LoadingSpinner from "../../components/loadingSpinner/LoadingSpinner";
 import SliceHelper from "../../helpers/SliceHelper";
 import DeviceScreenHelper from "../../helpers/DeviceScreenHelper";
 import { ListType } from "../../enums/ListType";
 import CONSTANTS from "../../../Constants";
 import "./MobileChatPage.css";
 
-export default function MobileChatPage() {    
+export default function MobileChatPage() {
     const { chatThread, isLoadingChatThread } = useAppSelector(state => state.chatSlice);
     const dispatch = useAppDispatch();
-	const chatThreadId = useChatThreadIdParam();
+	const { chatThreadId } = useParams();
+    const [sendTryToGetChatThread, didUnhandledServerErrorOccur] = useTryToSendRequest<null>();
+    const [sendTryToPollActiveChatThread, _] = useTryToSendRequest<null>();
     const { addUrlToHistory, navigateBack } = useUrlHistoryNavigate();
     const navigate = useNavigate();
 
@@ -28,18 +31,23 @@ export default function MobileChatPage() {
         navigate(CONSTANTS.HOME_URL);
     }
 
-    async function tryPollActiveChatThread() {
-        try {
-            await dispatch(pollActiveChatThread({ chatThreadId: chatThreadId })).unwrap();
-        } catch (err: any) {
-            console.log("TODO: handle Error");
+    async function tryToPollActiveChatThread() {
+        if (chatThreadId === undefined) {
+            toast.error(CONSTANTS.INCOMPLETE_REQUEST_CLIENT_MESSAGE);
+            return;
         }
+
+        await sendTryToPollActiveChatThread(async () => {
+            await dispatch(pollActiveChatThread({ chatThreadId: chatThreadId })).unwrap();
+
+            return null;
+        }, () => {});
     }
 	
 	useEffect(() => {
         SliceHelper.clearPageStates(dispatch);
         addUrlToHistory("");
-		SliceHelper.tryGetChatThread(chatThreadId, dispatch);
+        SliceHelper.tryToGetChatThread(chatThreadId, sendTryToGetChatThread, dispatch);
 
         // TODO-polling: uncomment Polling
         // const interval = setInterval(tryPollActiveChatThread, CONSTANTS.CHAT_POLLING_INTERVAL_IN_MS);
@@ -48,29 +56,42 @@ export default function MobileChatPage() {
         // }
     }, [chatThreadId]);
 
+    function getMobileChatPageHeaderContent(): React.JSX.Element {
+        if (chatThread === null) {
+            return <></>
+        }
+
+        return <>
+            <div className="chat-page-header-content-chatter-overview-info-container">
+                <ChatterOverviewInfo
+                    chatterOverview={chatThread.getOverview().getChatterOverview()}
+                />
+            </div>
+            <div className="chat-page-header-content-feature-list-container">
+                <ChatFeatureList
+                    activeChatThread={chatThread}
+                    listType={ListType.ROW}
+                />
+            </div>                    
+        </>
+    }
+
     return <PageWithBackHeader
         backOnClickFunction={() => {
             navigateBack();
         }}
         backHeaderContent={
             <div className="chat-page-header-content">
-                { isLoadingChatThread === true
-                    ? <LoadingSpinner />
-                    : <>
-                        <div className="chat-page-header-content-chatter-overview-info-container">
-                            <ChatterOverviewInfo
-                                chatterOverview={chatThread.getOverview().getChatterOverview()}
-                            />
-                        </div>
-                        <div className="chat-page-header-content-feature-list-container">
-                            <ChatFeatureList listType={ListType.ROW} />
-                        </div>                    
-                    </>
-                }
+                <PageContent
+                    regularPageContent={getMobileChatPageHeaderContent()}
+                    isLoadingPage={isLoadingChatThread}
+                    didUnhandledServerErrorOccur={didUnhandledServerErrorOccur}
+                    showResponseErrorCard={false}
+                />
             </div>
         }
         mainPage={
-            <ChatWindow />
+            <ChatWindow didUnhandledServerErrorOccur={didUnhandledServerErrorOccur} />
         }
     />
 }

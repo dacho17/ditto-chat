@@ -8,6 +8,7 @@ import ChatterRegistrationForm from "../classes/ChatterRegistrationForm";
 import LoginForm from "../classes/LoginForm";
 import ForgotPasswordForm from "../classes/ForgotPasswordForm";
 import ResetPasswordForm from "../classes/ResetPasswordForm";
+import S3PreSignedUrl from "../classes/S3PreSignedUrl";
 import PagedListDto from "../interfaces/PagedListDto";
 import LoginDto from "../interfaces/LoginDto";
 import ChatterOverviewDto from "../interfaces/ChatterOverviewDto";
@@ -147,8 +148,8 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
         });
     }
 
-    public async uploadFileToS3(s3PreSignedUploadUrl: S3PreSignedUrlDto, fileContentStream: ReadableStream): Promise<S3UploadFileResponseDto> {
-        console.log(`Received uploadFileToS3 Request with S3PreSignedUrlDto: ${JSON.stringify(s3PreSignedUploadUrl)}`);
+    public async uploadFileToS3(s3PreSignedUploadUrl: S3PreSignedUrl, fileContentStream: ReadableStream): Promise<S3UploadFileResponseDto> {
+        console.log(`Received uploadFileToS3 Request with S3PreSignedUrl: ${JSON.stringify(s3PreSignedUploadUrl)}`);
 
         const dummyS3UploadResponse = this.dummyChatService.generateDummyS3UploadFileResponse();
         console.log(`Respdnding with S3UploadFileResponseDto: ${JSON.stringify(dummyS3UploadResponse)}`);

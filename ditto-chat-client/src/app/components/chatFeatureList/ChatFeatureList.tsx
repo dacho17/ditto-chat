@@ -5,32 +5,32 @@ import { IoExpandOutline, IoContractOutline } from "react-icons/io5";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { clearChatThreadHistory } from "../../store/ChatSlice";
 import { setIsActiveChatThreadPanelExpanded } from "../../store/HomeSlice";
-import useChatThreadIdParam from "../../hooks/UseChatParams";
+import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import IconButtonDropdown from "../iconButtonDropdown/IconButtonDropdown";
 import IconButton from "../iconButton/IconButton";
 import DeviceScreenHelper from "../../helpers/DeviceScreenHelper";
+import ChatThread from "../../classes/ChatThread";
 import DropdownItem from "../../classes/DropdownItem";
 import { ListType } from "../../enums/ListType";
 import CONSTANTS from "../../../Constants";
 import "./ChatFeatureList.css";
 
 interface Props {
+	activeChatThread: ChatThread;
 	listType: ListType
 }
 
 export default function ChatFeatureList(props: Props) {
-	const { chatThread } = useAppSelector(state => state.chatSlice);
 	const { isActiveChatThreadPanelExpanded } = useAppSelector(state => state.homeSlice);
 	const dispatch = useAppDispatch();
-	const chatThreadId = useChatThreadIdParam();
+	const [sendTryToClearChatThreadHistory, _] = useTryToSendRequest<null>();
 	const navigate = useNavigate();
 
-	async function tryClearChatThreadHistory(): Promise<void> {
-		try {
-			await dispatch(clearChatThreadHistory({ chatThreadId: chatThreadId })).unwrap();
-		} catch (err) {
-			console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
-		} finally {}
+	async function tryToClearChatThreadHistory(): Promise<void> {
+		await sendTryToClearChatThreadHistory(async () => {
+			await dispatch(clearChatThreadHistory({ chatThreadId: props.activeChatThread.getOverview().getId() })).unwrap();
+			return null;
+		}, () => {});
 	}
 	
 	function getChatFeatureList(): DropdownItem[] {
@@ -39,7 +39,7 @@ export default function ChatFeatureList(props: Props) {
 			CHAT_FEATURE_LIST.push(new DropdownItem(
 				"View Contact",
 				() => {
-					const chatterId = chatThread.getOverview().getChatterOverview().getId();
+					const chatterId = props.activeChatThread.getOverview().getChatterOverview().getId();
 					navigate(`${CONSTANTS.CHATTER_URL}/${chatterId}`);
 				}
 			));
@@ -48,15 +48,11 @@ export default function ChatFeatureList(props: Props) {
 		CHAT_FEATURE_LIST.push(new DropdownItem(
 			"Clear Chat",
 			() => {
-				tryClearChatThreadHistory();
+				tryToClearChatThreadHistory();
 			}
 		));
 
 		return CHAT_FEATURE_LIST;
-	}
-
-	function getListStyleClassName(listType: ListType): string {
-		return listType === ListType.ROW ? "list-as-row" : "list-as-column";
 	}
 
 	function getPanelExpansionIcon(): React.JSX.Element {
@@ -65,7 +61,7 @@ export default function ChatFeatureList(props: Props) {
 			: <IoExpandOutline size={CONSTANTS.ICON_SIZE} />;
 	}
 
-	const listStyleClassName = getListStyleClassName(props.listType);
+	const listStyleClassName = props.listType === ListType.ROW ? "list-as-row" : "list-as-column";;
 	return <>
 		<div className={`chat-feature-list ${listStyleClassName}`}>
 			<IconButtonDropdown

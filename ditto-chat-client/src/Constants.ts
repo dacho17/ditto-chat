@@ -25,6 +25,8 @@ const CONSTANTS = {
     ICON_SIZE: 26,
     LARGER_ICON_SIZE: 30,
     SEARCH_FILTER_CHANGE_HTTP_REQUEST_DELAY_IN_MS: 300,
+    TOAST_MESSAGE_DISPLAY_DURATION_IN_MS: 5000,
+    TOAST_MESSAGE_REMOVAL_DELAY_IN_MS: 1000,
     CHAT_POLLING_INTERVAL_IN_MS: 10000,
     CONTENT_TYPE_STREAM: "application/octet-stream",
 
@@ -39,17 +41,28 @@ const CONSTANTS = {
     IS_POLLING_QUERY_PARAMTER: "isPolling",
     PASSWORD_RESET_TOKEN_QUERY_PARAMETER: "passwordResetToken",
 
+    UNEXPECTED_ERROR_CLIENT_MESSAGE: "An unexpected error occurred",
     INVALID_NAME_INPUT_CLIENT_MESSAGE: "Name must be at least 2 characters long",
     INVALID_SURNAME_INPUT_CLIENT_MESSAGE: "Surname must be at least 2 characters long",
     INVALID_USERNAME_INPUT_CLIENT_MESSAGE: "Username must be at least 6 characters long",
     INVALID_EMAIL_INPUT_CLIENT_MESSAGE: "Please provide a valid Email",
     INVALID_PASSWORD_INPUT_CLIENT_MESSAGE: "Password must be at least 6 characters long",
     INVALID_REPEATED_PASSWORD_INPUT_CLIENT_MESSAGE: "Passwords do not match",
+    INVALID_FORM_CLIENT_MESSAGE: "Form is not filled correctly",
+    INVALID_FILE_TYPE_UPLOAD_ATTEMPT_CLIENT_MESSAGE: "Please upload the File of Type:",
+    CHAT_THREAD_MESSAGE_INVALID_ATTACHED_FILE_TYPE_CLIENT_MESSAGE: "You can only send Files of Types:",
+    INVALID_FILE_SIZE_UPLOAD_ATTEMPT_CLIENT_MESSAGE: "Uploaded File can not be larger than 2MB",
+    CHAT_THREAD_MESSAGE_INVALID_ATTACHED_FILE_SIZE_CLIENT_MESSAGE: "You can not send Files larger than 2MB",
+    ACCOUNT_IMAGE_CHANGED_SUCCESSS_CLIENT_MESSAGE: "Your Account Picture is updated",
+    INCOMPLETE_REQUEST_CLIENT_MESSAGE: "You attempted an unsuppported action",
+    CHAT_THREAD_MESSAGE_MINIMUM_LENGTH_CLIENT_MESSAGE: "Message must contain at least one character to be sent",
+    CHAT_THREAD_MESSAGE_NOT_RESENDABLE_CLIENT_MESSAGE: "Message can be no longer resent",
 
     CTA_BUTTON_CONTACT_US_LABEL: "Contact Us",
     CTA_BUTTON_LOGIN_LABEL: "Log In",
     CTA_BUTTON_REGISTER_LABEL: "Register",
     CTA_BUTTON_SUBMIT_LABEL: "Submit",
+    CTA_BUTTON_BACK_HOME_LABEL: "Back to Home",
 }
 
 export default CONSTANTS;

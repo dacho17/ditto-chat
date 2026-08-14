@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom";
 import { AsyncThunk, AsyncThunkConfig } from "@reduxjs/toolkit";
 import { useAppDispatch } from "../../store/ReduxStore";
 import { getForgotPasswordPage, getLoginPage, getRegisterPage, getResetPasswordPage } from "../../store/AuthSlice";
+import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
+import PageContent from "../../components/pageContent/PageContent";
 import RegisterFormComponent from "../../components/authenticationForms/RegisterFormComponent";
 import LoginFormComponent from "../../components/authenticationForms/LoginFormComponent";
 import ForgotPasswordFormComponent from "../../components/authenticationForms/ForgotPasswordFormComponent";
 import ResetPasswordFormComponent from "../../components/authenticationForms/ResetPasswordFormComponent";
 import DittoLogoAndTitle from "../../components/dittoLogoAndTitle/DittoLogoAndTitle";
 import CtaButton from "../../components/ctaButton/CtaButton";
-import LoadingSpinner from "../../components/loadingSpinner/LoadingSpinner";
 import SliceHelper from "../../helpers/SliceHelper";
 import { AuthenticationActionType } from "../../enums/AuthenticationActionType";
 import CONSTANTS from "../../../Constants";
@@ -22,8 +22,8 @@ interface Props {
 
 export default function AuthenticationPage(props: Props) {
     const dispatch = useAppDispatch();
-    const navigate = useNavigate();
     const [isLoadingPage, setIsLoadingPage] = useState(true);
+    const [sendTryToGetAuthenticationPage, didUnhandledServerErrorOccur] = useTryToSendRequest<null>();
     
     function getAsyncThunkFunction(): AsyncThunk<{ redirectUrl: string } | null, void, AsyncThunkConfig> {
         switch (props.authenticationActionType) {
@@ -41,20 +41,12 @@ export default function AuthenticationPage(props: Props) {
     }
 
     async function tryToGetAuthenticationPage(): Promise<void> {
-        const getAuthenticationPageFunction = getAsyncThunkFunction();
+        await sendTryToGetAuthenticationPage(async () => {
+            const getAuthenticationPageFunction = getAsyncThunkFunction();
+            await dispatch(getAuthenticationPageFunction()).unwrap();
 
-        let responseBody = null;
-        try {
-            responseBody = await dispatch(getAuthenticationPageFunction()).unwrap();
-        } catch (err) {
-            console.log("TODO: handle Error!");
-        } finally {
-            setIsLoadingPage(false);
-
-            if (responseBody !== null) {
-                navigate(responseBody.redirectUrl);
-            }
-        }
+            return null;
+        }, () => setIsLoadingPage(false));
     }
 
     useEffect(() => {
@@ -63,12 +55,6 @@ export default function AuthenticationPage(props: Props) {
     }, []);
 
     function getAuthenticationPageContent(): React.JSX.Element {
-        if (isLoadingPage === true) {
-            return <div className="authentication-page-content-loading-spinner-container">
-                <LoadingSpinner />
-            </div>
-        }
-
         switch (props.authenticationActionType) {
             case AuthenticationActionType.REGISTER:
                 return <RegisterFormComponent />;
@@ -97,7 +83,12 @@ export default function AuthenticationPage(props: Props) {
             </div>
         </div>
         <div className="authentication-page-content">
-            {getAuthenticationPageContent()}
+            <PageContent
+                regularPageContent={getAuthenticationPageContent()}
+                isLoadingPage={isLoadingPage}
+                didUnhandledServerErrorOccur={didUnhandledServerErrorOccur}
+                showResponseErrorCard={true}
+            />
         </div>
     </div>
 }

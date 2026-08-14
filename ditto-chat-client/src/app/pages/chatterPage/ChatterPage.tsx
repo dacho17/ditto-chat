@@ -1,14 +1,14 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { clearChatterState } from "../../store/ChatterSlice";
-import useChatterId from "../../hooks/UseChatterId";
+import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
 import PageWithSideMenu from "../pageWithSideMenu/PageWithSideMenu";
 import PageWithBackHeader from "../pageWithBackHeader/PageWithBackHeader";
+import PageContent from "../../components/pageContent/PageContent";
 import AccountDetails from "../../components/accountDetails/AccountDetails";
 import SharedFilesList from "../../components/sharedFilesList/SharedFilesList";
-import LoadingSpinner from "../../components/loadingSpinner/LoadingSpinner";
 import SliceHelper from "../../helpers/SliceHelper";
 import DeviceScreenHelper from "../../helpers/DeviceScreenHelper";
 import CONSTANTS from "../../../Constants";
@@ -17,7 +17,8 @@ import "./ChatterPage.css";
 export default function ChatterPage() {
     const { chatter, isLoadingChatter } = useAppSelector(state => state.chatterSlice);
     const dispatch = useAppDispatch();
-    const chatterId = useChatterId();
+    const { chatterId } = useParams();
+    const [sendTryToGetChatter, didUnhandledServerErrorOccur] = useTryToSendRequest<null>();
     const { addUrlToHistory, navigateBack } = useUrlHistoryNavigate();
     const navigate = useNavigate();
 
@@ -30,17 +31,17 @@ export default function ChatterPage() {
     useEffect(() => {
         SliceHelper.clearPageStates(dispatch);
         addUrlToHistory("");
-        SliceHelper.tryGetChatter(chatterId, dispatch);
+        SliceHelper.tryToGetChatter(chatterId, sendTryToGetChatter, dispatch);
     }, []);
 
-    return <PageWithSideMenu
-        mainPage={ isLoadingChatter === true
-            ? <LoadingSpinner />
-            : <PageWithBackHeader
+    function getChatterPageContent(): React.JSX.Element {
+        if (chatter === null) {
+            return <></>
+        }
+
+        return <PageWithBackHeader
             backOnClickFunction={() => {
-                const chatterChatThreadId = chatter.getChatterOverview().getChatThreadId();
                 navigateBack();
-                // NavigationHelper.navigateToChat(navigate, chatterChatThreadId, null, UrlHelper.constructInitialHomePageQueryParams(new URLSearchParams()));
             }}
             backHeaderContent={
                 <div className="page-header-page-name">
@@ -56,10 +57,21 @@ export default function ChatterPage() {
                         />
                     </div>
                     <div className="chatter-page-shared-files-list-container">
-                        <SharedFilesList />
+                        <SharedFilesList selectedChatter={chatter} />
                     </div>
                 </div>
             }
-        />}            
+        />
+    }
+
+    return <PageWithSideMenu
+        mainPage={
+            <PageContent
+                regularPageContent={getChatterPageContent()}
+                isLoadingPage={isLoadingChatter}
+                didUnhandledServerErrorOccur={didUnhandledServerErrorOccur}
+                showResponseErrorCard={true}
+            />
+        }
     />
 }

@@ -9,10 +9,6 @@ interface Props {
 }
 
 export default function ChatFeatureButton(props: Props) {
-    function getButtonStyleClassName(): string {
-        return props.parentListType === ListType.ROW ? "button-as-column" : "button-as-row";
-    }
-
     function getFeatureText(): React.JSX.Element {
         return props.parentListType === ListType.COLUMN
             ? <>
@@ -29,7 +25,7 @@ export default function ChatFeatureButton(props: Props) {
             </>;
     }
 
-    const buttonStyleClassName = getButtonStyleClassName();
+    const buttonStyleClassName = props.parentListType === ListType.ROW ? "button-as-column" : "button-as-row";
     return <button className={`chat-feature-button ${buttonStyleClassName}`}>
         <IconContainer icon={props.chatFeatureIcon} />
         {getFeatureText()}

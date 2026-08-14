@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosResponse } from "axios";
-import { AyncThunkRejectType, RootState } from "./ReduxStore";
+import { AsyncThunkRejectType, RootState } from "./ReduxStore";
 import { registerPolledActiveChatThread, setChatThread, setIsLastChatMessagesListPage } from "./ChatSlice";
 import { ChatServerResponseBody, ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
@@ -83,7 +83,7 @@ function generateQueryParams(chatThreadSearchFilter: string, currentPageNumber: 
 export const getChatThreadsOnHomePage = createAsyncThunk<ChatThreadOverview[], {
     chatThreadSearchFilter: string, currentPageNumber: string,
     currentlySelectedChatThreadId: string | null, isInitialRetrieval: boolean, isPolling: boolean
-}, AyncThunkRejectType>(
+}, { rejectValue: AsyncThunkRejectType }>(
     "home/getChatThreadsOnHomePage",
     async ({ chatThreadSearchFilter, currentPageNumber, currentlySelectedChatThreadId, isInitialRetrieval, isPolling }, thunkAPI) => {
         const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;

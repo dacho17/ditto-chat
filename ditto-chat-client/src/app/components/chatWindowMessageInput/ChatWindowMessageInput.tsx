@@ -1,13 +1,15 @@
 import { IoAttachOutline, IoSendOutline } from "react-icons/io5";
+import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { appendChatThreadMessagesToList, requestChatThreadMessageAttachedFileUploadUrl, sendChatThreadMessage, setCurrentChatMessageInput, updateLastSeenChatThreadMessage, uploadChatThreadMessageAttachedFileToS3 } from "../../store/ChatSlice";
-import useChatThreadIdParam from "../../hooks/UseChatParams";
+import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import UploadImageButton from "../uploadImageButton/UploadImageButton";
 import EmojiPopup from "../emojiPopup/EmojiPopup";
-import Validator from "../../helpers/Validator";
+import Validator, { VALID_ATTACHED_FILE_TYPES } from "../../helpers/Validator";
 import TimeHelper from "../../helpers/TimeHelper";
 import CryptoHelper from "../../helpers/CryptoHelper";
 import Mapper from "../../helpers/Mapper";
+import ChatThread from "../../classes/ChatThread";
 import ChatThreadMessageForm from "../../classes/ChatThreadMessageForm";
 import ChatThreadMessage from "../../classes/ChatThreadMessage";
 import UploadFileIntent from "../../classes/UploadFileIntent";
@@ -18,47 +20,40 @@ import "./ChatWindowMessageInput.css";
 
 const INPUT_PLACEHOLDER_VALUE = "Message";
 
-export default function ChatWindowMessageInput() {
-    const { currentChatMessageInput, chatThread } = useAppSelector(state => state.chatSlice);
+interface Props {
+    activeChatThread: ChatThread
+}
+
+export default function ChatWindowMessageInput(props: Props) {
+    const { currentChatMessageInput } = useAppSelector(state => state.chatSlice);
     const { chatterOverview } = useAppSelector(state => state.authSlice);
     const dispatch = useAppDispatch();
-	const chatThreadId = useChatThreadIdParam();
+    const [sendTryToSendChatThreadMessage, _] = useTryToSendRequest<ChatThreadMessage>();
+    const [sendTryToUpdateLastSeenChatThreadMessage, __] = useTryToSendRequest<null>();
 
-    async function trySendChatThreadMessage(newChatThreadMessageForm: ChatThreadMessageForm): Promise<ChatThreadMessage> {
-        try {
-            const sentChatThreadMessage = await dispatch(sendChatThreadMessage({ chatThreadId: chatThreadId, chatThreadMessageForm: newChatThreadMessageForm })).unwrap();
-            return sentChatThreadMessage;
-        } catch (err) {
-            console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
-        }
-    }
-
-    async function tryUpdateLastSeenChatThreadMessage(): Promise<void> {
-        const currentLastUnseenMessage = chatThread.getMessages()
-            .find(chatMessage => chatMessage.getIsMessageSeen() === false);
-        if (currentLastUnseenMessage === undefined) {
-            return; // there are no unseen messages currently
+    async function tryToSendChatThreadMessageWithoutAttachment(): Promise<ChatThreadMessage> {
+        if (Validator.validateChatThreadMessageContent(currentChatMessageInput) === false) {
+            toast.error(CONSTANTS.CHAT_THREAD_MESSAGE_MINIMUM_LENGTH_CLIENT_MESSAGE);
+            return;
         }
 
-        try {
-            await dispatch(updateLastSeenChatThreadMessage({ chatThreadId: chatThreadId, chatThreadMessageId: currentLastUnseenMessage.getId() })).unwrap();
-        } catch (err) {
-            console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
-        } finally {}
+        const newChatThreadMessageForm = new ChatThreadMessageForm(currentChatMessageInput, null, CryptoHelper.generateUuid(), false);
+        return await sendTryToSendChatThreadMessage(async () => {
+            return await dispatch(sendChatThreadMessage(
+                { chatThreadId: props.activeChatThread.getOverview().getId(), chatThreadMessageForm: newChatThreadMessageForm })).unwrap();
+        }, () => {});
     }
 
-    async function trySendChatThreadMessageAttachedFile(fileName: string, inputFileType: string, fileSize: number, fileContentStream: ReadableStream): Promise<void> {
+    async function tryToSendChatThreadMessageAttachedFile(fileName: string, inputFileType: string, fileSize: number, fileContentStream: ReadableStream): Promise<void> {
         if (Validator.validateUploadChatThreadMessageAttachedFileType(inputFileType) === false) {
-            console.log("TODO-toasting: Notify user that they are attepmting to upload unsupported File Type. Tell them what passes");
+            toast.error(`${CONSTANTS.CHAT_THREAD_MESSAGE_INVALID_ATTACHED_FILE_TYPE_CLIENT_MESSAGE} ${VALID_ATTACHED_FILE_TYPES}`);
             return;
         }
 
         if (Validator.validateSharedFileSize(fileSize) === false) {
-            console.log("TODO-toasting: Notify user that they are attepmting to upload File of size over 2 MBs.");
+            toast.error(CONSTANTS.CHAT_THREAD_MESSAGE_INVALID_ATTACHED_FILE_SIZE_CLIENT_MESSAGE);
             return;
         }
-
-        const fileMetadata = new UploadFileIntent(fileName, Mapper.inputFileTypeToSharedFileType(inputFileType), fileSize);
 
         // Adding the chatThreadMessage early, to show indication of the File being uploaded!
         const chatThreadMessageWithAttachedFile = ChatThreadMessage.createNewChatThreadMessage(
@@ -67,25 +62,38 @@ export default function ChatWindowMessageInput() {
         );
         dispatch(appendChatThreadMessagesToList([chatThreadMessageWithAttachedFile]));
 
-        try {
+        await sendTryToSendChatThreadMessage(async () => {
+            const fileMetadata = new UploadFileIntent(fileName, Mapper.inputFileTypeToSharedFileType(inputFileType), fileSize);
             const s3UploadUrlDto = await dispatch(requestChatThreadMessageAttachedFileUploadUrl({ uploadFileIntent: fileMetadata })).unwrap();
-            console.log(`Retrieved s3UploadUrlDto: ${s3UploadUrlDto}`);
 
-            const res = await dispatch(uploadChatThreadMessageAttachedFileToS3(
+            const s3UploadFileResponseDto = await dispatch(uploadChatThreadMessageAttachedFileToS3(
                 { s3PreSignedUploadUrl: s3UploadUrlDto, fileContentStream: fileContentStream }
             )).unwrap();
 
             // TODO-attachment: set correct URL instead of dummy
             const uploadedAttachedFile = new SharedFile(fileMetadata.getFileName(), fileMetadata.getFileType(), DummyAttachedFile, null, chatterOverview.getId());
-            // recreating the Form, based on the early created chatThreadMessage. Setting uploadedAttachedFile so that the UploadedFile gets related to the ChatThreadMessage
+            // creating the Form, based on the early created chatThreadMessage. Setting uploadedAttachedFile so that the UploadedFile gets related to the ChatThreadMessage
             const chatThreadMessageWithAttachedFileForm = new ChatThreadMessageForm(
                 chatThreadMessageWithAttachedFile.getMessageContent(), uploadedAttachedFile, chatThreadMessageWithAttachedFile.getClientRef(), false
             );
 
-            const sentChatThreadMessage = await trySendChatThreadMessage(chatThreadMessageWithAttachedFileForm);
-        } catch (err) {
-            console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
+            return await dispatch(sendChatThreadMessage(
+                { chatThreadId: props.activeChatThread.getOverview().getId(), chatThreadMessageForm: chatThreadMessageWithAttachedFileForm })).unwrap();
+        }, () => {});
+    }
+
+    async function tryToUpdateLastSeenChatThreadMessage(): Promise<void> {
+        const currentLastUnseenMessage = props.activeChatThread.getMessages()
+            .find(chatMessage => chatMessage.getIsMessageSeen() === false);
+        if (currentLastUnseenMessage === undefined) {
+            return; // there are no unseen messages currently
         }
+
+        await sendTryToUpdateLastSeenChatThreadMessage(async () => {
+            await dispatch(updateLastSeenChatThreadMessage(
+                { chatThreadId: props.activeChatThread.getOverview().getId(), chatThreadMessageId: currentLastUnseenMessage.getId() })).unwrap();
+            return null;
+        }, () => {});
     }
 
     return <div className="chat-window-message-input">
@@ -99,13 +107,13 @@ export default function ChatWindowMessageInput() {
             onChange={(event) => {
                 dispatch(setCurrentChatMessageInput(event.target.value));
             }}
-            onFocus={() => tryUpdateLastSeenChatThreadMessage()}
+            onFocus={tryToUpdateLastSeenChatThreadMessage}
         />
         <div className="chat-window-message-input-additions">
             <UploadImageButton
                 buttonIcon={<IoAttachOutline size={CONSTANTS.ICON_SIZE} />}
                 buttonText={null}
-                uploadFunction={trySendChatThreadMessageAttachedFile}
+                uploadFunction={tryToSendChatThreadMessageAttachedFile}
                 isCurrentlyUploading={false}
             />
             <div>
@@ -114,10 +122,7 @@ export default function ChatWindowMessageInput() {
         </div>
         <div className="chat-window-message-input-send-button-container">
             <button className="chat-window-message-input-send-button"
-                onClick={() => {
-                    const newChatThreadMessage = new ChatThreadMessageForm(currentChatMessageInput, null, CryptoHelper.generateUuid(), false);
-                    trySendChatThreadMessage(newChatThreadMessage);
-                }}
+                onClick={tryToSendChatThreadMessageWithoutAttachment}
                 disabled={currentChatMessageInput.trim() === ""}
             >
                 <IoSendOutline size={CONSTANTS.ICON_SIZE} />

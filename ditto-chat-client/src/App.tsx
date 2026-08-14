@@ -1,4 +1,5 @@
 import {  Navigate, Route, Routes } from 'react-router-dom';
+import { Toaster } from "react-hot-toast";  // Following Documentation at: https://react-hot-toast.com/docs/toaster
 import AuthenticationPage from './app/pages/authenticationPage/AuthenticationPage';
 import HomePage from './app/pages/homePage/HomePage';
 import MobileChatPage from './app/pages/mobileChatPage/MobileChatPage';
@@ -12,6 +13,10 @@ import './App.css';
 export default function App() {
     return (
         <>
+            <Toaster position="top-center" toastOptions={{
+                duration: CONSTANTS.TOAST_MESSAGE_DISPLAY_DURATION_IN_MS,
+                removeDelay: CONSTANTS.TOAST_MESSAGE_REMOVAL_DELAY_IN_MS,
+            }}/>
             <Routes>
                 <Route path={CONSTANTS.ROOT_URL} element={<Navigate to={CONSTANTS.REGISTER_URL} replace />} />
                 

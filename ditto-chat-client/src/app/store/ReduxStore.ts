@@ -31,4 +31,7 @@ export type AppDispatch = typeof reduxStore.dispatch;            // helper type
 export const useAppDispatch = () => useDispatch<AppDispatch>();                 // overriding default useDispatch function
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;     // overriding default useAppSelector function
 
-export type AyncThunkRejectType = { rejectValue: { redirectUrl: string } | null };  // used as a Reject Type by AsyncThunk Functions in Slices
+export type AsyncThunkRejectType = {
+    responseHttpCode: number,
+    redirectUrl: string | null
+};  // used as a Reject Type by AsyncThunk Functions in Slices

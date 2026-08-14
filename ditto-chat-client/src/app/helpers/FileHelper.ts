@@ -15,7 +15,7 @@ export default class FileHelper {
                 blobParts.push(value);
             }
         } catch(err) {
-            console.log("TODO: handle error occuring during File Stream Reading");
+            console.log(`An error occurred while reading the image: ${JSON.stringify(err)}!`);
             return null;
         } finally {
             streamReader.releaseLock();

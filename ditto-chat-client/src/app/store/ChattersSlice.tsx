@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosResponse } from "axios";
-import { AyncThunkRejectType } from "./ReduxStore";
+import { AsyncThunkRejectType } from "./ReduxStore";
 import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
 import SliceHelper from "../helpers/SliceHelper";
@@ -15,6 +15,7 @@ interface ChattersState {
     isFilterCurrentlyChanging: boolean;
     isLoadingOlderChatterOverviews: boolean;
     isLastChatterOverviewListPage: boolean;
+    isCreatingNewChatThread: boolean;
 }
 
 const initialState: ChattersState = {
@@ -23,6 +24,7 @@ const initialState: ChattersState = {
     isFilterCurrentlyChanging: false,
     isLoadingOlderChatterOverviews: false,
     isLastChatterOverviewListPage: false,
+    isCreatingNewChatThread: false
 };
 
 function sortChatterOverviews(chatterOverviews: ChatterOverview[]): ChatterOverview[] {
@@ -50,7 +52,7 @@ function mergeChatterOverviewPageIntoList(chatterOverviewsList: ChatterOverview[
     return mergedList;
 }
 
-export const getChatters = createAsyncThunk<ChatterOverview[], { chatterSearchFilter: string, currentPageNumber: string, isInitialRetrieval: boolean }, AyncThunkRejectType>(
+export const getChatters = createAsyncThunk<ChatterOverview[], { chatterSearchFilter: string, currentPageNumber: string, isInitialRetrieval: boolean }, { rejectValue: AsyncThunkRejectType }>(
     "chatters/getChatters",
     async ({ chatterSearchFilter, currentPageNumber, isInitialRetrieval }, thunkAPI) => {
         try {
@@ -107,12 +109,16 @@ export const ChattersSlice = createSlice({
         setIsLastChatterOverviewListPage: (state, action: { payload: boolean }) => {
             state.isLastChatterOverviewListPage = action.payload;
         },
+        setIsCreatingNewChatThread: (state, action: { payload: boolean }) => {
+            state.isCreatingNewChatThread = action.payload;
+        },
         clearChattersState: (state) => {
             state.chatterOverviewList = initialState.chatterOverviewList;
             state.isLoadingChatterOverviews = initialState.isLoadingChatterOverviews;
             state.isFilterCurrentlyChanging = initialState.isFilterCurrentlyChanging;
             state.isLoadingOlderChatterOverviews = initialState.isLoadingOlderChatterOverviews;
             state.isLastChatterOverviewListPage = initialState.isLastChatterOverviewListPage;
+            state.isCreatingNewChatThread = initialState.isCreatingNewChatThread;
         }
     }
 });
@@ -124,5 +130,6 @@ export const {
     setIsChattersFilterCurrentlyChanging,
     setIsLoadingOlderChatterOverviews,
     setIsLastChatterOverviewListPage,
+    setIsCreatingNewChatThread,
     clearChattersState
 } = ChattersSlice.actions;

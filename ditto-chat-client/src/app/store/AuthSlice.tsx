@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosResponse } from "axios";
-import { AyncThunkRejectType } from "./ReduxStore";
+import { AsyncThunkRejectType } from "./ReduxStore";
 import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
 import SliceHelper from "../helpers/SliceHelper";
@@ -33,12 +33,14 @@ const AUTH_LOCAL_STORAGE_KEYS = {
     chatterImageUrl: "chatterImageUrl",
 };
 
-export const getRegisterPage = createAsyncThunk<{ redirectUrl: string } | null, void, AyncThunkRejectType>(
+export const getRegisterPage = createAsyncThunk<{ redirectUrl: string } | null, void, { rejectValue: AsyncThunkRejectType }>(
     "auth/getRegisterPage",
     async (_, thunkAPI) => {
         try {
-            const res = await ChatClient.getChatClient().getRegister();
-            return thunkAPI.fulfillWithValue(res.data);
+            const responseBody = await ChatClient.getChatClient().getRegister();
+            SliceHelper.toastSuccessResponseMessage(responseBody);
+
+            return thunkAPI.fulfillWithValue(responseBody.data);
         } catch (err: any) {
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             return thunkAPI.rejectWithValue(redirectUrlOrNull);
@@ -46,12 +48,14 @@ export const getRegisterPage = createAsyncThunk<{ redirectUrl: string } | null, 
     }
 );
 
-export const register = createAsyncThunk<{ redirectUrl: string }, { registrationForm: ChatterRegistrationForm }, AyncThunkRejectType>(
+export const register = createAsyncThunk<{ redirectUrl: string }, { registrationForm: ChatterRegistrationForm }, { rejectValue: AsyncThunkRejectType }>(
     "auth/register",
     async ({ registrationForm } , thunkAPI) => {
         try {
-            const res = await ChatClient.getChatClient().register(registrationForm);
-            return thunkAPI.fulfillWithValue(res.data);
+            const responseBody = await ChatClient.getChatClient().register(registrationForm);
+            SliceHelper.toastSuccessResponseMessage(responseBody);
+
+            return thunkAPI.fulfillWithValue(responseBody.data);
         } catch (err: any) {
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             return thunkAPI.rejectWithValue(redirectUrlOrNull);
@@ -59,12 +63,14 @@ export const register = createAsyncThunk<{ redirectUrl: string }, { registration
     }
 );
 
-export const getLoginPage = createAsyncThunk<{ redirectUrl: string } | null, void, AyncThunkRejectType>(
+export const getLoginPage = createAsyncThunk<{ redirectUrl: string } | null, void, { rejectValue: AsyncThunkRejectType }>(
     "auth/getLoginPage",
     async (_, thunkAPI) => {
         try {
-            const res = await ChatClient.getChatClient().getLogin();
-            return thunkAPI.fulfillWithValue(res.data);
+            const responseBody = await ChatClient.getChatClient().getLogin();
+            SliceHelper.toastSuccessResponseMessage(responseBody);
+
+            return thunkAPI.fulfillWithValue(responseBody.data);
         } catch (err: any) {
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             return thunkAPI.rejectWithValue(redirectUrlOrNull);
@@ -72,16 +78,17 @@ export const getLoginPage = createAsyncThunk<{ redirectUrl: string } | null, voi
     }
 );
 
-export const login = createAsyncThunk<{ redirectUrl: string }, { loginForm: LoginForm }, AyncThunkRejectType>(
+export const login = createAsyncThunk<{ redirectUrl: string }, { loginForm: LoginForm }, { rejectValue: AsyncThunkRejectType }>(
     "auth/login",
     async ({ loginForm } , thunkAPI) => {
         try {
-            const res = await ChatClient.getChatClient().login(loginForm);            
-            const retrievedChatterOverview = Mapper.chatterOverviewFromDto(res.data.chatterOverview);
+            const responseBody = await ChatClient.getChatClient().login(loginForm);            
+            SliceHelper.toastSuccessResponseMessage(responseBody);
+            const retrievedChatterOverview = Mapper.chatterOverviewFromDto(responseBody.data.chatterOverview);
 
             thunkAPI.dispatch(setChatterOverview(retrievedChatterOverview));
 
-            return thunkAPI.fulfillWithValue({ redirectUrl: res.data.redirectUrl });
+            return thunkAPI.fulfillWithValue({ redirectUrl: responseBody.data.redirectUrl });
         } catch (err: any) {
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             return thunkAPI.rejectWithValue(redirectUrlOrNull);
@@ -89,12 +96,14 @@ export const login = createAsyncThunk<{ redirectUrl: string }, { loginForm: Logi
     }
 );
 
-export const getForgotPasswordPage = createAsyncThunk<{ redirectUrl: string } | null, void, AyncThunkRejectType>(
+export const getForgotPasswordPage = createAsyncThunk<{ redirectUrl: string } | null, void, { rejectValue: AsyncThunkRejectType }>(
     "auth/getForgotPasswordPage",
     async (_, thunkAPI) => {
         try {
-            const res = await ChatClient.getChatClient().getForgotPasswordPage();
-            return thunkAPI.fulfillWithValue(res.data);
+            const responseBody = await ChatClient.getChatClient().getForgotPasswordPage();
+            SliceHelper.toastSuccessResponseMessage(responseBody);
+        
+            return thunkAPI.fulfillWithValue(responseBody.data);
         } catch (err: any) {
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             return thunkAPI.rejectWithValue(redirectUrlOrNull);
@@ -102,12 +111,14 @@ export const getForgotPasswordPage = createAsyncThunk<{ redirectUrl: string } | 
     }
 );
 
-export const forgotPassword = createAsyncThunk<{ redirectUrl: string } | null, { forgotPasswordForm: ForgotPasswordForm }, AyncThunkRejectType>(
+export const forgotPassword = createAsyncThunk<{ redirectUrl: string } | null, { forgotPasswordForm: ForgotPasswordForm }, { rejectValue: AsyncThunkRejectType }>(
     "auth/forgotPassword",
     async ({ forgotPasswordForm } , thunkAPI) => {
         try {
-            const res = await ChatClient.getChatClient().forgotPassword(forgotPasswordForm);
-            return thunkAPI.fulfillWithValue(res.data);
+            const responseBody = await ChatClient.getChatClient().forgotPassword(forgotPasswordForm);
+            SliceHelper.toastSuccessResponseMessage(responseBody);
+
+            return thunkAPI.fulfillWithValue(responseBody.data);
         } catch (err: any) {
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             return thunkAPI.rejectWithValue(redirectUrlOrNull);
@@ -115,12 +126,14 @@ export const forgotPassword = createAsyncThunk<{ redirectUrl: string } | null, {
     }
 );
 
-export const getResetPasswordPage = createAsyncThunk<{ redirectUrl: string } | null, void, AyncThunkRejectType>(
+export const getResetPasswordPage = createAsyncThunk<{ redirectUrl: string } | null, void, { rejectValue: AsyncThunkRejectType }>(
     "auth/getResetPasswordPage",
     async (_, thunkAPI) => {
         try {
-            const res = await ChatClient.getChatClient().getResetPasswordPage();
-            return thunkAPI.fulfillWithValue(res.data);
+            const responseBody = await ChatClient.getChatClient().getResetPasswordPage();
+            SliceHelper.toastSuccessResponseMessage(responseBody);
+
+            return thunkAPI.fulfillWithValue(responseBody.data);
         } catch (err: any) {
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             return thunkAPI.rejectWithValue(redirectUrlOrNull);
@@ -128,12 +141,14 @@ export const getResetPasswordPage = createAsyncThunk<{ redirectUrl: string } | n
     }
 );
 
-export const resetPassword = createAsyncThunk<{ redirectUrl: string }, { passwordResetToken: string, resetPasswordForm: ResetPasswordForm }, AyncThunkRejectType>(
+export const resetPassword = createAsyncThunk<{ redirectUrl: string }, { passwordResetToken: string, resetPasswordForm: ResetPasswordForm }, { rejectValue: AsyncThunkRejectType }>(
     "auth/resetPassword",
     async ({ passwordResetToken, resetPasswordForm } , thunkAPI) => {
         try {
-            const res = await ChatClient.getChatClient().resetPassword(passwordResetToken, resetPasswordForm);
-            return thunkAPI.fulfillWithValue(res.data);
+            const responseBody = await ChatClient.getChatClient().resetPassword(passwordResetToken, resetPasswordForm);
+            SliceHelper.toastSuccessResponseMessage(responseBody);
+
+            return thunkAPI.fulfillWithValue(responseBody.data);
         } catch (err: any) {
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             return thunkAPI.rejectWithValue(redirectUrlOrNull);
@@ -141,15 +156,17 @@ export const resetPassword = createAsyncThunk<{ redirectUrl: string }, { passwor
     }
 );
 
-export const logout = createAsyncThunk<{ redirectUrl: string }, void, AyncThunkRejectType>(
+export const logout = createAsyncThunk<{ redirectUrl: string }, void, { rejectValue: AsyncThunkRejectType }>(
     "auth/logout",
     async (_, thunkAPI) => {
         try {
-            const res = await ChatClient.getChatClient().logout();
+            const responseBody = await ChatClient.getChatClient().logout();
+            SliceHelper.toastSuccessResponseMessage(responseBody);
+
 
             thunkAPI.dispatch(clearAuthState());
 
-            return thunkAPI.fulfillWithValue(res.data);
+            return thunkAPI.fulfillWithValue(responseBody.data);
         } catch (err: any) {
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             return thunkAPI.rejectWithValue(redirectUrlOrNull);

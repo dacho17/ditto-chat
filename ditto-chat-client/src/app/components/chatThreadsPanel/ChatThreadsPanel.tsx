@@ -2,8 +2,9 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { IoMdMore } from "react-icons/io";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { setIsChatThreadsFilterCurrentlyChanging, setIsLoadingOlderChatThreads } from "../../store/HomeSlice";
-import useChatThreadIdParam from "../../hooks/UseChatParams";
 import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
+import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
+import PageContent from "../pageContent/PageContent";
 import SearchBar from "../searchBar/SearchBar";
 import ChatThreadButton from "../chatThreadButton/ChatThreadButton";
 import IconButtonDropdown from "../iconButtonDropdown/IconButtonDropdown";
@@ -22,38 +23,37 @@ import "./ChatThreadsPanel.css";
 
 const SEARCH_INPUT_PLACEHOLDER_VALUE = "Search Chats";
 
-export default function ChatThreadsPanel() {
+interface Props {
+	isInitialChatThreadLoadFinished: boolean;
+	didUnhandledServerErrorOccur: boolean;
+}
+
+export default function ChatThreadsPanel(props: Props) {
 	const { chatThread } = useAppSelector(state => state.chatSlice);
-	const { chatThreadList, isLastChatThreadListPage, isLoadingChatThreads, isFilterCurrentlyChanging }
+	const { chatThreadList, isLastChatThreadListPage, isFilterCurrentlyChanging }
 		= useAppSelector(state => state.homeSlice);
 	const dispatch = useAppDispatch();
-	const chatThreadId = useChatThreadIdParam();
 	const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
+	const [sendTryToGetOlderChatThreads, _] = useTryToSendRequest<null>();
+	const [sendTryToLogout, __] = useTryToSendRequest<null>();
 	const { addUrlToHistory } = useUrlHistoryNavigate();
 	const navigate = useNavigate();
 
 	const isTabletScreen = DeviceScreenHelper.isTabletScreen();
 	const isPcScreen = DeviceScreenHelper.isPcScreen();
 	const isChatWindowOnHomePage = isTabletScreen || isPcScreen;
+	const isChatThreadsPanelIndependentPage = DeviceScreenHelper.isMobileScreen();
 
-	async function tryGetOlderChatThreads(): Promise<void> {
+	async function tryToGetOlderChatThreads(): Promise<void> {
 		const newPage = TypeFormatter.stringToInt(searchParams.get(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER)) + 1;
 		searchParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, newPage.toString());
 		setSearchParams(searchParams);
+		addUrlToHistory(searchParams.toString());
 
-		const chatThreadSearchFilter = searchParams.get(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER);
-        const currentPageNumber = searchParams.get(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER);
 		const currentlySelectedChatThread =
 			isChatWindowOnHomePage === true && chatThread !== null ? chatThread.getOverview() : null;
-        const isInitialRetrieval = false;
-
-		addUrlToHistory(searchParams.toString());
-		dispatch(setIsLoadingOlderChatThreads(true));
-		await SliceHelper.tryGetChatThreads(
-			chatThreadSearchFilter, currentPageNumber, currentlySelectedChatThread,
-			isInitialRetrieval, setIsLoadingOlderChatThreads, dispatch
-		);
+		await SliceHelper.tryToGetChatThreads(searchParams, currentlySelectedChatThread, false, sendTryToGetOlderChatThreads, setIsLoadingOlderChatThreads, dispatch);
 	}
 
 	function onSearchInputChange(newSearchInput: string): void {
@@ -64,22 +64,62 @@ export default function ChatThreadsPanel() {
 		addUrlToHistory(searchParams.toString());
 	}
 
-	const isChatThreadsPanelIndependentPage = DeviceScreenHelper.isMobileScreen();
-	const ACCOUNT_FEATURES: DropdownItem[] = [
-		new DropdownItem(
-			"Account",
-			() => {
-				NavigationHelper.navigateToAccount(navigate, location.pathname);
-			}
-		),
-		new DropdownItem(
-			"Logout",
-			async () => {
-				const redirectUrl = await SliceHelper.tryLogout(dispatch);
-				navigate(redirectUrl);
-			}
-		)
-    ];
+	function getAccountFeatures(): DropdownItem[] {
+		return [
+			new DropdownItem(
+				"Account",
+				() => {
+					NavigationHelper.navigateToAccount(navigate, location.pathname);
+				}
+			),
+			new DropdownItem(
+				"Logout",
+				async () => {
+					await SliceHelper.tryToLogout(sendTryToLogout, dispatch);
+				}
+			)
+		];
+	}
+
+	function getChatThreadButtonList(): React.JSX.Element {
+		const activeChatThreadId = chatThread !== null
+			? chatThread.getOverview().getId() : null;
+
+		// ChatThreadButtonList differs based on whether the Filter is currently changing or not
+		const chatThreadButtonList = isFilterCurrentlyChanging === true
+			? <> 
+				{/* If chatThread is Selected, show it above loading spinner while the Filter is Changing */}
+				{chatThread !== null && <ChatThreadButton
+					chatThreadOverview={chatThread.getOverview()}
+					openChatFunction={() => NavigationHelper.navigateToChat(navigate, activeChatThreadId, activeChatThreadId, searchParams)}
+					isSelected={true}
+				/>}
+				<LoadingSpinner />
+			</>
+			: <>
+				{ chatThreadList.map(chatThreadOverview => {
+					return <ChatThreadButton
+						key={chatThreadOverview.getId()}
+						chatThreadOverview={chatThreadOverview as ChatThreadOverview}
+						openChatFunction={() => NavigationHelper.navigateToChat(navigate, chatThreadOverview.getId(), activeChatThreadId, searchParams)}
+						isSelected={
+							(isChatThreadsPanelIndependentPage === false)
+							&& (chatThreadOverview.getId() === activeChatThreadId)
+						}
+					/>
+				})}
+				{ isLastChatThreadListPage === false && 
+					<ShowMoreButton
+						isDirectionUpwards={false}
+						showMoreFunc={tryToGetOlderChatThreads}
+					/>
+				}
+			</>
+
+		return <div className="chat-thread-buttons-container">
+			{chatThreadButtonList};
+		</div>
+	}
 
     return <div className="chat-threads-panel">
 		<div className="panel-header">
@@ -90,7 +130,7 @@ export default function ChatThreadsPanel() {
 				<div className="account-feature-list-container">
 					<IconButtonDropdown
 						icon={<IoMdMore size={CONSTANTS.ICON_SIZE} />}
-						dropdownItems={ACCOUNT_FEATURES}
+						dropdownItems={getAccountFeatures()}
 					/>
 				</div>
 			</div>
@@ -103,37 +143,12 @@ export default function ChatThreadsPanel() {
 			</div>
 		</div>
 		<div className="chat-threads-container">
-			{ isLoadingChatThreads === true
-				? <LoadingSpinner />
-				: isFilterCurrentlyChanging === true
-					? <div className="chat-thread-buttons-container">
-						{chatThread !== null && <ChatThreadButton
-							chatThreadOverview={chatThread.getOverview()}
-							openChatFunction={() => NavigationHelper.navigateToChat(navigate, chatThread.getOverview().getId(), chatThreadId, searchParams)}
-							isSelected={true}
-						/>}
-						<LoadingSpinner />
-					</div>
-					: <div className="chat-thread-buttons-container">
-						{ chatThreadList.map(chatThreadOverview => {
-							return <ChatThreadButton
-								key={chatThreadOverview.getId()}
-								chatThreadOverview={chatThreadOverview as ChatThreadOverview}
-								openChatFunction={() => NavigationHelper.navigateToChat(navigate, chatThreadOverview.getId(), chatThreadId, searchParams)}
-								isSelected={
-									(isChatThreadsPanelIndependentPage === false)
-									&& (chatThreadOverview.getId() === chatThreadId)
-								}
-							/>
-						})}
-						{ isLastChatThreadListPage === false && 
-							<ShowMoreButton
-								isDirectionUpwards={false}
-								showMoreFunc={tryGetOlderChatThreads}
-							/>
-						}
-					</div>
-			}
+			<PageContent
+				regularPageContent={getChatThreadButtonList()}
+				isLoadingPage={props.isInitialChatThreadLoadFinished === false}
+				didUnhandledServerErrorOccur={props.didUnhandledServerErrorOccur}
+				showResponseErrorCard={false}
+			/>
 		</div>
 		<NewChatButton />
 	</div>

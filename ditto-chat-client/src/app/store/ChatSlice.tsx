@@ -4,7 +4,7 @@
 
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosResponse } from "axios";
-import { AyncThunkRejectType, RootState } from "./ReduxStore";
+import { AsyncThunkRejectType, RootState } from "./ReduxStore";
 import { updateChatThreadOverviewFromList } from "./HomeSlice";
 import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
@@ -17,8 +17,8 @@ import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
 import ChatThreadMessage from "../classes/ChatThreadMessage";
 import UploadFileIntent from "../classes/UploadFileIntent";
 import SharedFile from "../classes/SharedFile";
+import S3PreSignedUrl from "../classes/S3PreSignedUrl";
 import S3UploadFileResponseDto from "../interfaces/S3UploadFileResponseDto";
-import S3PreSignedUrlDto from "../interfaces/S3PreSignedUrlDto";
 import { ChatThreadMessageStatus } from "../enums/ChatThreadMessageStatus";
 import CONSTANTS from "../../Constants";
 
@@ -148,14 +148,14 @@ function setIsSeenValueOnChatThreadMessageList(chatThreadMessages: ChatThreadMes
     };
 }
 
-export const pollActiveChatThread = createAsyncThunk<ChatThread, { chatThreadId: string }, AyncThunkRejectType>(
+export const pollActiveChatThread = createAsyncThunk<ChatThread, { chatThreadId: string }, { rejectValue: AsyncThunkRejectType }>(
     "chat/pollActiveChatThread",
     async ({ chatThreadId }, thunkAPI) => {
         const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
 
         try {
-            const res = await ChatClient.getChatClient().getChatThread(chatThreadId);
-            const chatThread = Mapper.chatThreadFromDto(res.data, chatterOverview.getId());
+            const responseBody = await ChatClient.getChatClient().getChatThread(chatThreadId);
+            const chatThread = Mapper.chatThreadFromDto(responseBody.data, chatterOverview.getId());
 
             thunkAPI.dispatch(registerPolledActiveChatThread(chatThread));
 
@@ -167,7 +167,7 @@ export const pollActiveChatThread = createAsyncThunk<ChatThread, { chatThreadId:
     }
 );
 
-export const postChatThread = createAsyncThunk<ChatThread, { chatterId: string }, AyncThunkRejectType>(
+export const postChatThread = createAsyncThunk<ChatThread, { chatterId: string }, { rejectValue: AsyncThunkRejectType }>(
     "chat/postChatThread",
     async ({ chatterId }, thunkAPI) => {
         const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
@@ -184,7 +184,7 @@ export const postChatThread = createAsyncThunk<ChatThread, { chatterId: string }
     }
 );
 
-export const getChatThread = createAsyncThunk<ChatThread, { chatThreadId: string }, AyncThunkRejectType>(
+export const getChatThread = createAsyncThunk<ChatThread, { chatThreadId: string }, { rejectValue: AsyncThunkRejectType }>(
     "chat/getChatThread",
     async ({ chatThreadId }, thunkAPI) => {
         const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
@@ -206,7 +206,7 @@ export const getChatThread = createAsyncThunk<ChatThread, { chatThreadId: string
     }
 );
 
-export const getChatThreadMessages = createAsyncThunk<ChatThreadMessage[], { chatThreadId: string }, AyncThunkRejectType>(
+export const getChatThreadMessages = createAsyncThunk<ChatThreadMessage[], { chatThreadId: string }, { rejectValue: AsyncThunkRejectType }>(
     "chat/getChatThreadMessages",
     async ({ chatThreadId }, thunkAPI) => {
         try {
@@ -231,7 +231,7 @@ export const getChatThreadMessages = createAsyncThunk<ChatThreadMessage[], { cha
     }
 );
 
-export const updateLastSeenChatThreadMessage = createAsyncThunk<void, { chatThreadId: string, chatThreadMessageId: string }, AyncThunkRejectType>(
+export const updateLastSeenChatThreadMessage = createAsyncThunk<void, { chatThreadId: string, chatThreadMessageId: string }, { rejectValue: AsyncThunkRejectType }>(
     "chat/updateLastSeenChatThreadMessage",
     async ({ chatThreadId, chatThreadMessageId }, thunkAPI) => {
         const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
@@ -253,7 +253,7 @@ export const updateLastSeenChatThreadMessage = createAsyncThunk<void, { chatThre
     }
 );
 
-export const sendChatThreadMessage = createAsyncThunk<ChatThreadMessage, { chatThreadId: string, chatThreadMessageForm: ChatThreadMessageForm }, AyncThunkRejectType>(
+export const sendChatThreadMessage = createAsyncThunk<ChatThreadMessage, { chatThreadId: string, chatThreadMessageForm: ChatThreadMessageForm }, { rejectValue: AsyncThunkRejectType }>(
     "chat/sendChatThreadMessage",
     async ({ chatThreadId, chatThreadMessageForm }, thunkAPI) => {
         const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
@@ -305,12 +305,13 @@ export const sendChatThreadMessage = createAsyncThunk<ChatThreadMessage, { chatT
     }
 );
 
-export const clearChatThreadHistory = createAsyncThunk<void, { chatThreadId: string }, AyncThunkRejectType>(
+export const clearChatThreadHistory = createAsyncThunk<void, { chatThreadId: string }, { rejectValue: AsyncThunkRejectType }>(
     "chat/clearChatThreadHistory",
     async ({ chatThreadId }, thunkAPI) => {
         try {
-            const res = await ChatClient.getChatClient().clearChatThreadHistory(chatThreadId);
-            const { chatThreadHistoryClearedAt } = res.data;
+            const responseBody = await ChatClient.getChatClient().clearChatThreadHistory(chatThreadId);
+            SliceHelper.toastSuccessResponseMessage(responseBody);
+            const { chatThreadHistoryClearedAt } = responseBody.data;
             const chatThreadHistoryClearedAtTimestamp = TimeHelper.dateStringToTimestamp(chatThreadHistoryClearedAt);
 
             thunkAPI.dispatch(clearChatThreadMessages(chatThreadHistoryClearedAtTimestamp));
@@ -325,12 +326,14 @@ export const clearChatThreadHistory = createAsyncThunk<void, { chatThreadId: str
     }
 );
 
-export const requestChatThreadMessageAttachedFileUploadUrl = createAsyncThunk<S3PreSignedUrlDto, { uploadFileIntent: UploadFileIntent }, AyncThunkRejectType>(
+export const requestChatThreadMessageAttachedFileUploadUrl = createAsyncThunk<S3PreSignedUrl, { uploadFileIntent: UploadFileIntent }, { rejectValue: AsyncThunkRejectType }>(
     "account/requestChatThreadMessageAttachedFileUploadUrl",
     async ({ uploadFileIntent } , thunkAPI) => {
         try {
-            const res = await ChatClient.getChatClient().requestFileUploadUrl(uploadFileIntent);
-            return thunkAPI.fulfillWithValue(res.data);
+            const responseBody = await ChatClient.getChatClient().requestFileUploadUrl(uploadFileIntent);
+            const S3PreSignedUrl = Mapper.s3PreSignedUrlFromDto(responseBody.data);
+
+            return thunkAPI.fulfillWithValue(S3PreSignedUrl);
         } catch (err: any) {
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             return thunkAPI.rejectWithValue(redirectUrlOrNull);
@@ -339,17 +342,15 @@ export const requestChatThreadMessageAttachedFileUploadUrl = createAsyncThunk<S3
 );
 
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#API_PutObject_RequestSyntax
-export const uploadChatThreadMessageAttachedFileToS3 = createAsyncThunk<S3UploadFileResponseDto, { s3PreSignedUploadUrl: S3PreSignedUrlDto, fileContentStream: ReadableStream }, AyncThunkRejectType>(
+export const uploadChatThreadMessageAttachedFileToS3 = createAsyncThunk<S3UploadFileResponseDto, { s3PreSignedUploadUrl: S3PreSignedUrl, fileContentStream: ReadableStream }, { rejectValue: AsyncThunkRejectType }>(
     "account/uploadChatThreadMessageAttachedFileToS3",
     async ({ s3PreSignedUploadUrl, fileContentStream } , thunkAPI) => {
         try {
             const res = await AwsClient.getAwsClient().uploadFileToS3(s3PreSignedUploadUrl, fileContentStream);
-            
-            // TODO-toasting: likely, show success Message to the Client that they changed their Image
 
             return thunkAPI.fulfillWithValue(res);
         } catch (err: any) {
-            // TODO-toasting: possibly AWS Sends special Error Types Back on S3 Image Upload. I may not be able to use ChatClientResponseErrorBody. Look into this!
+            // TODO-aws: possibly AWS Sends special Error Types Back on S3 Image Upload. I may not be able to use ChatClientResponseErrorBody. Look into this!
             const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
             return thunkAPI.rejectWithValue(redirectUrlOrNull);
         }

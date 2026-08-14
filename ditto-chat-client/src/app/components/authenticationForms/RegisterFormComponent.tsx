@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { register, setIsCurrentlyAuthenticating } from "../../store/AuthSlice";
+import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import AuthenticationForm from "../authenticationForm/AuthenticationForm";
 import GenFormInput, { GenFormInputState, INITIAL_GEN_FORM_INPUT_STATE } from "../genFormInput/GenFormInput";
 import CtaButton from "../ctaButton/CtaButton";
@@ -16,7 +18,7 @@ const ALREADY_HAVE_ACCOUNT_TEXT = "Already have an account?";
 export default function RegisterFormComponent() {
     const { isCurrentlyAuthenticating } = useAppSelector(state => state.authSlice);
     const dispatch = useAppDispatch();
-    const navigate = useNavigate();
+    const [sendTryToRegister, _] = useTryToSendRequest<{ redirectUrl: string }>();
 
     const [chatterName, setChatterName] = useState<GenFormInputState>(INITIAL_GEN_FORM_INPUT_STATE);
     const [chatterSurname, setChatterSurname] = useState<GenFormInputState>(INITIAL_GEN_FORM_INPUT_STATE);
@@ -42,7 +44,7 @@ export default function RegisterFormComponent() {
 
     async function tryToRegister(): Promise<void> {
         if (isRegisterFormInputValid() === false) {
-            console.log(`TODO-toasting Show Error!`);
+            toast.error(CONSTANTS.INVALID_FORM_CLIENT_MESSAGE);
             return;
         }
 
@@ -51,20 +53,15 @@ export default function RegisterFormComponent() {
             chatterEmail.entered, chatterPassword.entered
         );
 
-        dispatch(setIsCurrentlyAuthenticating(true));
+        await sendTryToRegister(async () => {
+            dispatch(setIsCurrentlyAuthenticating(true));
+            const responseBody = await dispatch(register({ registrationForm: registrationFormToSend })).unwrap();
 
-        let responseBody = null;
-        try {
-            responseBody = await dispatch(register({ registrationForm: registrationFormToSend })).unwrap();
-
-            console.log(`TODO-toasting: Toast to success!`);
             resetRegisterFormInputs();
-        } catch (err: any) {
-            console.log(`TODO-toasting: Toast error!`);
-        } finally {
+            return responseBody;
+        }, () => {
             dispatch(setIsCurrentlyAuthenticating(false));
-            navigate(responseBody.redirectUrl);
-        }
+        });
     }
     
     function getRegisterFormInputGroups(): React.JSX.Element {

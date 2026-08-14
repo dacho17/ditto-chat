@@ -5,12 +5,14 @@ import ChatThread from "../classes/ChatThread";
 import ChatThreadMessage from "../classes/ChatThreadMessage";
 import ChatThreadOverview from "../classes/ChatThreadOverview";
 import SharedFile from "../classes/SharedFile";
+import S3PreSignedUrl from "../classes/S3PreSignedUrl";
 import ChatterDto from "../interfaces/ChatterDto";
 import ChatterOverviewDto from "../interfaces/ChatterOverviewDto";
 import ChatThreadDto from "../interfaces/ChatThreadDto";
 import ChatThreadOverviewDto from "../interfaces/ChatThreadOverviewDto";
 import ChatThreadMessageDto from "../interfaces/ChatThreadMessageDto";
 import SharedFileDto from "../interfaces/SharedFileDto";
+import S3PreSignedUrlDto from "../interfaces/S3PreSignedUrlDto";
 import { SharedFileType } from "../enums/SharedFileType";
 import CONSTANTS from "../../Constants";
 
@@ -79,6 +81,13 @@ export default class Mapper {
             TimeHelper.dateStringToTimestamp(chatThreadMessageDto.messageRegisteredAt),
             loggedInChatterId !== chatThreadMessageDto.messageSenderId,
             chatThreadMessageDto.isMessageSeen
+        );
+    }
+
+    public static s3PreSignedUrlFromDto(s3PreSignedUrlDto: S3PreSignedUrlDto): S3PreSignedUrl {
+        return new S3PreSignedUrl(
+            s3PreSignedUrlDto.url,
+            TimeHelper.dateStringToTimestamp(s3PreSignedUrlDto.expiresAt)
         );
     }
 

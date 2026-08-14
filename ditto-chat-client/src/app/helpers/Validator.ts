@@ -1,5 +1,8 @@
 import CONSTANTS from "../../Constants";
 
+export const VALID_ACCOUNT_IMAGE_FILE_TYPES = [CONSTANTS.INPUT_FILE_TYPE_PNG, CONSTANTS.INPUT_FILE_TYPE_JPEG];
+export const VALID_ATTACHED_FILE_TYPES = [CONSTANTS.INPUT_FILE_TYPE_PDF, CONSTANTS.INPUT_FILE_TYPE_TEXT, CONSTANTS.INPUT_FILE_TYPE_PNG, CONSTANTS.INPUT_FILE_TYPE_JPEG];
+const MAXIMUM_ACCOUNT_IMAGE_FILE_SIZE_IN_BYTES = 2097152; // Number of Bytes in 2 MB
 export default class Validator {
     public static validateChatterName(name: string): boolean {
         const MINIMAL_CHATTER_NAME_LENGTH = 2;
@@ -28,18 +31,19 @@ export default class Validator {
         return password.trim().length >= MINIMAL_PASSWORD_LENGTH;
     }
 
+    public static validateChatThreadMessageContent(messageContent: String): boolean {
+        return messageContent !== null && messageContent !== undefined && messageContent.trim().length > 0;
+    }
+
     public static validateUploadChatThreadMessageAttachedFileType(inputFileType: string): boolean {
-        const VALID_ATTACHED_FILE_TYPES = [CONSTANTS.INPUT_FILE_TYPE_PDF, CONSTANTS.INPUT_FILE_TYPE_TEXT, CONSTANTS.INPUT_FILE_TYPE_PNG, CONSTANTS.INPUT_FILE_TYPE_JPEG];
         return VALID_ATTACHED_FILE_TYPES.includes(inputFileType);
     }
 
     public static validateUploadAccountImageFileType(inputFileType: string): boolean {
-        const VALID_ACCOUNT_IMAGE_FILE_TYPES = [CONSTANTS.INPUT_FILE_TYPE_PNG, CONSTANTS.INPUT_FILE_TYPE_JPEG];
         return VALID_ACCOUNT_IMAGE_FILE_TYPES.includes(inputFileType);
     }
 
     public static validateSharedFileSize(fileSizeInBytes: number): boolean {
-        const MAXIMUM_ACCOUNT_IMAGE_FILE_SIZE_IN_BYTES = 2097152; // Number of Bytes in 2 MB
         return MAXIMUM_ACCOUNT_IMAGE_FILE_SIZE_IN_BYTES >= fileSizeInBytes;
     }
 }

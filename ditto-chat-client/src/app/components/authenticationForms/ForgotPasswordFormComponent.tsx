@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { forgotPassword, setIsCurrentlyAuthenticating } from "../../store/AuthSlice";
+import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import AuthenticationForm from "../authenticationForm/AuthenticationForm";
 import GenFormInput, { GenFormInputState, INITIAL_GEN_FORM_INPUT_STATE } from "../genFormInput/GenFormInput";
 import CtaButton from "../ctaButton/CtaButton";
@@ -16,7 +18,7 @@ const BACK_TO_TEXT = "Back to";
 export default function ForgotPasswordFormComponent() {
     const { isCurrentlyAuthenticating } = useAppSelector(state => state.authSlice);
     const dispatch = useAppDispatch();
-    const navigate = useNavigate();
+    const [sendTryToSubmitForgotPassword, _] = useTryToSendRequest<{ redirectUrl: string } | null>();
 
     const [chatterEmail, setChatterEmail] = useState<GenFormInputState>(INITIAL_GEN_FORM_INPUT_STATE);
 
@@ -30,28 +32,21 @@ export default function ForgotPasswordFormComponent() {
 
     async function tryToSubmitForgotPassword(): Promise<void> {
         if (isForgotPasswordFormInputValid() === false) {
-            console.log(`TODO-toasting Show Error!`);
+            toast.error(CONSTANTS.INVALID_FORM_CLIENT_MESSAGE);
             return;
         }
 
         const forgotPasswordFormToSend = new ForgotPasswordForm(chatterEmail.entered);
+        
+        await sendTryToSubmitForgotPassword(async () => {
+            dispatch(setIsCurrentlyAuthenticating(true));
+            const responseBody = await dispatch(forgotPassword({ forgotPasswordForm: forgotPasswordFormToSend })).unwrap();
 
-        dispatch(setIsCurrentlyAuthenticating(true));
-
-        let responseBody = null;
-        try {
-            responseBody = await dispatch(forgotPassword({ forgotPasswordForm: forgotPasswordFormToSend })).unwrap();
-
-            console.log(`TODO-toasting: Toast to success!`);
             resetForgotPasswordFormInputs();
-        } catch (err: any) {
-            console.log(`TODO-toasting: Toast error!`);
-        } finally {
+            return responseBody;
+        }, () => {
             dispatch(setIsCurrentlyAuthenticating(false));
-            if (responseBody !== null) {
-                navigate(responseBody.redirectUrl);
-            }
-        }
+        });
     }
 
     function getForgotPasswordFormInputGroups(): React.JSX.Element {

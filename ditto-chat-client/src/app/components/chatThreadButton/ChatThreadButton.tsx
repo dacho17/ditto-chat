@@ -49,15 +49,13 @@ export default function ChatThreadButton(props: Props) {
             <div className="chat-thread-button-summary-row line-height-2">
                 <span className="bold-text handle-overflow">{props.chatThreadOverview.getChatterOverview().getChatterFullName()}</span>
                 { props.chatThreadOverview.getLastMessageTimestamp() !== null
-                    ? <span className="regular-faded-text margin-left-1">{getLastMessageTime(props.chatThreadOverview.getLastMessageTimestamp())}</span>
-                    : null
+                    && <span className="regular-faded-text margin-left-1">{getLastMessageTime(props.chatThreadOverview.getLastMessageTimestamp())}</span>
                 }
             </div>
             <div className="chat-thread-button-summary-row line-height-2">
                 <span className="regular-faded-text handle-overflow">{getLastMessageText()}</span>
                 { props.chatThreadOverview.getNumberOfUnseenMessages() > 0
-                    ? <span className="chat-thread-button-summary-unread-messages">{props.chatThreadOverview.getNumberOfUnseenMessages()}</span>
-                    : null
+                    && <span className="chat-thread-button-summary-unread-messages">{props.chatThreadOverview.getNumberOfUnseenMessages()}</span>
                 }
             </div>
         </div>

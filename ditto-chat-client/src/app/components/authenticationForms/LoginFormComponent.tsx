@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { login, setIsCurrentlyAuthenticating } from "../../store/AuthSlice";
+import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import AuthenticationForm from "../authenticationForm/AuthenticationForm";
 import GenFormInput, { GenFormInputState, INITIAL_GEN_FORM_INPUT_STATE } from "../genFormInput/GenFormInput";
 import CtaButton from "../ctaButton/CtaButton";
@@ -17,7 +19,7 @@ const DONT_HAVE_ACCOUNT_TEXT = "Don't have an account?";
 export default function LoginFormComponent() {
     const { isCurrentlyAuthenticating } = useAppSelector(state => state.authSlice);
     const dispatch = useAppDispatch();
-    const navigate = useNavigate();
+    const [sendTryToLogin, _] = useTryToSendRequest<{ redirectUrl: string }>();
 
     const [chatterEmail, setChatterEmail] = useState<GenFormInputState>(INITIAL_GEN_FORM_INPUT_STATE);
     const [chatterPassword, setChatterPassword] = useState<GenFormInputState>(INITIAL_GEN_FORM_INPUT_STATE);
@@ -34,26 +36,21 @@ export default function LoginFormComponent() {
 
     async function tryToLogin(): Promise<void> {
         if (isLoginFormInputValid() === false) {
-            console.log(`TODO-toasting Show Error!`);
+            toast.error(CONSTANTS.INVALID_FORM_CLIENT_MESSAGE);
             return;
         }
 
         const loginFormToSend = new LoginForm(chatterEmail.entered, chatterPassword.entered);
 
-        dispatch(setIsCurrentlyAuthenticating(true));
+        await sendTryToLogin(async () => {
+            dispatch(setIsCurrentlyAuthenticating(true));
+            const responseBody = await dispatch(login({ loginForm: loginFormToSend })).unwrap();
 
-        let responseBody = null;
-        try {
-            responseBody = await dispatch(login({ loginForm: loginFormToSend })).unwrap();
-
-            console.log(`TODO-toasting: Toast to success!`);
             resetLoginFormInputs();
-        } catch (err: any) {
-            console.log(`TODO-toasting: Toast error!`);
-        } finally {
+            return responseBody;
+        }, () => {
             dispatch(setIsCurrentlyAuthenticating(false));
-            navigate(responseBody.redirectUrl);
-        }
+        });
     }
 
     function getLoginFormInputGroups(): React.JSX.Element {

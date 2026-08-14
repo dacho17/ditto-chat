@@ -1,0 +1,94 @@
+.server-response-error-card {
+    --server-response-error-card-min-width: 400px;
+    --server-response-error-card-border-radius: 12px;
+
+    --server-response-error-card-icon-container-height: 20%;
+    --server-response-error-card-text-height: 60%;
+    --server-response-error-card-go-back-container-height: 20%;
+
+    box-sizing: border-box;
+    min-width: var(--server-response-error-card-min-width);
+    min-height: 600px;
+    height: 90%;    /* on non-mobile Pages form is in the card whose length should be shorter than the screen size */
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-left: 30px;
+    padding-right: 30px;
+
+    border-radius: var(--server-response-error-card-border-radius);
+    background-color: var(--dark-panel-color);
+}
+
+.server-response-error-card-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+}
+
+.server-response-error-card-icon-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    max-height: var(--server-response-error-card-icon-container-height);
+    padding-bottom: 30px;
+}
+
+.server-response-error-card-text-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 100%;
+    max-height: var(--server-response-error-card-text-height);
+    padding-bottom: 100px;
+}
+
+.server-response-error-card-go-back-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    width: 100%;
+    max-height: var(--server-response-error-card-go-back-container-height);
+}
+
+.server-response-error-card-go-back-button-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+
+    width: 50%;
+    height: 100%;
+}
+.server-response-error-card-icon {
+    color: var(--ditto-pink);
+}
+
+
+@media (max-width: 720px) {
+    .server-response-error-card {
+        --server-response-error-card-min-width: 300px;
+        
+        box-sizing: border-box;
+        width: 100%;
+        padding-top: 20px;
+        padding-bottom: 20px;
+        padding-left: 5%;
+        padding-right: 5%;
+        border-radius: 0px;
+
+        background-color: inherit;
+    }
+}

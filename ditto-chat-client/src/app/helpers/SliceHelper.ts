@@ -1,6 +1,8 @@
 import { AxiosResponse } from "axios";
 import { GetThunkAPI } from "@reduxjs/toolkit";
-import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
+import toast from "react-hot-toast";
+import { ChatServerResponseBody, ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
+import { AsyncThunkRejectType } from "../store/ReduxStore";
 import { clearChatterState, getChatter, setIsLoadingChatter } from "../store/ChatterSlice";
 import { clearChatState, getChatThread, setIsLoadingChatThread } from "../store/ChatSlice";
 import { clearHomeState, getChatThreadsOnHomePage } from "../store/HomeSlice";
@@ -9,24 +11,29 @@ import { clearChattersState, getChatters } from "../store/ChattersSlice";
 import { clearAuthState, logout, refreshChatterOverview } from "../store/AuthSlice";
 import { clearUrlHistoryState, refreshUrlHistory } from "../store/UrlHistorySlice";
 import ChatThreadOverview from "../classes/ChatThreadOverview";
-import ChatterOverview from "../classes/ChatterOverview";
+import CONSTANTS from "../../Constants";
 
 export default class SliceHelper {
-    public static handleAxiosErrorResponse(err: AxiosResponse<ChatServerResponseErrorBody>, thunkAPI: GetThunkAPI<any>): { redirectUrl: string } | null {
-        // const axiosErrorResponse = err as AxiosResponse<BookingRestApiResponseObject<RedirectResponseObject | null>>;
+    public static handleAxiosErrorResponse(axiosErrorResponse: AxiosResponse<ChatServerResponseErrorBody>, thunkAPI: GetThunkAPI<any>): AsyncThunkRejectType {
+        const errorMessageToBeDisplayed = axiosErrorResponse.data.message !== null
+            ? axiosErrorResponse.data.message : CONSTANTS.UNEXPECTED_ERROR_CLIENT_MESSAGE;
+        toast.error(errorMessageToBeDisplayed);
 
-        // TODO-toasting: if errorResponseMessage is received, display it in Notification Bubble (Toast)
-        // const errorResponseMessage = err.data.message;
-        // const errorMessage = NotificationMessageMapper.newNotificationMessage(
-        //     thunkErrorResponse.message || CONSTANTS.UNEXPECTED_ERROR_CLIENT_MESSAGE, NotificationMessageType.ACTION_FAILED);
-        // thunkAPI.dispatch(addNotification(errorMessage));
+        const redirectUrl = axiosErrorResponse.data.data !== null
+            ? axiosErrorResponse.data.data.redirectUrl
+            : null;
 
+        const responseHttpCode = axiosErrorResponse.status;
+        return {
+            responseHttpCode: responseHttpCode,
+            redirectUrl: redirectUrl
+        }
+    }
 
-        const redirectUrl = err.data.data !== null
-            ? err.data.data.redirectUrl : null;
-        return redirectUrl !== null ? {
-            redirectUrl: redirectUrl   
-        }: null;
+    public static toastSuccessResponseMessage(responseBody: ChatServerResponseBody<any>): void {
+        if (responseBody.message !== null) {
+            toast.success(responseBody.message);
+        }
     }
 
     public static clearPageStates(dispatch: Function): void {
@@ -46,35 +53,53 @@ export default class SliceHelper {
         dispatch(clearAuthState());
     }
 
-    public static async tryGetChatter(chatterId: string, dispatch: Function): Promise<void> {
-        dispatch(setIsLoadingChatter(true));
-        
-        try {
+    public static async tryToGetChatter(chatterId: string,
+        sendTryToGetChatter: (tryToSendRequestFunction: () => Promise<null>, finallyFunction: () => void) => Promise<null>,
+    dispatch: Function): Promise<void> {
+        if (chatterId === null) {
+            toast.error(CONSTANTS.INCOMPLETE_REQUEST_CLIENT_MESSAGE);
+            return;
+        }
+
+        await sendTryToGetChatter(async () => {
+            dispatch(setIsLoadingChatter(true));
+
             await dispatch(getChatter({ chatterId: chatterId }));
-        } catch (err) {
-            console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
-        } finally {
-            dispatch(setIsLoadingChatter(false));
-        }
+            return null;
+        }, () => dispatch(setIsLoadingChatter(false)));
     }
 
-    public static async tryGetChatThread(chatThreadId: string, dispatch: Function): Promise<void> {
-        dispatch(setIsLoadingChatThread(true));
+    public static async tryToGetChatThread(chatThreadId: string,
+        sendTryToGetChatThread: (tryToSendRequestFunction: () => Promise<null>, finallyFunction: () => void) => Promise<null>,
+    dispatch: Function): Promise<void> {
+        if (chatThreadId === null) {
+            toast.error(CONSTANTS.INCOMPLETE_REQUEST_CLIENT_MESSAGE);
+            return;
+        }
 
-        try {
+        await sendTryToGetChatThread(async () => {
+            dispatch(setIsLoadingChatThread(true));
+    
             await dispatch(getChatThread({ chatThreadId: chatThreadId }));
-        } catch (err) {
-            console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
-        } finally {
-            dispatch(setIsLoadingChatThread(false));
-        }
+            return null;
+        }, () => dispatch(setIsLoadingChatThread(false)));
     }
 
-    public static async tryGetChatThreads(chatThreadSearchFilter: string, currentPageNumber: string, currentlySelectedChatThread: ChatThreadOverview | null, isInitialRetrieval: boolean, isLoadingReducer: Function, dispatch: Function): Promise<ChatThreadOverview[]> {
-        dispatch(isLoadingReducer(true));
-        // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
+    public static async tryToGetChatThreads(queryParams: URLSearchParams, currentlySelectedChatThread: ChatThreadOverview | null, isInitialRetrieval: boolean,
+        sendTryToGetChatThreads: (tryToSendRequestFunction: () => Promise<ChatThreadOverview[]>, finallyFunction: () => void) => Promise<ChatThreadOverview[]>,
+    isLoadingReducer: Function, dispatch: Function): Promise<ChatThreadOverview[]> {
+        const chatThreadSearchFilter = queryParams.get(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER);
+        const currentPageNumber = queryParams.get(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER);
 
-        try {
+        if (chatThreadSearchFilter === null || currentPageNumber === null) {
+            toast.error(CONSTANTS.INCOMPLETE_REQUEST_CLIENT_MESSAGE);
+            return;
+        }
+
+        return await sendTryToGetChatThreads(async () => {
+            dispatch(isLoadingReducer(true));
+
+            // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
             const retrievedChatThreadOverviews = await dispatch(getChatThreadsOnHomePage({
                 chatThreadSearchFilter: chatThreadSearchFilter,
                 currentPageNumber: currentPageNumber,
@@ -83,36 +108,42 @@ export default class SliceHelper {
                 isInitialRetrieval: isInitialRetrieval,
                 isPolling: false,
             })).unwrap();
-
             // TODO-result-caching: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
+            
             return retrievedChatThreadOverviews;
-        } catch (err: any) {
-            console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
-        } finally {
-            dispatch(isLoadingReducer(false));
-        }
+        }, () => dispatch(isLoadingReducer(false)));
     }
 
-    public static async tryGetChatters(chattersSearchFilter: string, currentPageNumber: string, isInitialRetrieval: boolean, isLoadingReducer: Function, dispatch: Function): Promise<ChatterOverview[]> {
-        dispatch(isLoadingReducer(true));
-        
-        // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
+    public static async tryToGetChatters(queryParams: URLSearchParams, isInitialRetrieval: boolean,
+        sendTryToGetChatters: (tryToSendRequestFunction: () => Promise<null>, finallyFunction: () => void) => Promise<null>,
+    isLoadingReducer: Function, dispatch: Function): Promise<void> {
+        const chattersSearchFilter = queryParams.get(CONSTANTS.SEARCH_FILTER_QUERY_PARAMETER);
+        const currentPageNumber = queryParams.get(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER);
 
-        try {
-            const retrievedChatterOverviews = await dispatch(getChatters({ chatterSearchFilter: chattersSearchFilter, currentPageNumber: currentPageNumber, isInitialRetrieval: isInitialRetrieval })).unwrap();
+        if (chattersSearchFilter === null || currentPageNumber === null) {
+            toast.error(CONSTANTS.INCOMPLETE_REQUEST_CLIENT_MESSAGE);
+            return;
+        }
 
+        await sendTryToGetChatters(async () => {
+            dispatch(isLoadingReducer(true));
+
+            // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
+            await dispatch(getChatters({ chatterSearchFilter: chattersSearchFilter, currentPageNumber: currentPageNumber, isInitialRetrieval: isInitialRetrieval })).unwrap();
             // TODO-result-caching: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
-            return retrievedChatterOverviews;
-        } catch (err: any) {
-            console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
-        } finally {
-            dispatch(isLoadingReducer(false));
-        }
+            
+            return null;
+        }, () => dispatch(isLoadingReducer(false)));
     }
 
-    public static async tryLogout(dispatch: Function): Promise<string> {
-        const { redirectUrl } = await dispatch(logout()).unwrap();
-        SliceHelper.clearAllStates(dispatch);
-        return redirectUrl;
+    public static async tryToLogout(
+        sendTryToLogout: (tryToSendRequestFunction: () => Promise<{ redirectUrl: string }>, finallyFunction: () => void) => Promise<null>,
+    dispatch: Function): Promise<void> {
+        await sendTryToLogout(async () => {
+            const responseBody =  await dispatch(logout()).unwrap();
+            SliceHelper.clearAllStates(dispatch);
+
+            return responseBody;
+        }, () => {});
     }
 }

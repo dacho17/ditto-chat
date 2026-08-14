@@ -1,43 +1,47 @@
+import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { getChatThreadMessages, sendChatThreadMessage, setCurrentChatThreadMessagesListPage, setIsLoadingOlderMessages } from "../../store/ChatSlice";
-import useChatThreadIdParam from "../../hooks/UseChatParams";
+import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import ChatMessageRow from "../chatMessageRow/ChatMessageRow";
 import ShowMoreButton from "../showMoreButton/ShowMoreButton";
 import LoadingSpinner from "../loadingSpinner/LoadingSpinner";
+import ChatThread from "../../classes/ChatThread";
 import ChatThreadMessage from "../../classes/ChatThreadMessage";
 import ChatThreadMessageForm from "../../classes/ChatThreadMessageForm";
 import { ChatThreadMessageStatus } from "../../enums/ChatThreadMessageStatus";
+import CONSTANTS from "../../../Constants";
 import "./ChatWindowMessagesList.css";
 
 const START_THE_CHAT_INDICATOR_TEXT = "No message history. Be the first one to message the tenant";
 const CHAT_STARTED_INDICATOR_TEXT = "Conversation started";
 
-export default function ChatWindowMessagesList() {
-    const { chatThread, isLastChatMessagesListPage, currentChatMessagesListPage, isLoadingOlderMessages } = useAppSelector(state => state.chatSlice);
+interface Props {
+    activeChatThread: ChatThread
+}
+
+export default function ChatWindowMessagesList(props: Props) {
+    const { isLastChatMessagesListPage, currentChatMessagesListPage, isLoadingOlderMessages } = useAppSelector(state => state.chatSlice);
     const { chatterOverview } = useAppSelector(state => state.authSlice);
     const dispatch = useAppDispatch();
-	const chatThreadId = useChatThreadIdParam();
+    const [sendTryToGetOlderChatMessages, _] = useTryToSendRequest<null>();
+    const [sendTryToResendChatMessage, __] = useTryToSendRequest<null>();
 
-    async function tryGetOlderChatMessages(): Promise<void> {
-        dispatch(setIsLoadingOlderMessages(true));
-        dispatch(setCurrentChatThreadMessagesListPage(currentChatMessagesListPage + 1));
+    async function tryToGetOlderChatMessages(): Promise<void> {
+        await sendTryToGetOlderChatMessages(async () => {
+            dispatch(setIsLoadingOlderMessages(true));
+            dispatch(setCurrentChatThreadMessagesListPage(currentChatMessagesListPage + 1));
 
-        // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
-
-        try {
-            await dispatch(getChatThreadMessages({ chatThreadId: chatThreadId })).unwrap();
-
+            // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
+            await dispatch(getChatThreadMessages({ chatThreadId: props.activeChatThread.getOverview().getId() })).unwrap();
             // TODO-result-caching: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
-            return;
-        } catch (err: any) {
-            console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
-        } finally {
+            return null;
+        }, () => {
             dispatch(setIsLoadingOlderMessages(false));
-        }
+        });
     }
 
-    async function tryResendChatMessage(chatMessageClientRef: string): Promise<void> {
-        const failedChatMessage = chatThread.getMessages()
+    async function tryToResendChatMessage(chatMessageClientRef: string): Promise<void> {
+        const failedChatMessage = props.activeChatThread.getMessages()
             .find(chatThreadMessage => chatThreadMessage.getClientRef() === chatMessageClientRef
                 && chatThreadMessage.getStatus() === ChatThreadMessageStatus.FAILED_TO_SEND);
         if (failedChatMessage !== undefined) {
@@ -45,13 +49,13 @@ export default function ChatWindowMessagesList() {
                 failedChatMessage.getMessageContent(), failedChatMessage.getAttachedFile(), failedChatMessage.getClientRef(), true
             );
 
-            try {
-                await dispatch(sendChatThreadMessage({ chatThreadId: chatThreadId, chatThreadMessageForm: failedToSendChatThreadMessage })).unwrap();
-            } catch (err) {
-                console.log(`TODO err must be handled: ${JSON.stringify(err)}.`);
-            }
+            await sendTryToResendChatMessage(async () => {
+                await dispatch(sendChatThreadMessage(
+                    { chatThreadId: props.activeChatThread.getOverview().getId(), chatThreadMessageForm: failedToSendChatThreadMessage })).unwrap();
+                return null;
+            }, () => {});
         } else {
-            console.log("ERROR: Referenced messsage does not exist!");
+            toast.error(CONSTANTS.CHAT_THREAD_MESSAGE_NOT_RESENDABLE_CLIENT_MESSAGE);
         }
     }
 
@@ -66,11 +70,13 @@ export default function ChatWindowMessagesList() {
             </div>
         } else {
             if (isLoadingOlderMessages === true) {
-                return  <LoadingSpinner />
+                return <div className='chat-window-messages-list-indicator-row'>
+                    <LoadingSpinner />
+                </div>
             } else {
                 return <div className='chat-window-messages-list-indicator-row margin-bottom-1'>
                     <ShowMoreButton
-                        showMoreFunc={tryGetOlderChatMessages}
+                        showMoreFunc={tryToGetOlderChatMessages}
                         isDirectionUpwards={true}
                     />
                 </div>
@@ -78,7 +84,7 @@ export default function ChatWindowMessagesList() {
         }
     }
 
-    const displayedChatThreadMessages = chatThread.getMessages();
+    const displayedChatThreadMessages = props.activeChatThread.getMessages();
     return <div className="chat-window-messages-list">
         <div className="margin-bottom-2" />
             {displayedChatThreadMessages.map(chatMessage => {
@@ -86,7 +92,7 @@ export default function ChatWindowMessagesList() {
                     key={chatMessage.getId()}
                     chatThreadMessage={chatMessage}
                     loggedInChatterId={chatterOverview.getId()}
-                    resendFunction={(chatMessageClientRef: string) => tryResendChatMessage(chatMessageClientRef)}
+                    resendFunction={(chatMessageClientRef: string) => tryToResendChatMessage(chatMessageClientRef)}
                 />
             })}
             {getFirstChatMessagerRow(displayedChatThreadMessages)}

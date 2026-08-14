@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { resetPassword, setIsCurrentlyAuthenticating } from "../../store/AuthSlice";
+import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import AuthenticationForm from "../authenticationForm/AuthenticationForm";
 import GenFormInput, { GenFormInputState, INITIAL_GEN_FORM_INPUT_STATE } from "../genFormInput/GenFormInput";
 import CtaButton from "../ctaButton/CtaButton";
@@ -16,9 +18,9 @@ const BACK_TO_TEXT = "Back to";
 export default function ResetPasswordFormComponent() {
     const { isCurrentlyAuthenticating } = useAppSelector(state => state.authSlice);
     const dispatch = useAppDispatch();
-    const navigate = useNavigate();
+    const [sendTryToSubmitResetPassword, _] = useTryToSendRequest<{ redirectUrl: string }>();
 
-    const [searchParams, _] = useSearchParams();
+    const [searchParams, __] = useSearchParams();
     const passwordResetToken = searchParams.get(CONSTANTS.PASSWORD_RESET_TOKEN_QUERY_PARAMETER);
 
     const [chatterPassword, setChatterPassword] = useState<GenFormInputState>(INITIAL_GEN_FORM_INPUT_STATE);
@@ -51,31 +53,26 @@ export default function ResetPasswordFormComponent() {
 
     async function tryToSubmitResetPassword(): Promise<void> {
         if (passwordResetToken === null) {
-            console.log(`TODO-toasting Show Error!`);
+            toast.error(CONSTANTS.INCOMPLETE_REQUEST_CLIENT_MESSAGE);
             return;
         }
         
         if (isResetPasswordFormInputValid() === false) {
-            console.log(`TODO-toasting Show Error!`);
+            toast.error(CONSTANTS.INVALID_FORM_CLIENT_MESSAGE);
             return;
         }
 
         const resetPasswordFormToSend = new ResetPasswordForm(chatterPassword.entered, chatterRepeatedPassword.entered);
 
-        dispatch(setIsCurrentlyAuthenticating(true));
+        await sendTryToSubmitResetPassword(async () => {
+            dispatch(setIsCurrentlyAuthenticating(true));
+            const responseBody = await dispatch(resetPassword({ passwordResetToken: passwordResetToken, resetPasswordForm: resetPasswordFormToSend })).unwrap();
 
-        let responseBody = null;
-        try {
-            responseBody = await dispatch(resetPassword({ passwordResetToken: passwordResetToken, resetPasswordForm: resetPasswordFormToSend })).unwrap();
-
-            console.log(`TODO-toasting: Toast to success!`);
             resetResetPasswordFormInputs();
-        } catch (err: any) {
-            console.log(`TODO-toasting: Toast error!`);
-        } finally {
+            return responseBody;
+        }, () => {
             dispatch(setIsCurrentlyAuthenticating(false));
-            navigate(responseBody.redirectUrl);
-        }
+        });
     }
 
     function getResetPasswordFormInputGroups(): React.JSX.Element {

@@ -77,16 +77,6 @@
 	padding-left: var(--horizontal-padding);
 	padding-right: var(--horizontal-padding);
 }
-.authentication-page-content-loading-spinner-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-
-    box-sizing: content-box;
-    width: 200px;
-    height: 200px;
-}
 
 @media (max-width: 720px) {
     .authentication-page {

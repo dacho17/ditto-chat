@@ -2,7 +2,7 @@ import AxiosClient from "./AxiosClient";
 import AwsClientInterface from "./AwsClientInterface";
 import DummyChatClient from "./DummyChatClient";
 import ViteHelper from "../helpers/ViteHelper";
-import S3PreSignedUrlDto from "../interfaces/S3PreSignedUrlDto";
+import S3PreSignedUrl from "../classes/S3PreSignedUrl";
 import S3UploadFileResponseDto from "../interfaces/S3UploadFileResponseDto";
 import CONSTANTS from "../../Constants";
 
@@ -25,8 +25,8 @@ export default class AwsClient extends AxiosClient implements AwsClientInterface
         }
     }
 
-    public async uploadFileToS3(s3PreSignedUploadUrl: S3PreSignedUrlDto, fileContentStream: ReadableStream): Promise<S3UploadFileResponseDto> {
-        const targetUrl = s3PreSignedUploadUrl.url;
+    public async uploadFileToS3(s3PreSignedUploadUrl: S3PreSignedUrl, fileContentStream: ReadableStream): Promise<S3UploadFileResponseDto> {
+        const targetUrl = s3PreSignedUploadUrl.getUrl();
         const axiosResponse = await this.sendPutRequest<Promise<S3UploadFileResponseDto>>(
             targetUrl,
             fileContentStream,

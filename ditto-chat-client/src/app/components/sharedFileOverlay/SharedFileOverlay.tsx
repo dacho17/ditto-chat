@@ -15,19 +15,9 @@ import "./SharedFileOverlay.css";
 export default function SharedFileOverlay() {
     const [sharedFileOverlayInfo, setSharedFileInOverlay] = useSharedFileOverlayInfo();
     const dispatch = useAppDispatch();
+    const [isInitialClick, setIsInitialClick] = useState(true);
     const sharedFileImageContainerRef = useRef(null);
     const sharedFileOverlayHeaderRef = useRef(null);
-    const [isInitialClick, setIsInitialClick] = useState(true);
-
-    function closeSharedFileOverlayOnBackgroundClick(event: PointerEvent) {
-        if (
-            sharedFileImageContainerRef.current !== null && !sharedFileImageContainerRef.current.contains(event.target) &&
-            sharedFileOverlayHeaderRef.current !== null && !sharedFileOverlayHeaderRef.current.contains(event.target)
-        ) {
-            // Close if the click target is completely outside the ref element (non-image Container area of the screen)
-            closeSharedFileOverlay();
-        }
-    }
 
     useEffect(() => {
         if (isInitialClick === true) {  // delaying adding EventListener not to get immediately when the SharedFileButton is Clicked!
@@ -38,6 +28,16 @@ export default function SharedFileOverlay() {
         document.addEventListener("click", closeSharedFileOverlayOnBackgroundClick);
         return () => document.removeEventListener("click", closeSharedFileOverlayOnBackgroundClick);
     }, [isInitialClick]);
+
+    function closeSharedFileOverlayOnBackgroundClick(event: PointerEvent): void {
+        if (
+            sharedFileImageContainerRef.current !== null && !sharedFileImageContainerRef.current.contains(event.target) &&
+            sharedFileOverlayHeaderRef.current !== null && !sharedFileOverlayHeaderRef.current.contains(event.target)
+        ) {
+            // Close if the click target is completely outside the ref element (non-image Container area of the screen)
+            closeSharedFileOverlay();
+        }
+    }
 
     function closeSharedFileOverlay(): void {
         dispatch(setSharedFileInOverlay(null));

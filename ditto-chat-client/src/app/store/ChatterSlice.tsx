@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosResponse } from "axios";
-import { AyncThunkRejectType, RootState } from "./ReduxStore";
+import { AsyncThunkRejectType, RootState } from "./ReduxStore";
 import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
 import SliceHelper from "../helpers/SliceHelper";
@@ -42,7 +42,7 @@ function mergeSharedFilePageToList(sharedFileList: SharedFile[], sharedFilesPage
     return mergedList;
 }
 
-export const getChatter = createAsyncThunk<Chatter, { chatterId: string }, AyncThunkRejectType>(
+export const getChatter = createAsyncThunk<Chatter, { chatterId: string }, { rejectValue: AsyncThunkRejectType }>(
     "chatter/getChatter",
     async ({ chatterId }, thunkAPI) => {
         try {
@@ -62,7 +62,7 @@ export const getChatter = createAsyncThunk<Chatter, { chatterId: string }, AyncT
     }
 );
 
-export const getSharedFiles = createAsyncThunk<SharedFile[], { chatterId: string }, AyncThunkRejectType>(
+export const getSharedFiles = createAsyncThunk<SharedFile[], { chatterId: string }, { rejectValue: AsyncThunkRejectType }>(
     "chatter/getSharedFiles",
     async ({ chatterId }, thunkAPI) => {
         try {
