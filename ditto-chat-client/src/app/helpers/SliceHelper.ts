@@ -99,7 +99,6 @@ export default class SliceHelper {
         return await sendTryToGetChatThreads(async () => {
             dispatch(isLoadingReducer(true));
 
-            // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
             const retrievedChatThreadOverviews = await dispatch(getChatThreadsOnHomePage({
                 chatThreadSearchFilter: chatThreadSearchFilter,
                 currentPageNumber: currentPageNumber,
@@ -108,7 +107,6 @@ export default class SliceHelper {
                 isInitialRetrieval: isInitialRetrieval,
                 isPolling: false,
             })).unwrap();
-            // TODO-result-caching: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
             
             return retrievedChatThreadOverviews;
         }, () => dispatch(isLoadingReducer(false)));
@@ -128,10 +126,7 @@ export default class SliceHelper {
         await sendTryToGetChatters(async () => {
             dispatch(isLoadingReducer(true));
 
-            // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
             await dispatch(getChatters({ chatterSearchFilter: chattersSearchFilter, currentPageNumber: currentPageNumber, isInitialRetrieval: isInitialRetrieval })).unwrap();
-            // TODO-result-caching: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
-            
             return null;
         }, () => dispatch(isLoadingReducer(false)));
     }

@@ -31,9 +31,7 @@ export default function ChatWindowMessagesList(props: Props) {
             dispatch(setIsLoadingOlderMessages(true));
             dispatch(setCurrentChatThreadMessagesListPage(currentChatMessagesListPage + 1));
 
-            // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
             await dispatch(getChatThreadMessages({ chatThreadId: props.activeChatThread.getOverview().getId() })).unwrap();
-            // TODO-result-caching: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
             return null;
         }, () => {
             dispatch(setIsLoadingOlderMessages(false));

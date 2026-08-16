@@ -234,13 +234,14 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
             chatterDto.chatterOverview.id === chatterId
         );
 
-        const sortedSharedFilesWithChatter = DummyChatService.sortSharedFileDtoList(foundChatter.sharedFiles);
+        const sortedSharedFilesWithChatter = DummyChatService.sortSharedFileDtoList(foundChatter.sharedFiles.pagedList);
         const responseData = structuredClone(foundChatter);
-        responseData.sharedFiles = sortedSharedFilesWithChatter;
+        responseData.sharedFiles.pagedList = sortedSharedFilesWithChatter;
 
         // returning only first, sorted Page of the sharedFiles!
         if (responseData !== null) {
-            responseData.sharedFiles = responseData.sharedFiles.slice(0, CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE);
+            responseData.sharedFiles.pagedList = responseData.sharedFiles.pagedList.slice(0, CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE);
+            responseData.sharedFiles.isLastPage = responseData.sharedFiles.pagedList.length <= CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE;
         }
         
         console.log(`Responding with chatterDto: ${JSON.stringify(responseData)}`);
@@ -257,12 +258,12 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
         const foundChatter = this.dummyChatService.getDummyChatters()
             .find(chatterDto => chatterDto.chatterOverview.id === chatterId);
 
-        const sortedSharedFilesWithChatter = DummyChatService.sortSharedFileDtoList(foundChatter.sharedFiles);
+        const sortedSharedFilesWithChatter = DummyChatService.sortSharedFileDtoList(foundChatter.sharedFiles.pagedList);
         const sharedFilesPage = sortedSharedFilesWithChatter.slice(pageNumber * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE, (pageNumber + 1) * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE);
 
         const responseData = {
             pagedList: sharedFilesPage,
-            isLastPage: foundChatter.sharedFiles.length <= (pageNumber + 1) * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE
+            isLastPage: foundChatter.sharedFiles.pagedList.length <= (pageNumber + 1) * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE
         } as PagedListDto<SharedFileDto>;
     
         console.log(`Responding with PagedListDto<SharedFileDto> containing ${responseData.pagedList.length} entries`);

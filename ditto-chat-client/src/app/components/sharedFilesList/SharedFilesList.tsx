@@ -24,9 +24,7 @@ export default function SharedFilesList(props: Props) {
             dispatch(setCurrentSharedFilesListPage(currentSharedFilesListPage + 1));
             dispatch(setIsLoadingOlderSharedFiles(true));
 
-            // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
             await dispatch(getSharedFiles({ chatterId: props.selectedChatter.getChatterOverview().getId() })).unwrap();
-            // TODO-result-caching: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
 
             return null;
         }, () => {

@@ -1,14 +1,16 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, GetThunkAPI } from "@reduxjs/toolkit";
 import { AxiosResponse } from "axios";
 import { AsyncThunkRejectType, RootState } from "./ReduxStore";
 import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
 import SliceHelper from "../helpers/SliceHelper";
+import TimeHelper from "../helpers/TimeHelper";
 import Mapper from "../helpers/Mapper";
 import Chatter from "../classes/Chatter";
 import SharedFile from "../classes/SharedFile";
 import CONSTANTS from "../../Constants";
 
+type SharedFilesWithChatterCache = { cachedSharedFileList: SharedFile[], lastRetrievedPageNumber: number, isLastPage: boolean, expiresAtTimestamp: number };
 interface ChatterState {
     chatter: Chatter | null;   // contains List of SharedFiles sorted descendingly temporaly at all times!
     isLoadingChatter: boolean;
@@ -17,6 +19,7 @@ interface ChatterState {
     isLoadingOlderSharedFiles: boolean;
 
     chatterSharedFileInOverlay: SharedFile | null;
+    retrievedSharedFilesCache: SharedFilesWithChatterCache | null;
 }
 
 const initialState: ChatterState = {
@@ -25,7 +28,9 @@ const initialState: ChatterState = {
     currentSharedFilesListPage: 0,
     isLastSharedFilesListPage: false,
     isLoadingOlderSharedFiles: false,
-    chatterSharedFileInOverlay: null
+
+    chatterSharedFileInOverlay: null,
+    retrievedSharedFilesCache: null
 };
 
 function mergeSharedFilePageToList(sharedFileList: SharedFile[], sharedFilesPage: SharedFile[]): SharedFile[] {
@@ -42,17 +47,48 @@ function mergeSharedFilePageToList(sharedFileList: SharedFile[], sharedFilesPage
     return mergedList;
 }
 
+function retrieveSharedFilesFromCache(targetPageNumber: number, thunkAPI: GetThunkAPI<any>): {
+    previouslyCachedSharedFiles: SharedFile[], previouslyCachedIsLastPage: boolean } | null
+{
+    const { retrievedSharedFilesCache } = (thunkAPI.getState() as RootState).chatterSlice;
+    
+    if (retrievedSharedFilesCache !== null) {
+        if (retrievedSharedFilesCache.expiresAtTimestamp < TimeHelper.getCurrentTimestamp()) {
+            // Entry exists but has expired. It needs to be deleted from the Cache
+            thunkAPI.dispatch(clearSharedFilesCache());
+            return null;
+        }
+
+        if (targetPageNumber <= retrievedSharedFilesCache.lastRetrievedPageNumber) {
+            // Target Page has been Cached
+            const targetCachedSharedFileList = retrievedSharedFilesCache.cachedSharedFileList.slice(0, (targetPageNumber + 1) * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE);
+            const isLastPageResult = retrievedSharedFilesCache.isLastPage;
+
+            console.log(`Returning SharedFiles from Cache: ${targetCachedSharedFileList.length}`);
+            return {
+                previouslyCachedSharedFiles: targetCachedSharedFileList,
+                previouslyCachedIsLastPage: isLastPageResult
+            };
+        }
+    }
+
+    return null;    // Entry does not exist, or if it does the Target Page has not been Cached yet
+}
+
 export const getChatter = createAsyncThunk<Chatter, { chatterId: string }, { rejectValue: AsyncThunkRejectType }>(
     "chatter/getChatter",
     async ({ chatterId }, thunkAPI) => {
         try {
             const res = await ChatClient.getChatClient().getChatter(chatterId);
             const retrievedChatter = Mapper.chatterFromDto(res.data);
+            const isSharedFileLastPage = res.data.sharedFiles.isLastPage;
 
             thunkAPI.dispatch(setChatter(retrievedChatter));
-            if (retrievedChatter.getSharedFiles().length < CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE) {
-                thunkAPI.dispatch(setIsLastSharedFilesListPage(true));
-            }
+            thunkAPI.dispatch(setIsLastSharedFilesListPage(isSharedFileLastPage));
+
+            // store the Retrieved SharedFiles in the Cache
+            const { chatter } = (thunkAPI.getState() as RootState).chatterSlice;
+            thunkAPI.dispatch(updateSharedFilesCache({ sharedFilesListToCache: chatter.getSharedFiles(), pageNumber: 0, isLastPage: isSharedFileLastPage }));
 
             return thunkAPI.fulfillWithValue(retrievedChatter);
         } catch (err: any) {
@@ -71,12 +107,19 @@ export const getSharedFiles = createAsyncThunk<SharedFile[], { chatterId: string
             const queryParams = new URLSearchParams();
             queryParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, currentSharedFilesListPage.toString());
             
-            const retrievedSharedFiles = await ChatClient.getChatClient().getSharedFiles(chatterId, queryParams);
-            const { pagedList, isLastPage } = retrievedSharedFiles.data;
+            // checks if there is an entry already in Cache, and if yes, use the Cached object and do not send the request to the server!
+            const cacheResponse = retrieveSharedFilesFromCache(currentSharedFilesListPage, thunkAPI);            
+            const { pagedList, isLastPage } = cacheResponse !== null
+                ? { pagedList: cacheResponse.previouslyCachedSharedFiles, isLastPage: cacheResponse.previouslyCachedIsLastPage }
+                : (await ChatClient.getChatClient().getSharedFiles(chatterId, queryParams)).data;
 
             const sharedFiles = pagedList.map(sharedFileDto => Mapper.sharedFileFromDto(sharedFileDto));
             thunkAPI.dispatch(appendSharedFilesToList(sharedFiles));
             thunkAPI.dispatch(setIsLastSharedFilesListPage(isLastPage));
+
+            // store the Retrieved SharedFiles in the Cache
+            const { chatter } = (thunkAPI.getState() as RootState).chatterSlice;
+            thunkAPI.dispatch(updateSharedFilesCache({ sharedFilesListToCache: chatter.getSharedFiles(), pageNumber: currentSharedFilesListPage, isLastPage: isLastPage }));
 
             return thunkAPI.fulfillWithValue(sharedFiles);
         } catch (err: any) {
@@ -98,6 +141,21 @@ export const ChatterSlice = createSlice({
         },
         setIsLoadingOlderSharedFiles: (state, action: { payload: boolean }) => {
             state.isLoadingOlderSharedFiles = action.payload;
+        },
+        updateSharedFilesCache: (state, action: { payload: {
+            sharedFilesListToCache: SharedFile[], pageNumber: number, isLastPage: boolean }
+        }) => {
+            const valueToCache = {
+                cachedSharedFileList: action.payload.sharedFilesListToCache,
+                lastRetrievedPageNumber: action.payload.pageNumber,
+                isLastPage: action.payload.isLastPage,
+                expiresAtTimestamp: TimeHelper.getCurrentTimestamp() + CONSTANTS.LONG_CACHED_ENTRY_EXPIRES_IN_MS
+            } as SharedFilesWithChatterCache;
+
+            state.retrievedSharedFilesCache = valueToCache;
+        },
+        clearSharedFilesCache: (state) => {
+            state.retrievedSharedFilesCache = initialState.retrievedSharedFilesCache;
         },
         appendSharedFilesToList: (state, action: { payload: SharedFile[] }) => {
             const mergedSharedFiles = mergeSharedFilePageToList(state.chatter.getSharedFiles(), action.payload);
@@ -127,6 +185,7 @@ export const ChatterSlice = createSlice({
             state.isLastSharedFilesListPage = initialState.isLastSharedFilesListPage;
             state.isLoadingOlderSharedFiles = initialState.isLoadingOlderSharedFiles;
             state.chatterSharedFileInOverlay = initialState.chatterSharedFileInOverlay;
+            state.retrievedSharedFilesCache = initialState.retrievedSharedFilesCache;
         }
     }
 });
@@ -135,6 +194,8 @@ export const {
     setChatter,
     setIsLoadingChatter,
     setIsLoadingOlderSharedFiles,
+    updateSharedFilesCache,
+    clearSharedFilesCache,
     appendSharedFilesToList,
     setCurrentSharedFilesListPage,
     setIsLastSharedFilesListPage,

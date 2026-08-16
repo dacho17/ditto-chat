@@ -62,7 +62,10 @@ export default class DummyChatService {
                 isChatterOnline: true,
                 chatThreadId: null,
             },
-            sharedFiles: []
+            sharedFiles: {
+                pagedList: [],
+                isLastPage: true
+            }
         } as ChatterDto;
 
         this.dummyChatters.push(newlyRegisteredChatter);
@@ -133,8 +136,9 @@ export default class DummyChatService {
             const peerChatterDtoIndex = this.dummyChatters.findIndex(chatter =>
                 chatter.chatterOverview.id === this.dummyChatThreads[chatThreadIndex].chatThreadOverview.chatterOverview.id);
             
-            this.dummyChatters[peerChatterDtoIndex].sharedFiles.push(registeredChatThreadMessage.attachedFile);
-            this.dummyChatters[peerChatterDtoIndex].sharedFiles = DummyChatService.sortSharedFileDtoList(this.dummyChatters[peerChatterDtoIndex].sharedFiles);
+            this.dummyChatters[peerChatterDtoIndex].sharedFiles.pagedList.push(registeredChatThreadMessage.attachedFile);
+            this.dummyChatters[peerChatterDtoIndex].sharedFiles.pagedList
+                = DummyChatService.sortSharedFileDtoList(this.dummyChatters[peerChatterDtoIndex].sharedFiles.pagedList);
         }
 
         return registeredChatThreadMessage;
@@ -185,7 +189,7 @@ export default class DummyChatService {
 
         const peerChatterDtoIndex = this.dummyChatters.findIndex(chatter =>
             chatter.chatterOverview.id === this.dummyChatThreads[chatThreadIndex].chatThreadOverview.chatterOverview.id);
-        this.dummyChatters[peerChatterDtoIndex].sharedFiles = [];
+        this.dummyChatters[peerChatterDtoIndex].sharedFiles.pagedList = [];
 
         return {
             chatThreadHistoryClearedAt: chatThreadHistoryClearedAt
@@ -387,7 +391,10 @@ export default class DummyChatService {
                         isChatterOnline: index % 3 === 0 ? true : false,
                         chatThreadId: null
                     },
-                    sharedFiles: []
+                    sharedFiles: {
+                        pagedList: [],
+                        isLastPage: true
+                    }
                 } as ChatterDto
             })
         ] as ChatterDto[];
@@ -440,7 +447,7 @@ export default class DummyChatService {
                 .filter(chatThreadMessage => chatThreadMessage.attachedFile !== null)
                 .map(chatThreadMessage => chatThreadMessage.attachedFile);
             const sortedSharedFilesWithinChatThread = DummyChatService.sortSharedFileDtoList(sharedFilesWithinChatThread);
-            generatedDummyChatters[index].sharedFiles = sortedSharedFilesWithinChatThread;
+            generatedDummyChatters[index].sharedFiles.pagedList = sortedSharedFilesWithinChatThread;
 
             // determining lastSeen Message by Chatter following Pattern receivedMesages[chatThreadIndex % receivedMesages.length]
             const receivedMesages

@@ -1,6 +1,6 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, GetThunkAPI } from "@reduxjs/toolkit";
 import { AxiosResponse } from "axios";
-import { AsyncThunkRejectType } from "./ReduxStore";
+import { AsyncThunkRejectType, RootState } from "./ReduxStore";
 import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
 import SliceHelper from "../helpers/SliceHelper";
@@ -8,7 +8,9 @@ import Mapper from "../helpers/Mapper";
 import ChatterOverview from "../classes/ChatterOverview";
 import TypeFormatter from "../helpers/TypeFormatter";
 import CONSTANTS from "../../Constants";
+import TimeHelper from "../helpers/TimeHelper";
 
+type ChatterOverviewsCacheValue = { cachedChatterOverviewList: ChatterOverview[], lastRetrievedPageNumber: number, isLastPage: boolean };
 interface ChattersState {
     chatterOverviewList: ChatterOverview[];     // sorted descendingly alphabetically at all times!
     isLoadingChatterOverviews: boolean;
@@ -16,6 +18,8 @@ interface ChattersState {
     isLoadingOlderChatterOverviews: boolean;
     isLastChatterOverviewListPage: boolean;
     isCreatingNewChatThread: boolean;
+
+    retrievedChatterOverviewsCache: { searchFilter: string, cachedValue: ChatterOverviewsCacheValue, expiresAtTimestamp: number }[];
 }
 
 const initialState: ChattersState = {
@@ -24,7 +28,9 @@ const initialState: ChattersState = {
     isFilterCurrentlyChanging: false,
     isLoadingOlderChatterOverviews: false,
     isLastChatterOverviewListPage: false,
-    isCreatingNewChatThread: false
+    isCreatingNewChatThread: false,
+
+    retrievedChatterOverviewsCache: []
 };
 
 function sortChatterOverviews(chatterOverviews: ChatterOverview[]): ChatterOverview[] {
@@ -52,6 +58,37 @@ function mergeChatterOverviewPageIntoList(chatterOverviewsList: ChatterOverview[
     return mergedList;
 }
 
+function retrieveChatterOverviewsFromCache(chatterSearchFilter: string, targetPageNumber: number, isInitialRetrieval: boolean, thunkAPI: GetThunkAPI<any>): {
+    previouslyCachedChatterOverviews: ChatterOverview[], previouslyCachedIsLastPage: boolean } | null
+{
+    const { retrievedChatterOverviewsCache } = (thunkAPI.getState() as RootState).chattersSlice;
+    
+    const cachedChatterOverviewsEntry = retrievedChatterOverviewsCache.find(cachedEntry => cachedEntry.searchFilter === chatterSearchFilter);
+    if (cachedChatterOverviewsEntry !== undefined) {
+        if (cachedChatterOverviewsEntry.expiresAtTimestamp < TimeHelper.getCurrentTimestamp()) {
+            // Entry exists but has expired. It needs to be deleted from the Cache
+            thunkAPI.dispatch(removeChatterOverviewsFromCache({ searchFilter: cachedChatterOverviewsEntry.searchFilter }));
+            return null;
+        }
+
+        if (targetPageNumber <= cachedChatterOverviewsEntry.cachedValue.lastRetrievedPageNumber) {
+            // Target Page has been Cached
+            const targetCachedChatterOverviewList = isInitialRetrieval === true
+                ? cachedChatterOverviewsEntry.cachedValue.cachedChatterOverviewList.slice(0, (targetPageNumber + 1) * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE)
+                : cachedChatterOverviewsEntry.cachedValue.cachedChatterOverviewList.slice(targetPageNumber * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE, (targetPageNumber + 1) * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE);
+            const isLastPageResult = cachedChatterOverviewsEntry.cachedValue.isLastPage;
+
+            console.log(`Returning ChatterOverviews from Cache: ${targetCachedChatterOverviewList.length}`);
+            return {
+                previouslyCachedChatterOverviews: targetCachedChatterOverviewList,
+                previouslyCachedIsLastPage: isLastPageResult
+            };
+        }
+    }
+
+    return null;    // Entry does not exist, or if it does the Target Page has not been Cached yet
+}
+
 export const getChatters = createAsyncThunk<ChatterOverview[], { chatterSearchFilter: string, currentPageNumber: string, isInitialRetrieval: boolean }, { rejectValue: AsyncThunkRejectType }>(
     "chatters/getChatters",
     async ({ chatterSearchFilter, currentPageNumber, isInitialRetrieval }, thunkAPI) => {
@@ -61,9 +98,13 @@ export const getChatters = createAsyncThunk<ChatterOverview[], { chatterSearchFi
             queryParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, currentPageNumber);
             queryParams.set(CONSTANTS.IS_INITIAL_RETRIEVAL_QUERY_PARAMETER, TypeFormatter.booleanToString(isInitialRetrieval));
 
-            const retrievedChatterOverviews = await ChatClient.getChatClient().getChatters(queryParams);
-            const { pagedList, isLastPage } = retrievedChatterOverviews.data;
-
+            // checks if there is an entry already in Cache, and if yes, use the Cached object and do not send the request to the server!
+            const cacheResponse =
+                retrieveChatterOverviewsFromCache(chatterSearchFilter, TypeFormatter.stringToInt(currentPageNumber), isInitialRetrieval, thunkAPI);
+            
+            const { pagedList, isLastPage } = cacheResponse !== null
+                ? { pagedList: cacheResponse.previouslyCachedChatterOverviews, isLastPage: cacheResponse.previouslyCachedIsLastPage }
+                : (await ChatClient.getChatClient().getChatters(queryParams)).data;
             const chatterOverviews = pagedList.map(chatterOverviewDto => Mapper.chatterOverviewFromDto(chatterOverviewDto));
 
             if (isInitialRetrieval === true) {
@@ -73,6 +114,13 @@ export const getChatters = createAsyncThunk<ChatterOverview[], { chatterSearchFi
             }
 
             thunkAPI.dispatch(setIsLastChatterOverviewListPage(isLastPage));
+
+            // store the Retrieved Result in the Cache
+            const { chatterOverviewList } = (thunkAPI.getState() as RootState).chattersSlice;    // I expect this assignment to contain chatThreadOverviews updated by the previous Dispatch Calls!
+            thunkAPI.dispatch(addChatterOverviewsToCache({
+                chatterOverviewListToCache: chatterOverviewList,
+                searchFilter: chatterSearchFilter, pageNumber: TypeFormatter.stringToInt(currentPageNumber), isLastPage: isLastPage
+            }));
 
             return thunkAPI.fulfillWithValue(chatterOverviews);
         } catch (err: any) {
@@ -97,6 +145,33 @@ export const ChattersSlice = createSlice({
 
             state.chatterOverviewList = sortedNewChatterOverviewsList;            
         },
+        addChatterOverviewsToCache: (state, action: { payload: {
+            chatterOverviewListToCache: ChatterOverview[], searchFilter: string, pageNumber: number, isLastPage: boolean }
+        }) => {
+            const updatedCache = [...state.retrievedChatterOverviewsCache];
+            const valueToCache = {
+                cachedChatterOverviewList: action.payload.chatterOverviewListToCache,
+                lastRetrievedPageNumber: action.payload.pageNumber,
+                isLastPage: action.payload.isLastPage
+            } as ChatterOverviewsCacheValue;
+
+            // Updates the existing cacheEntry, or creates a new one if one does not exist
+            const targetCacheEntryIndex = updatedCache.findIndex(cachedEntry => cachedEntry.searchFilter === action.payload.searchFilter);
+            if (targetCacheEntryIndex !== -1) {
+                updatedCache[targetCacheEntryIndex].cachedValue = valueToCache;
+            } else {
+                const cachedEntryExpiresAtTimestamp = TimeHelper.getCurrentTimestamp() + CONSTANTS.SHORTLY_CACHED_ENTRY_EXPIRES_IN_MS;
+                updatedCache.push({ searchFilter: action.payload.searchFilter, cachedValue: valueToCache, expiresAtTimestamp: cachedEntryExpiresAtTimestamp });
+            }
+
+            state.retrievedChatterOverviewsCache = updatedCache;
+        },
+        removeChatterOverviewsFromCache: (state, action: { payload: { searchFilter: string }}) => {
+            const updatedCache = [...state.retrievedChatterOverviewsCache]
+                .filter(chatterOverviewCacheEntry => chatterOverviewCacheEntry.searchFilter !== action.payload.searchFilter);
+            
+            state.retrievedChatterOverviewsCache = updatedCache;
+        },
         setIsLoadingChatterOverviews: (state, action: { payload: boolean }) => {
             state.isLoadingChatterOverviews = action.payload;
         },
@@ -119,6 +194,7 @@ export const ChattersSlice = createSlice({
             state.isLoadingOlderChatterOverviews = initialState.isLoadingOlderChatterOverviews;
             state.isLastChatterOverviewListPage = initialState.isLastChatterOverviewListPage;
             state.isCreatingNewChatThread = initialState.isCreatingNewChatThread;
+            state.retrievedChatterOverviewsCache = initialState.retrievedChatterOverviewsCache;
         }
     }
 });
@@ -126,6 +202,8 @@ export const ChattersSlice = createSlice({
 export const {
     setChatterOverviewsList,
     appendChatterOverviewsToList,
+    addChatterOverviewsToCache,
+    removeChatterOverviewsFromCache,
     setIsLoadingChatterOverviews,
     setIsChattersFilterCurrentlyChanging,
     setIsLoadingOlderChatterOverviews,

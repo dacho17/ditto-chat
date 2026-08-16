@@ -63,7 +63,6 @@ export default function HomePage() {
             dispatch(setIsLoadingChatThreads(true));
             dispatch(setIsLoadingChatThread(true));
 
-            // TODO-result-caching: For Optimization, include whether Search was attempted before in Cache, and use the list of restults if yes. I will have to store pageNumber as well in the cache
             await dispatch(getChatThreadsOnHomePage({
                 chatThreadSearchFilter: chatThreadSearchFilter,
                 currentPageNumber: currentPageNumber,
@@ -71,7 +70,6 @@ export default function HomePage() {
                 isInitialRetrieval: true,
                 isPolling: false
             }));
-            // TODO-result-caching: if using Cache, store the retrieved result (retrievedChatThreadOverviews) in the Cache
 
             return null;
         }, () => {

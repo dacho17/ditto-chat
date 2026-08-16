@@ -50,7 +50,7 @@ export default class Mapper {
     public static chatterFromDto(chatterDto: ChatterDto): Chatter {
         return new Chatter(
             Mapper.chatterOverviewFromDto(chatterDto.chatterOverview),
-            chatterDto.sharedFiles.map(sharedFileDto => Mapper.sharedFileFromDto(sharedFileDto))
+            chatterDto.sharedFiles.pagedList.map(sharedFileDto => Mapper.sharedFileFromDto(sharedFileDto))
         );
     }
 
