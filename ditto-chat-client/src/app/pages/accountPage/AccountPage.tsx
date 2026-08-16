@@ -75,7 +75,7 @@ export default function AccountPage() {
             <div className="account-page-account-details-container">
                 <AccountDetails
                     accountOverview={chatterOverview as ChatterOverview}
-                    isDisplayedInPanel={true}
+                    isDisplayedInPanel={false}
                 />
             </div>
             <div className="account-page-edit-chatter-image-container">

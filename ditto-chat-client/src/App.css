@@ -1,7 +1,3 @@
-.full-screen-height {
-    height: 100dvh;
-}
-
 .panel-header {
     height: var(--page-header-height);
 }

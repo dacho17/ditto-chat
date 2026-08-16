@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default function PageWithSideMenu(props: Props) {
-    return <div className="page-with-side-menu full-screen-height">
+    return <div className="page-with-side-menu">
         <div className="side-menu-container">
             <SideMenu />
         </div>

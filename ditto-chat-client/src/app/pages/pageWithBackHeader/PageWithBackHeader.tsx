@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function PageWithBackHeader(props: Props) {
-    return <div className="page-with-back-header full-screen-height">
+    return <div className="page-with-back-header">
         <div className="back-header-container">
             <BackHeader
                 onClickFunction={props.backOnClickFunction}

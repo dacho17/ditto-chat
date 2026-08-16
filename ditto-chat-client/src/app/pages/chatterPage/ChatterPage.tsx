@@ -54,7 +54,7 @@ export default function ChatterPage() {
                     <div className="chatter-page-account-details-container">
                         <AccountDetails
                             accountOverview={chatter.getChatterOverview()}
-                            isDisplayedInPanel={true}
+                            isDisplayedInPanel={false}
                         />
                     </div>
                     <div className="chatter-page-shared-files-list-container">
