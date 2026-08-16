@@ -1,6 +1,7 @@
 import ChatClientInterface, { ChatServerResponse } from "./ChatClientInterface";
 import AwsClientInterface from "./AwsClientInterface";
 import DummyChatService from "../helpers/DummyChatService";
+import TimeHelper from "../helpers/TimeHelper";
 import TypeFormatter from "../helpers/TypeFormatter";
 import UploadFileIntent from "../classes/UploadFileIntent";
 import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
@@ -83,6 +84,7 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
             message: DUMMY_LOGIN_SUCCESS_MESSAGE,
             data: {
                 chatterOverview: dummyLoggedInChatter,
+                sessionExpiresAt: TimeHelper.getServerFormattedTimestamp(TimeHelper.getCurrentTimestamp() + 1000 * 10), // half hour Session
                 redirectUrl: CONSTANTS.HOME_URL
             }
         });

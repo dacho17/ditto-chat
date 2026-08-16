@@ -4,6 +4,8 @@ import { AsyncThunkRejectType } from "./ReduxStore";
 import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
 import SliceHelper from "../helpers/SliceHelper";
+import TimeHelper from "../helpers/TimeHelper";
+import TypeFormatter from "../helpers/TypeFormatter";
 import Mapper from "../helpers/Mapper";
 import ChatterRegistrationForm from "../classes/ChatterRegistrationForm";
 import LoginForm from "../classes/LoginForm";
@@ -15,15 +17,18 @@ interface AuthState {
     isCurrentlyAuthenticating: boolean;
     chatterOverview: ChatterOverview | null;
     isLoadingChatterOverview: boolean;
+
+    sessionExpiresAtTimestamp: number | null;
 }
 
 const initialState: AuthState = {
     isCurrentlyAuthenticating: false,
     chatterOverview: null,
     isLoadingChatterOverview: true,
+
+    sessionExpiresAtTimestamp: null
 };
 
-// TODO-auth: store expiresAt as well
 const AUTH_LOCAL_STORAGE_KEYS = {
     chatterId: "chatterId",
     chatterName: "chatterName",
@@ -31,7 +36,23 @@ const AUTH_LOCAL_STORAGE_KEYS = {
     chatterUsername: "chatterUsername",
     chatterEmail: "chatterEmail",
     chatterImageUrl: "chatterImageUrl",
+    sessionExpiresAtTimestamp: "sessionExpiresAtTimestamp"
 };
+
+function clearAuthStateHelper(state: AuthState): void {
+    localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterId);
+    localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterName);
+    localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterSurname);
+    localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterUsername);
+    localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterEmail);
+    localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterImageUrl);
+    localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.sessionExpiresAtTimestamp);
+
+    state.chatterOverview = initialState.chatterOverview;
+    state.isLoadingChatterOverview = initialState.isLoadingChatterOverview;
+    state.isCurrentlyAuthenticating = initialState.isCurrentlyAuthenticating;
+    state.sessionExpiresAtTimestamp = initialState.sessionExpiresAtTimestamp;
+}
 
 export const getRegisterPage = createAsyncThunk<{ redirectUrl: string } | null, void, { rejectValue: AsyncThunkRejectType }>(
     "auth/getRegisterPage",
@@ -85,8 +106,9 @@ export const login = createAsyncThunk<{ redirectUrl: string }, { loginForm: Logi
             const responseBody = await ChatClient.getChatClient().login(loginForm);            
             SliceHelper.toastSuccessResponseMessage(responseBody);
             const retrievedChatterOverview = Mapper.chatterOverviewFromDto(responseBody.data.chatterOverview);
+            const sessionExpiresAtTimestamp = TimeHelper.dateStringToTimestamp(responseBody.data.sessionExpiresAt);
 
-            thunkAPI.dispatch(setChatterOverview(retrievedChatterOverview));
+            thunkAPI.dispatch(setChatterOverview({ loggedInChatterOverview: retrievedChatterOverview, sessionExpiresAtTimestamp: sessionExpiresAtTimestamp }));
 
             return thunkAPI.fulfillWithValue({ redirectUrl: responseBody.data.redirectUrl });
         } catch (err: any) {
@@ -184,27 +206,38 @@ export const AuthSlice = createSlice({
         setIsLoadingChatterOverview: (state, action: { payload: boolean }) => {
             state.isLoadingChatterOverview = action.payload;
         },
-        setChatterOverview: (state, action: { payload: ChatterOverview }) => {
-            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterId, action.payload.getId());
-            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterName, action.payload.getChatterName());
-            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterSurname, action.payload.getChatterSurname());
-            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterUsername, action.payload.getChatterUsername());
-            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterEmail, action.payload.getChatterEmail());
-            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterImageUrl, action.payload.getChatterImageUrl());
+        setChatterOverview: (state, action: { payload: { loggedInChatterOverview: ChatterOverview, sessionExpiresAtTimestamp: number} }) => {
+            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterId, action.payload.loggedInChatterOverview.getId());
+            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterName, action.payload.loggedInChatterOverview.getChatterName());
+            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterSurname, action.payload.loggedInChatterOverview.getChatterSurname());
+            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterUsername, action.payload.loggedInChatterOverview.getChatterUsername());
+            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterEmail, action.payload.loggedInChatterOverview.getChatterEmail());
+            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterImageUrl, action.payload.loggedInChatterOverview.getChatterImageUrl());
 
-            state.chatterOverview = action.payload;
+            localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.sessionExpiresAtTimestamp, action.payload.sessionExpiresAtTimestamp.toString());
+
+            state.chatterOverview = action.payload.loggedInChatterOverview;
+            state.sessionExpiresAtTimestamp = action.payload.sessionExpiresAtTimestamp;
         },
         refreshChatterOverview: (state) => {
+            const sessionExpiresAtTimestampStr = localStorage.getItem(AUTH_LOCAL_STORAGE_KEYS.sessionExpiresAtTimestamp);
+            if (sessionExpiresAtTimestampStr === null) {
+                return;     // if sessionExpiresAtTimestamp is not stored in Web Browser, it can not be Stored in the State and needs to be retrieved from the Server
+            }
+
+            const sessionExpiresAtTimestamp = TypeFormatter.stringToInt(sessionExpiresAtTimestampStr);
+            if (sessionExpiresAtTimestamp < TimeHelper.getCurrentTimestamp()) {
+                // if Session Expired clear the AuthState!
+                clearAuthStateHelper(state as AuthState);
+                return;
+            }
+
             if (state.chatterOverview !== null) {
                 return;     // if ChatterOverview is already Set in State it does not have to be Stored in the State
             }
 
-            const chatterId = localStorage.getItem(AUTH_LOCAL_STORAGE_KEYS.chatterId);
-            if (chatterId === null) {
-                return;     // if ChatterOverviewId is not stored in Web Browser, it can not be Stored in the State and needs to be retrieved from the Server
-            }
-
             // get ChatterOverview from Web Browser Local Storage
+            const chatterId = localStorage.getItem(AUTH_LOCAL_STORAGE_KEYS.chatterId);
             const chatterName = localStorage.getItem(AUTH_LOCAL_STORAGE_KEYS.chatterName);
             const chatterSurname = localStorage.getItem(AUTH_LOCAL_STORAGE_KEYS.chatterSurname);
             const chatterUsername = localStorage.getItem(AUTH_LOCAL_STORAGE_KEYS.chatterUsername);
@@ -215,6 +248,7 @@ export const AuthSlice = createSlice({
             );
 
             state.chatterOverview = chatterOverview;
+            state.sessionExpiresAtTimestamp = sessionExpiresAtTimestamp;
         },
         setNewLoggedInChatterImageUrl: (state, action: { payload: { newLoggedInChatterImageUrl: string }}) => {
             localStorage.setItem(AUTH_LOCAL_STORAGE_KEYS.chatterImageUrl, action.payload.newLoggedInChatterImageUrl);
@@ -224,17 +258,8 @@ export const AuthSlice = createSlice({
 
             state.chatterOverview = updatedLoggedInChatter;
         },
-        clearAuthState: (state) => {            
-            localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterId);
-            localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterName);
-            localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterSurname);
-            localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterUsername);
-            localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterEmail);
-            localStorage.removeItem(AUTH_LOCAL_STORAGE_KEYS.chatterImageUrl);
-
-            state.chatterOverview = initialState.chatterOverview;
-            state.isLoadingChatterOverview = initialState.isLoadingChatterOverview;
-            state.isCurrentlyAuthenticating = initialState.isCurrentlyAuthenticating;
+        clearAuthState: (state) => {
+            clearAuthStateHelper(state as AuthState);
         }
     }
 });

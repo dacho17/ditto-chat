@@ -3,6 +3,7 @@ import {  Navigate, Route, Routes } from 'react-router-dom';
 import { Toaster } from "react-hot-toast";  // Following Documentation at: https://react-hot-toast.com/docs/toaster
 import { useAppDispatch } from './app/store/ReduxStore';
 import { setCurrentDeviceType } from './app/store/DeviceTypeSlice';
+import useIsAuthenticated from './app/hooks/UseIsAuthenticated';
 import AuthenticationPage from './app/pages/authenticationPage/AuthenticationPage';
 import HomePage from './app/pages/homePage/HomePage';
 import MobileChatPage from './app/pages/mobileChatPage/MobileChatPage';
@@ -15,6 +16,7 @@ import CONSTANTS from './Constants';
 import './App.css';
 
 export default function App() {
+    useIsAuthenticated();
     const dispatch = useAppDispatch();
     
     function setDeviceTypeOnScreenResize(): void {
