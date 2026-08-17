@@ -1,7 +1,7 @@
 .home-page {
 	--chat-thread-panel-container-width: 20%;
-	--chat-window-container-width: 60%;
-	--active-chat-thread-panel-container-width: 20%;
+	--chat-window-container-width: 50%;
+	--active-chat-thread-panel-container-width: 30%;
 	--chat-window-container-expanded-width: 80%;
 
 	display: flex;

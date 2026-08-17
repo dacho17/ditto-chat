@@ -9,6 +9,7 @@
 
 	box-sizing: border-box;
 	height: 100%;
+	width: 100%;
 	border-left: var(--divider-border-style);
 
 	background-color: var(--dark-panel-color);
