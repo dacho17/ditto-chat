@@ -3,6 +3,7 @@ import {  Navigate, Route, Routes } from 'react-router-dom';
 import { Toaster } from "react-hot-toast";  // Following Documentation at: https://react-hot-toast.com/docs/toaster
 import { useAppDispatch } from './app/store/ReduxStore';
 import { setCurrentDeviceType } from './app/store/DeviceTypeSlice';
+import { setDidClickBrowserNavigationButton } from './app/store/UrlHistorySlice';
 import useIsAuthenticated from './app/hooks/UseIsAuthenticated';
 import AuthenticationPage from './app/pages/authenticationPage/AuthenticationPage';
 import HomePage from './app/pages/homePage/HomePage';
@@ -25,9 +26,24 @@ export default function App() {
         dispatch(setCurrentDeviceType(currentDeviceType));
     }
 
-    useEffect(() => {
+    // TODO-navigation: Correct Browser Navigation needs to be Implemented
+    function onBrowserNavigation(): void {
+        dispatch(setDidClickBrowserNavigationButton(true));
+    }
+
+    function addApplicationEventListeners(): void {
         window.addEventListener("resize", setDeviceTypeOnScreenResize);
-        return () => window.removeEventListener("resize", setDeviceTypeOnScreenResize);
+        window.addEventListener("popstate", onBrowserNavigation);
+    }
+
+    function removeApplicationEventListeners(): void {
+        window.removeEventListener("resize", setDeviceTypeOnScreenResize);
+        window.removeEventListener("popstate", onBrowserNavigation);
+    }
+
+    useEffect(() => {
+        addApplicationEventListeners();
+        return () => removeApplicationEventListeners();
     }, []);
     
     return (

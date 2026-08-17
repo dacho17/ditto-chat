@@ -38,7 +38,7 @@ export default function SideMenu() {
             {
                 icon: <IoLogOutOutline size={CONSTANTS.LARGER_ICON_SIZE} className="alert" />,
                 onClickFunction: async () => {
-                    await SliceHelper.tryToLogout(sendTryToLogout, dispatch);
+                    SliceHelper.tryToLogout(sendTryToLogout, dispatch);
                 }
             }
         ];

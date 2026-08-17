@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { setChatterOverviewsList, setIsChattersFilterCurrentlyChanging, setIsCreatingNewChatThread, setIsLastChatterOverviewListPage, setIsLoadingChatterOverviews, setIsLoadingOlderChatterOverviews } from "../../store/ChattersSlice";
 import { postChatThread } from "../../store/ChatSlice";
+import { setDidClickBrowserNavigationButton } from "../../store/UrlHistorySlice";
 import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
 import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import PageContent from "../../components/pageContent/PageContent";
@@ -27,6 +28,7 @@ const SEARCH_INPUT_PLACEHOLDER_VALUE = "Search Chatters";
 export default function ChattersPage() {
     const { chatterOverviewList, isLastChatterOverviewListPage, isLoadingChatterOverviews, isFilterCurrentlyChanging } = useAppSelector(state => state.chattersSlice);
     const { currentDeviceType } = useAppSelector(state => state.deviceTypeSlice);
+    const { didClickBrowserNavigationButton } = useAppSelector(state => state.urlHistorySlice);
     const dispatch = useAppDispatch();
     const [searchParams, setSearchParams] = useSearchParams();
     const [sendTryToGetChatters, didUnhandledServerErrorOccur] = useTryToSendRequest<null>();
@@ -76,7 +78,10 @@ export default function ChattersPage() {
 
     // NOTE: Retrieve Initial ChatterOverviews Page whenever searchFilter queryParam value is changed in URL
     useEffect(() => {
-        if (isFilterCurrentlyChanging === false) {
+        if (didClickBrowserNavigationButton === true) { // if Navigated through Browser to the Page, send the request and reset the Navigation Flag
+            dispatch(setDidClickBrowserNavigationButton(false));
+            addUrlToHistory(searchParams.toString());
+        } else if (isFilterCurrentlyChanging === false) {
             return;
         }
 

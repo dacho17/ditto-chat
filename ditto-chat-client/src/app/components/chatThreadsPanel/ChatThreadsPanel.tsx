@@ -72,7 +72,7 @@ export default function ChatThreadsPanel(props: Props) {
 			new DropdownItem(
 				"Logout",
 				async () => {
-					await SliceHelper.tryToLogout(sendTryToLogout, dispatch);
+					SliceHelper.tryToLogout(sendTryToLogout, dispatch);
 				}
 			)
 		];

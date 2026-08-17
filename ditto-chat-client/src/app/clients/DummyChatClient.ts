@@ -84,7 +84,7 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
             message: DUMMY_LOGIN_SUCCESS_MESSAGE,
             data: {
                 chatterOverview: dummyLoggedInChatter,
-                sessionExpiresAt: TimeHelper.getServerFormattedTimestamp(TimeHelper.getCurrentTimestamp() + 1000 * 10), // half hour Session
+                sessionExpiresAt: TimeHelper.getServerFormattedTimestamp(TimeHelper.getCurrentTimestamp() + 1000 * 60 * 30), // half hour Session
                 redirectUrl: CONSTANTS.HOME_URL
             }
         });

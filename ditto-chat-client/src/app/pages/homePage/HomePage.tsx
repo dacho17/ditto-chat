@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { getChatThreadsOnHomePage, setChatThreadList, setIsChatThreadsFilterCurrentlyChanging, setIsInitialLoadFinished, setIsLastChatThreadListPage, setIsLoadingChatThreads } from "../../store/HomeSlice";
 import { setIsLoadingChatThread } from "../../store/ChatSlice";
+import { setDidClickBrowserNavigationButton } from "../../store/UrlHistorySlice";
 import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
 import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import PageWithSideMenu from "../pageWithSideMenu/PageWithSideMenu";
@@ -22,6 +23,7 @@ export default function HomePage() {
     const { isActiveChatThreadPanelExpanded, isInitialLoadFinished, isFilterCurrentlyChanging } = useAppSelector(state => state.homeSlice);
     const { chatThread } = useAppSelector(state => state.chatSlice);
     const { currentDeviceType } = useAppSelector(state => state.deviceTypeSlice);
+    const { didClickBrowserNavigationButton } = useAppSelector(state => state.urlHistorySlice);
     const dispatch = useAppDispatch();
     const { chatThreadId } = useParams();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -165,7 +167,10 @@ export default function HomePage() {
 
     // NOTE: Retrieve Initial ChatThreads Page whenever searchFilter queryParam value is changed in URL
     useEffect(() => {
-        if (isInitialLoadFinished === false || isFilterCurrentlyChanging === false) {
+        if (didClickBrowserNavigationButton === true) { // if Navigated through Browser to the Page, send the request and reset the Navigation Flag
+            dispatch(setDidClickBrowserNavigationButton(false));
+            addUrlToHistory(searchParams.toString());
+        } else if (isInitialLoadFinished === false || isFilterCurrentlyChanging === false) {
             return;
         }
 

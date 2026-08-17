@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAppSelector } from "../store/ReduxStore";
-import CONSTANTS from "../../Constants";
+import { useAppDispatch, useAppSelector } from "../store/ReduxStore";
+import { refreshChatterOverview } from "../store/AuthSlice";
 import TimeHelper from "../helpers/TimeHelper";
+import CONSTANTS from "../../Constants";
 
 
 const PUBLIC_PAGES_URLS = [
@@ -14,9 +15,11 @@ const PUBLIC_PAGES_URLS = [
 
 export default function useIsAuthenticated(): void {
     const { chatterOverview, sessionExpiresAtTimestamp } = useAppSelector(state => state.authSlice);
+    const dispatch = useAppDispatch();
 	const location = useLocation();
     const navigate = useNavigate();
     
+    dispatch(refreshChatterOverview());
     const isOnPublicPage = PUBLIC_PAGES_URLS.find(pageUrl => location.pathname.includes(pageUrl)) !== undefined;
     const didSessionExpire = sessionExpiresAtTimestamp !== null && sessionExpiresAtTimestamp < TimeHelper.getCurrentTimestamp();
     useEffect(() => {

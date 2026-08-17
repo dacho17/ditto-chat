@@ -3,10 +3,12 @@ import UrlHelper from "../helpers/UrlHelper";
 
 interface UrlHistoryState {
     urlHistoryList: string[];
+    didClickBrowserNavigationButton: boolean;
 }
 
 const initialState: UrlHistoryState = {
-    urlHistoryList: []
+    urlHistoryList: [],
+    didClickBrowserNavigationButton: false
 }
 
 const URL_HISTORY_LOCAL_STORAGE_KEYS = {
@@ -84,10 +86,14 @@ export const UrlHistorySlice = createSlice({
 
             state.urlHistoryList = urlHistoryList;
         },
+        setDidClickBrowserNavigationButton: (state, action: { payload: boolean }) => {
+            state.didClickBrowserNavigationButton = action.payload;
+        },
         clearUrlHistoryState: (state) => {
             localStorage.removeItem(URL_HISTORY_LOCAL_STORAGE_KEYS.urlHistoryList);
 
             state.urlHistoryList = initialState.urlHistoryList;
+            state.didClickBrowserNavigationButton = initialState.didClickBrowserNavigationButton;
         }
     }
 });
@@ -96,5 +102,6 @@ export const {
     refreshUrlHistory,
     addUrlToUrlHistory,
     popUrlFromUrlHistory,
+    setDidClickBrowserNavigationButton,
     clearUrlHistoryState
 } = UrlHistorySlice.actions;
