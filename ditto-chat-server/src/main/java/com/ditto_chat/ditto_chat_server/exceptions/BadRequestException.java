@@ -1,0 +1,11 @@
+package com.ditto_chat.ditto_chat_server.exceptions;
+
+public class BadRequestException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
+	public BadRequestException() {}
+
+	public BadRequestException(String message) {
+		super(message);
+	}
+}

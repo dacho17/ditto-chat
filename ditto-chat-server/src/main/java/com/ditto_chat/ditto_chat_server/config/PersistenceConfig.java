@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
+import org.springframework.web.context.WebApplicationContext;
 
 import com.ditto_chat.ditto_chat_server.entities.AccountImage;
 import com.ditto_chat.ditto_chat_server.entities.ChatThread;
@@ -26,19 +28,19 @@ import com.zaxxer.hikari.HikariDataSource;
 @Configuration
 public class PersistenceConfig {
     @Value("${DITTO_CHAT_DATABASE_URL}")
-    private String dbUrl;
+    private String DATABASE_URL;
     @Value("${DITTO_CHAT_MYSQL_USER}")
-    private String dbUsername;
+    private String DATABASE_USER;
     @Value("${DITTO_CHAT_MYSQL_USER_TEST_PASSWORD}")
-    private String dbUsernamePassword;
+    private String DATABASE_USER_PASSWORD;
 
     @Bean
     @Scope("singleton")    
     public HikariDataSource dataSource() {
         HikariDataSource dataSource = new HikariDataSource();
-        dataSource.setJdbcUrl(dbUrl);
-        dataSource.setUsername(dbUsername);
-        dataSource.setPassword(dbUsernamePassword);
+        dataSource.setJdbcUrl(DATABASE_URL);
+        dataSource.setUsername(DATABASE_USER);
+        dataSource.setPassword(DATABASE_USER_PASSWORD);
         // hikariConfig.setSchema(null);    // NOTE: can be used if for some reason Jdbc url needs to point at the DB server endpoint, and not to DB schema
 
         dataSource.setIdleTimeout(0);
@@ -94,9 +96,9 @@ public class PersistenceConfig {
     }
 
     @Bean
-    @Scope("request")
+    @Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
     @DependsOn("entityManagerFactory")
-    public Session entityManager(@Qualifier("entityManagerFactory") SessionFactory hibernateSessionFactory) {
+    public Session hibernateSession(@Qualifier("entityManagerFactory") SessionFactory hibernateSessionFactory) {
         // commiting transactions and closing the session needs to be done manually to release JDBC connection!
         return hibernateSessionFactory.openSession();          // always creates a new Session instance each time it is called
     }

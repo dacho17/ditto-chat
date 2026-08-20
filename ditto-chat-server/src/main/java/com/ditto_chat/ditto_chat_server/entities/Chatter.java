@@ -56,6 +56,8 @@ public class Chatter {
     @OneToMany(mappedBy = "chatter", fetch = FetchType.LAZY, cascade = {CascadeType.DETACH, CascadeType.REFRESH})
 	private List<ChatThreadParticipant> chatThreadParticipants;
 
+    public Chatter() {}
+
     public Chatter(UUID id, String name, String surname, String username, String email, String password,
             Timestamp createdAt) {
         this.id = id;
