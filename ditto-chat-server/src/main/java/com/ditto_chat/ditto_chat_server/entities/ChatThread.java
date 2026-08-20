@@ -25,6 +25,9 @@ public class ChatThread {
     @Column(name = "id", length = 36)
     private UUID id;
 
+    @Column(name = "is_group_chat_thread", nullable = false)
+    private boolean isGroupChatThread;
+
     @Column(name = "created_at", nullable = false)
     private Timestamp createdAt;
 
@@ -38,14 +41,19 @@ public class ChatThread {
 	@JoinColumn(name = "last_chat_thread_message_id", referencedColumnName = "id", nullable = true)
 	private ChatThreadMessage lastChatThreadMessage;
 
-    public ChatThread(UUID id, Timestamp createdAt, List<ChatThreadParticipant> chatThreadParticipants) {
+    public ChatThread(UUID id, boolean isGroupChatThread, Timestamp createdAt, List<ChatThreadParticipant> chatThreadParticipants) {
         this.id = id;
+        this.isGroupChatThread = isGroupChatThread;
         this.createdAt = createdAt;
         this.chatThreadParticipants = chatThreadParticipants;
     }
 
     public UUID getId() {
         return id;
+    }
+
+    public boolean getIsGroupChatThread() {
+        return isGroupChatThread;
     }
 
     public Timestamp getCreatedAt() {

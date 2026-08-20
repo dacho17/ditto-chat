@@ -52,6 +52,7 @@ CREATE TABLE `chatter` (
 
 CREATE TABLE `chat_thread` (
     `id` varchar(36),
+    `is_group_chat_thread` bit(1) NOT NULL,
     `created_at` datetime(6) NOT NULL,
     `last_chat_thread_message_id` varchar(36) DEFAULT NULL,
     PRIMARY KEY (`id`)

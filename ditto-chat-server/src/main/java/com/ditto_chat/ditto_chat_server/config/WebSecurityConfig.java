@@ -85,6 +85,7 @@ public class WebSecurityConfig {
 				.requestMatchers(HttpMethod.POST, Constants.FORGOT_PASSWORD_URL).permitAll()
 				.requestMatchers(HttpMethod.GET, Constants.RESET_PASSWORD_URL).permitAll()
 				.requestMatchers(HttpMethod.POST, Constants.RESET_PASSWORD_URL).permitAll()
+				.anyRequest().authenticated()
 			)
 			.logout(logout -> logout	// TODO-logout: logout needs to be allowed only for tenants with the active session
 				.logoutUrl(Constants.LOGOUT_URL)

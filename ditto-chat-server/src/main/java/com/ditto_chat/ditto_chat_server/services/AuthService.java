@@ -24,7 +24,7 @@ public class AuthService {
     private ChatterRepository chatterRepository;
     private Session hibernateSession;
     private final Logger logger = LoggerFactory.getLogger(AuthService.class);
-    private final String EMAIL_ALREADY_IN_USE_MESSAGE = "Please use different email";
+    private final String EMAIL_OR_USERNAME_ALREADY_IN_USE_MESSAGE = "Please use different email or username";
     private final String UNKNOWN_EMAIL_MESSAGE = "Please enter your email correctly";
     private final String RESET_PASSWORD_EXPIRED_MESSAGE = "Please send new password reset request";
     private final int MINUTES_TO_RESET_PASSWORD = 30;
@@ -40,10 +40,10 @@ public class AuthService {
     }
 
     public void registerNewChatter(ChatterRegistrationForm chatterRegistrationForm) {
-        Chatter chatterWithSameEmail = this.chatterRepository.retrieveByEmail(chatterRegistrationForm.getEmail());
-        if (chatterWithSameEmail != null) {
-            logger.info(String.format("Chatter with email=%s already exists in the database. New Chatter with the same email can not be registered.", chatterRegistrationForm.getEmail()));
-			throw new ResourceConflictException(this.EMAIL_ALREADY_IN_USE_MESSAGE);
+        Chatter chatterWithSameEmailOrUsername = this.chatterRepository.retrieveByEmailOrUsername(chatterRegistrationForm.getEmail(), chatterRegistrationForm.getUsername());
+        if (chatterWithSameEmailOrUsername != null) {
+            logger.info(String.format("Chatter with email=%s or username=%s already exists in the database. New Chatter with the same email can not be registered.", chatterRegistrationForm.getEmail(), chatterRegistrationForm.getUsername()));
+			throw new ResourceConflictException(this.EMAIL_OR_USERNAME_ALREADY_IN_USE_MESSAGE);
         }
 
         Transaction dbTransaction = this.hibernateSession.beginTransaction();

@@ -29,7 +29,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping(value = "", produces = { "application/json" })
-public class AuthController {
+public class AuthController extends GeneralController {
     @Autowired
 	private AuthService authService;
 	@Autowired
@@ -163,11 +163,5 @@ public class AuthController {
 		
 		logger.info("POST /reset-password - returning response.");
 		return generateRedirectResponse(HttpStatus.CREATED, PASSWORD_RESET_SUCCESS_MESSAGE, Constants.LOGIN_URL);
-	}
-
-	private ResponseEntity<ResponseBody<RedirectUrlDto>> generateRedirectResponse(HttpStatus httpCode, String responseMessage, String redirectUrl) {
-		return ResponseEntity
-			.status(httpCode)
-			.body(new ResponseBody<RedirectUrlDto>(responseMessage, new RedirectUrlDto(redirectUrl)));
 	}
 }
