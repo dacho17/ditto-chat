@@ -16,6 +16,7 @@ import com.ditto_chat.ditto_chat_server.Constants;
 import com.ditto_chat.ditto_chat_server.dtos.ChatterOverviewDto;
 import com.ditto_chat.ditto_chat_server.dtos.ResponseBody;
 import com.ditto_chat.ditto_chat_server.dtos.ResponsePagedListDto;
+import com.ditto_chat.ditto_chat_server.helpers.EntityPaginationHelper;
 import com.ditto_chat.ditto_chat_server.helpers.auth.ChatterUserDetails;
 import com.ditto_chat.ditto_chat_server.services.ChattersService;
 import com.ditto_chat.ditto_chat_server.validators.RequestUrlValidator;
@@ -40,7 +41,7 @@ public class ChattersController extends GeneralController {
 
         ResponsePagedListDto<ChatterOverviewDto> chatterOverviewPages
             = this.chattersService.getChattersPages(searchFilter, pageNumber, isInitialRetrieval, chatterUserDetails.getId());
-		if (chatterOverviewPages.getPageList().size() == 0 && pageNumber != 0) {
+		if (EntityPaginationHelper.doesEntityPageExist(chatterOverviewPages.getPageList(), pageNumber, isInitialRetrieval) == false) {
 			logger.warn(String.format("Chatter with id=%s requested Chatter Page which does not exist for searchFilter=%s, pageNumber=%d, isInitialRetrieval=%s",
 				chatterUserDetails.getId(), searchFilter, pageNumber, isInitialRetrieval));
 			String redirectUrl = String.format("%s?searchFilter=%s&pageNumber=%d&isInitialRetrieval=%s", Constants.CHATTERS_URL, searchFilter, 0, true);

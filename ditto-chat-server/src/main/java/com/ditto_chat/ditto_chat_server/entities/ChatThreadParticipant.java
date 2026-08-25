@@ -45,6 +45,8 @@ public class ChatThreadParticipant {
 	@JoinColumn(name = "last_seen_chat_thread_message_id", referencedColumnName = "id", nullable = true)
 	private ChatThreadMessage lastSeenChatThreadMessage;
 
+    public ChatThreadParticipant() {}
+
     public ChatThreadParticipant(UUID id, Timestamp joinedChatThreadAt, Chatter chatter, ChatThread chatThread) {
         this.id = id;
         this.joinedChatThreadAt = joinedChatThreadAt;

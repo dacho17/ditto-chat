@@ -63,6 +63,29 @@ public class ChatterRepository {
         }
     }
 
+    public Chatter retrieveById(UUID chatterId) {
+        QChatter qChatter = QChatter.chatter;
+
+        try {
+            Chatter foundChatter = this.queryFactory
+                .selectFrom(qChatter)
+                .where(qChatter.id.eq(chatterId))
+                .fetchOne();
+            
+            if (foundChatter == null) {
+                logger.info(String.format("No Chatters have been found with chatterId=%s.", chatterId));
+                return null;
+            }
+
+            logger.info(String.format("Chatter with id=%s has been retrieved by id.", foundChatter.getId()));
+	    	return foundChatter;
+        } catch (Exception e) {
+            logger.error(String.format("An exception occurred while retrieving Chatter by id=%s. Exception=[%s]",
+                chatterId, FormattingTool.stringifyException(e)));
+            throw new DatabaseException();
+        }
+    }
+
     public Chatter retrieveByEmailOrUsername(String email, String username) {
         QChatter qChatter = QChatter.chatter;
 

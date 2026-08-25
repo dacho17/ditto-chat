@@ -30,6 +30,8 @@ public class SharedFile {
 	@JoinColumn(name = "uploaded_file_id", referencedColumnName = "id", nullable = false, unique = true)
 	private UploadedFile uploadedFile;
 
+	public SharedFile() {}
+
 	public SharedFile(UUID id, ChatThreadMessage chatThreadMessage, UploadedFile uploadedFile) {
 		this.id = id;
 		this.chatThreadMessage = chatThreadMessage;

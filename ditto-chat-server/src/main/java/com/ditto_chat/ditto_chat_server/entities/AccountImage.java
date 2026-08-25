@@ -35,6 +35,8 @@ public class AccountImage {
 	@JoinColumn(name = "uploaded_file_id", referencedColumnName = "id", nullable = false, unique = true)
 	private UploadedFile uploadedFile;
 
+    public AccountImage() {}
+
     public AccountImage(UUID id, Chatter chatter, UploadedFile uploadedFile) {
         this.id = id;
         this.chatter = chatter;

@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 
 public class TimeTool {
     private static final long MINUTES_TO_MS_MULTIPLIER = 60000;
+    private static final long SECONDS_TO_MS_MULTIPLIER = 1000;
     
     public static Timestamp getCurrentTimestamp() {
 		return new Timestamp(System.currentTimeMillis());
@@ -22,5 +23,13 @@ public class TimeTool {
         }
         
         return first.getTime() == second.getTime();
+    }
+
+    public static void delaySeconds(int secondsToDelay) {
+        try {
+            Thread.sleep(secondsToDelay * SECONDS_TO_MS_MULTIPLIER);
+        } catch (InterruptedException e) {
+            return;
+        }
     }
 }

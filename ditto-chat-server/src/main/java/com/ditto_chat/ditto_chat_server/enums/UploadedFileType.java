@@ -18,6 +18,8 @@ public enum UploadedFileType {
 		= new HashMap<Short, UploadedFileType>();
 	private static final Set<UploadedFileType> uploadedFileImageEnumSet
 		= new HashSet<UploadedFileType>(List.of(PNG, JPEG));
+	private static final Set<UploadedFileType> uploadedFileMessageAttachmentEnumSet
+		= new HashSet<UploadedFileType>(List.of(PNG, JPEG, PDF, TXT));
 
 	static {
 		for(UploadedFileType anEnum: EnumSet.allOf(UploadedFileType.class))
@@ -38,5 +40,9 @@ public enum UploadedFileType {
 
 	public static boolean isUploadedFileTypeAnImage(UploadedFileType uploadedFileType) {
 		return uploadedFileImageEnumSet.contains(uploadedFileType);
+	}
+
+	public static boolean isUploadedFileTypeBeAMessageAttachment(UploadedFileType uploadedFileType) {
+		return uploadedFileMessageAttachmentEnumSet.contains(uploadedFileType);
 	}
 }

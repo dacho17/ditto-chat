@@ -22,6 +22,7 @@ import com.ditto_chat.ditto_chat_server.entities.ChatThreadMessage;
 import com.ditto_chat.ditto_chat_server.entities.ChatThreadParticipant;
 import com.ditto_chat.ditto_chat_server.entities.Chatter;
 import com.ditto_chat.ditto_chat_server.entities.SharedFile;
+import com.ditto_chat.ditto_chat_server.entities.UploadFileIntent;
 import com.ditto_chat.ditto_chat_server.entities.UploadedFile;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -83,7 +84,8 @@ public class PersistenceConfig {
             ChatThreadMessage.class,
             ChatThreadParticipant.class,
             SharedFile.class,
-            UploadedFile.class
+            UploadedFile.class,
+            UploadFileIntent.class
         )));
 
         // 3. Set addtional properties

@@ -5,12 +5,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.ditto_chat.ditto_chat_server.entities.ChatThread;
+import com.ditto_chat.ditto_chat_server.entities.ChatThreadMessage;
 import com.ditto_chat.ditto_chat_server.entities.Chatter;
 import com.ditto_chat.ditto_chat_server.entities.QChatThread;
 import com.ditto_chat.ditto_chat_server.entities.QChatThreadParticipant;
@@ -23,8 +25,52 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 @Repository
 public class ChatThreadRepository {
     @Autowired
+    private Session hibernateSession;
+    @Autowired
     private JPAQueryFactory queryFactory;
     private final Logger logger = LoggerFactory.getLogger(ChatThreadRepository.class);
+
+    public ChatThread createChatThread(ChatThread newChatThread) {
+        try {
+            this.hibernateSession.persist(newChatThread);
+
+            logger.info(String.format("New ChatThread with id=%s has been created", newChatThread.getId()));
+            return newChatThread;
+        } catch (Exception e) {
+            logger.error(String.format("An exception occurred while creating new ChatThread. Exception=[%s]",
+                FormattingTool.stringifyException(e)));
+            throw new DatabaseException();
+        }
+    }
+
+    public ChatThread retrieveChattersChatThread(UUID chatThreadId, Chatter loggedInChatter) {
+        QChatThread qChatThread = QChatThread.chatThread;
+        QChatThreadParticipant chatterParticipantAlias = new QChatThreadParticipant("chatterParticipant");
+
+        BooleanExpression isTargetChatThread = qChatThread.id.eq(chatThreadId);
+        BooleanExpression isLoggedInChatterChatThreadParticipant = chatterParticipantAlias.chatter.id.eq(loggedInChatter.getId());
+        BooleanExpression filterChain = isTargetChatThread.and(isLoggedInChatterChatThreadParticipant);
+
+        try {
+            ChatThread retrievedChatThread = this.queryFactory
+                .selectFrom(qChatThread)
+                .join(chatterParticipantAlias).on(qChatThread.id.eq(chatterParticipantAlias.chatThread.id))
+                .where(filterChain)
+                .fetchOne();
+
+            if (retrievedChatThread == null) {
+                logger.info(String.format("No Chatter's Chat Thread has been found for chatThreadId=%s and loggedInChatterId=%s", chatThreadId, loggedInChatter.getId()));
+                return null;
+            }
+
+            logger.info(String.format("ChatThread with id=%s has been retrieved for Chatter with id=%s", chatThreadId, loggedInChatter.getId()));
+	    	return retrievedChatThread;
+        } catch (Exception e) {
+            logger.error(String.format("An exception occurred while retrieving ChatThread with id=%s for Chatter with id=%s. Exception=[%s]",
+                chatThreadId, loggedInChatter.getId(), FormattingTool.stringifyException(e)));
+            throw new DatabaseException();
+        }
+    }
 
     public Map<String, ChatThread> retrieveChatThreadsBetweenChatterAndPeerChatters(UUID chatterId, List<Chatter> peerChatters) {
         QChatThread qChatThread = QChatThread.chatThread;
@@ -64,5 +110,44 @@ public class ChatThreadRepository {
                 chatterId, FormattingTool.stringifyException(e)));
             throw new DatabaseException();
         }
+    }
+
+    public void updateLastChatThreadMessage(ChatThread targetChatThread, ChatThreadMessage newLastChatThreadMessage) {
+        QChatThread qChatThread = QChatThread.chatThread;
+
+        BooleanExpression doesMatchEntryId = qChatThread.id.eq(targetChatThread.getId());
+        BooleanExpression filterChain =
+            this.addCurrentBeforeNewLastChatThreadMessage(doesMatchEntryId, targetChatThread, newLastChatThreadMessage, qChatThread);
+
+        try {
+            long numberOfUpdatedEntries = this.queryFactory
+                .update(qChatThread)
+                .where(filterChain)
+                .set(qChatThread.lastChatThreadMessage, newLastChatThreadMessage)
+                .execute();
+
+            if (numberOfUpdatedEntries != 1) {
+                logger.error(String.format("updateLastChatThreadMessage failed to update lastChatThreadMessage of ChatThread with id=%s to ChatThreadMessage with id=%s.", targetChatThread.getId(), newLastChatThreadMessage.getId()));
+                throw new DatabaseException();
+            }
+
+            logger.info(String.format("lastChatThreadMessage of ChatThread with id=%s has been updated to ChatThreadMessage with id=%s.", targetChatThread.getId(), newLastChatThreadMessage.getId()));
+	    	return;
+        } catch (Exception e) {
+            logger.error(String.format("Exception occurred while attempting to update lastChatThreadMessage of ChatThread with id=%s to ChatThreadMessage with id=%s. Exception=[%s]",
+                targetChatThread.getId(), newLastChatThreadMessage.getId(), FormattingTool.stringifyException(e)));
+            throw new DatabaseException();
+        }
+    }
+
+    private BooleanExpression addCurrentBeforeNewLastChatThreadMessage(BooleanExpression filterChain, ChatThread targetChatThread, ChatThreadMessage newLastChatThreadMessage, QChatThread qChatThread) {
+        if (targetChatThread.getLastChatThreadMessage() == null) {
+            return filterChain;
+        }
+
+        BooleanExpression isCurrentBeforeNewLastChatThreadMessage =
+            qChatThread.lastChatThreadMessage.messageRegisteredAt.before(newLastChatThreadMessage.getMessageRegisteredAt());
+        
+        return filterChain.and(isCurrentBeforeNewLastChatThreadMessage);
     }
 }

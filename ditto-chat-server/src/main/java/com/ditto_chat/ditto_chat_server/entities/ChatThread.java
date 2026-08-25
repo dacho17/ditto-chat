@@ -31,7 +31,7 @@ public class ChatThread {
     @Column(name = "created_at", nullable = false)
     private Timestamp createdAt;
 
-    @OneToMany(mappedBy = "chatThread", fetch = FetchType.LAZY, cascade = {CascadeType.DETACH, CascadeType.REFRESH})
+    @OneToMany(mappedBy = "chatThread", fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REFRESH})
 	private List<ChatThreadParticipant> chatThreadParticipants;
 
     @OneToMany(mappedBy = "chatThread", fetch = FetchType.LAZY, cascade = {CascadeType.DETACH, CascadeType.REFRESH})
@@ -40,6 +40,8 @@ public class ChatThread {
 	@OneToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REFRESH}, optional = true)
 	@JoinColumn(name = "last_chat_thread_message_id", referencedColumnName = "id", nullable = true)
 	private ChatThreadMessage lastChatThreadMessage;
+
+    public ChatThread() {}
 
     public ChatThread(UUID id, boolean isGroupChatThread, Timestamp createdAt, List<ChatThreadParticipant> chatThreadParticipants) {
         this.id = id;

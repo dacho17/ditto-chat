@@ -10,12 +10,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.ditto_chat.ditto_chat_server.Constants;
 import com.ditto_chat.ditto_chat_server.dtos.ChatterOverviewDto;
 import com.ditto_chat.ditto_chat_server.dtos.ResponsePagedListDto;
 import com.ditto_chat.ditto_chat_server.entities.AccountImage;
 import com.ditto_chat.ditto_chat_server.entities.ChatThread;
 import com.ditto_chat.ditto_chat_server.entities.Chatter;
+import com.ditto_chat.ditto_chat_server.helpers.EntityPaginationHelper;
 import com.ditto_chat.ditto_chat_server.mappers.ChatterMapper;
 import com.ditto_chat.ditto_chat_server.repositories.AccountImageRepository;
 import com.ditto_chat.ditto_chat_server.repositories.ChatThreadRepository;
@@ -44,8 +44,11 @@ public class ChattersService {
     public ResponsePagedListDto<ChatterOverviewDto> getChattersPages(String searchFilter, Integer pageNumber, Boolean isInitialRetrieval, UUID loggedInChatterId) {
         List<Chatter> pagedPeerChatters
             = this.chatterRepository.retrieveChatterPages(searchFilter, pageNumber, isInitialRetrieval, loggedInChatterId);
+        boolean isLastChattersPage = EntityPaginationHelper.isLastEntityPage(pagedPeerChatters, pageNumber, isInitialRetrieval);
         List<AccountImage> peerChatterCurrentAccountImages
             = this.accountImageRepository.retrieveCurrentAccountImagesForChatters(pagedPeerChatters);
+        EntityPaginationHelper.removeAdditionalEntityOnPage(pagedPeerChatters, pageNumber, isInitialRetrieval);
+
         Map<String, ChatThread> chatThreadsBetweenLoggedInAndPeerChatters
             = this.chatThreadRepository.retrieveChatThreadsBetweenChatterAndPeerChatters(loggedInChatterId, pagedPeerChatters);
 
@@ -62,17 +65,6 @@ public class ChattersService {
             );
         }
 
-        boolean isLastChattersPage = this.isLastChattersPage(pagedPeerChatters, pageNumber, isInitialRetrieval);
         return new ResponsePagedListDto<>(peerChatterOverviewDtos, isLastChattersPage);
-    }
-
-    // if there exist at least one entry more than the maximum possible number of entries which can appear on the pages, the page is not last
-    private boolean isLastChattersPage(List<Chatter> pagedPeerChatters, Integer pageNumber, Boolean isInitialRetrieval) {
-        Integer numberOfPagedEntries = pagedPeerChatters.size();
-        if (isInitialRetrieval == true) {
-            return numberOfPagedEntries != (pageNumber + 1) * Constants.NUMBER_OF_ITEMS_PER_PAGE + 1;
-        } else {
-            return numberOfPagedEntries != Constants.NUMBER_OF_ITEMS_PER_PAGE + 1;
-        }
     }
 }

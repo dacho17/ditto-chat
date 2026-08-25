@@ -29,6 +29,9 @@ WORKDIR ${WORKING_DIRECTORY}
 COPY src ./src
 COPY pom.xml .
 
+COPY ditto-chat-server-entrypoint.sh .
+RUN chmod +x ./ditto-chat-server-entrypoint.sh
+
 CMD if [[ "$PACKAGE_SERVICE_INTO_JAR" == "true" ]]; then \
     mvn clean package -Dmaven.test.skip=true && java -jar ./target/*.jar ; \
 fi

@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.type.descriptor.jdbc.VarcharJdbcType;
 
+import com.ditto_chat.ditto_chat_server.utils.CryptoTool;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -41,14 +43,17 @@ public class ChatThreadMessage {
     @OneToOne(mappedBy = "chatThreadMessage", cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REFRESH}, optional = true)
 	private SharedFile sharedFile;
 
+    public ChatThreadMessage() {}
+
     public ChatThreadMessage(UUID id, String messageContent, Timestamp messageRegisteredAt,
-            ChatThreadParticipant senderChatThreadParticipant, ChatThread chatThread, SharedFile sharedFile) {
+            ChatThreadParticipant senderChatThreadParticipant, ChatThread chatThread, UploadedFile attachedUploadedFile) {
         this.id = id;
         this.messageContent = messageContent;
         this.messageRegisteredAt = messageRegisteredAt;
         this.senderChatThreadParticipant = senderChatThreadParticipant;
         this.chatThread = chatThread;
-        this.sharedFile = sharedFile;
+        this.sharedFile = attachedUploadedFile != null
+            ? new SharedFile(CryptoTool.generateUUID(), this, attachedUploadedFile) : null;
     }
 
     public UUID getId() {
