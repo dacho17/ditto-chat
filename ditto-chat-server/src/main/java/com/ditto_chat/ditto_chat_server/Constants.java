@@ -11,6 +11,7 @@ public final class Constants {
     public static final String HOME_URL = "/home";
     public static final String CHATTERS_URL = "/chatters";
     public static final String CHAT_URL = "/chat";
+    public static final String CHATTER_URL = "/chatter";
 
     public static final int NUMBER_OF_ITEMS_PER_PAGE = 10;
 	public static final String PAGE_NOT_FOUND_ERROR_MESSAGE = "You requested information which does not exist";

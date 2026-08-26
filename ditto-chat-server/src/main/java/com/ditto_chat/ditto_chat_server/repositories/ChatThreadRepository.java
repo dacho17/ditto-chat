@@ -1,6 +1,5 @@
 package com.ditto_chat.ditto_chat_server.repositories;
 
-import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,14 +23,12 @@ import com.ditto_chat.ditto_chat_server.entities.QChatThread;
 import com.ditto_chat.ditto_chat_server.entities.QChatThreadMessage;
 import com.ditto_chat.ditto_chat_server.entities.QChatThreadParticipant;
 import com.ditto_chat.ditto_chat_server.exceptions.DatabaseException;
+import com.ditto_chat.ditto_chat_server.helpers.RepositoryHelper;
 import com.ditto_chat.ditto_chat_server.utils.FormattingTool;
 import com.querydsl.core.Tuple;
-import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.CaseBuilder;
-import com.querydsl.core.types.dsl.DateTimeExpression;
 import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -124,7 +121,7 @@ public class ChatThreadRepository {
                 .leftJoin(unseenChatThreadMessagesAlias).on(qChatThread.id.eq(unseenChatThreadMessagesAlias.chatThread.id))
                 .groupBy(qChatThread.id, loggedInChatterParticipantAlias.id, peerChatterParticipantAlias.id, peerAccountImageAlias.id)
                 .where(filterChain)
-                .orderBy(new OrderSpecifier<>(Order.DESC, this.getLatestChatThreadActivityTimestamp(qChatThread, loggedInChatterParticipantAlias)))
+                .orderBy(new OrderSpecifier<>(Order.DESC, RepositoryHelper.getLatestChatThreadActivityTimestamp(qChatThread, loggedInChatterParticipantAlias)))
                 .offset(chatThreadsPagesOffset)
                 .limit(chatThreadsPagesLimit)
                 .fetch();
@@ -202,7 +199,7 @@ public class ChatThreadRepository {
 
         BooleanExpression doesMatchEntryId = qChatThread.id.eq(targetChatThread.getId());
         BooleanExpression filterChain =
-            this.addCurrentBeforeNewLastChatThreadMessage(doesMatchEntryId, targetChatThread, newLastChatThreadMessage, qChatThread);
+            RepositoryHelper.addCurrentBeforeNewLastChatThreadMessage(doesMatchEntryId, targetChatThread, newLastChatThreadMessage, qChatThread);
 
         try {
             long numberOfUpdatedEntries = this.queryFactory
@@ -223,28 +220,5 @@ public class ChatThreadRepository {
                 targetChatThread.getId(), newLastChatThreadMessage.getId(), FormattingTool.stringifyException(e)));
             throw new DatabaseException();
         }
-    }
-
-    private BooleanExpression addCurrentBeforeNewLastChatThreadMessage(BooleanExpression filterChain, ChatThread targetChatThread, ChatThreadMessage newLastChatThreadMessage, QChatThread qChatThread) {
-        if (targetChatThread.getLastChatThreadMessage() == null) {
-            return filterChain;
-        }
-
-        BooleanExpression isCurrentBeforeNewLastChatThreadMessage =
-            qChatThread.lastChatThreadMessage.messageRegisteredAt.before(newLastChatThreadMessage.getMessageRegisteredAt());
-        
-        return filterChain.and(isCurrentBeforeNewLastChatThreadMessage);
-    }
-
-    private Expression<Timestamp> getLatestChatThreadActivityTimestamp(QChatThread qChatThread, QChatThreadParticipant qLoggedInChatThreadParticipant) {
-        DateTimeExpression<Timestamp> chatThreadLastMessageTimestamp =
-            qChatThread.lastChatThreadMessage.messageRegisteredAt.coalesce(qChatThread.createdAt);
-        DateTimeExpression<Timestamp> chatThreadHistoryClearedAtTimestamp =
-            qLoggedInChatThreadParticipant.clearedChatThreadHistoryAt.coalesce(qChatThread.createdAt);
-
-        Expression<Timestamp> latestChatThreadActivityTimestamp = new CaseBuilder()
-            .when(chatThreadLastMessageTimestamp.after(chatThreadHistoryClearedAtTimestamp)).then(chatThreadLastMessageTimestamp)
-            .otherwise(chatThreadHistoryClearedAtTimestamp);
-        return latestChatThreadActivityTimestamp;
     }
 }

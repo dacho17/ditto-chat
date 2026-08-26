@@ -22,7 +22,7 @@ public class SharedFile {
     @Column(name = "id", length = 36)
     private UUID id;
 
-	@OneToOne(fetch = FetchType.LAZY)
+	@OneToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "chat_thread_message_id", referencedColumnName = "id", nullable = false, unique = true)
 	private ChatThreadMessage chatThreadMessage;
 

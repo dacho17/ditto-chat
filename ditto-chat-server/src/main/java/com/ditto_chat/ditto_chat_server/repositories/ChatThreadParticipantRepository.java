@@ -11,6 +11,7 @@ import com.ditto_chat.ditto_chat_server.entities.ChatThreadMessage;
 import com.ditto_chat.ditto_chat_server.entities.ChatThreadParticipant;
 import com.ditto_chat.ditto_chat_server.entities.QChatThreadParticipant;
 import com.ditto_chat.ditto_chat_server.exceptions.DatabaseException;
+import com.ditto_chat.ditto_chat_server.helpers.RepositoryHelper;
 import com.ditto_chat.ditto_chat_server.utils.FormattingTool;
 import com.ditto_chat.ditto_chat_server.utils.TimeTool;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -27,7 +28,7 @@ public class ChatThreadParticipantRepository {
 
         BooleanExpression doesMatchEntryId = qChatThreadParticipant.id.eq(loggedInChatThreadParticipant.getId());
         BooleanExpression filterChain =
-            this.addCurrentBeforeNewLastSeenChatThreadMessage(doesMatchEntryId, loggedInChatThreadParticipant, newLastSeenChatThreadMessage, qChatThreadParticipant);
+            RepositoryHelper.addCurrentBeforeNewLastSeenChatThreadMessage(doesMatchEntryId, loggedInChatThreadParticipant, newLastSeenChatThreadMessage, qChatThreadParticipant);
 
         try {
             long numberOfUpdatedEntries = this.queryFactory
@@ -76,16 +77,5 @@ public class ChatThreadParticipantRepository {
                 loggedInChatThreadParticipant.getId(), FormattingTool.stringifyException(e)));
             throw new DatabaseException();
         }
-    }
-
-    private BooleanExpression addCurrentBeforeNewLastSeenChatThreadMessage(BooleanExpression filterChain, ChatThreadParticipant loggedInChatterParticipant, ChatThreadMessage newLastSeenChatThreadMessage, QChatThreadParticipant qChatThreadParticipant) {
-        if (loggedInChatterParticipant.getLastSeenChatThreadMessage() == null) {
-            return filterChain;
-        }
-
-        BooleanExpression isCurrentBeforeNewLastSeenChatThreadMessage =
-            qChatThreadParticipant.lastSeenChatThreadMessage.messageRegisteredAt.before(
-                    newLastSeenChatThreadMessage.getMessageRegisteredAt());
-        return filterChain.and(isCurrentBeforeNewLastSeenChatThreadMessage);
     }
 }

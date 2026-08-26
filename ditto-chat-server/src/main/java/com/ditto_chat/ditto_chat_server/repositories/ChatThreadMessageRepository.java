@@ -15,6 +15,7 @@ import com.ditto_chat.ditto_chat_server.entities.ChatThreadMessage;
 import com.ditto_chat.ditto_chat_server.entities.ChatThreadParticipant;
 import com.ditto_chat.ditto_chat_server.entities.QChatThreadMessage;
 import com.ditto_chat.ditto_chat_server.exceptions.DatabaseException;
+import com.ditto_chat.ditto_chat_server.helpers.RepositoryHelper;
 import com.ditto_chat.ditto_chat_server.utils.FormattingTool;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
@@ -46,7 +47,7 @@ public class ChatThreadMessageRepository {
         QChatThreadMessage qChatThreadMessage = QChatThreadMessage.chatThreadMessage;
 
         BooleanExpression doesIdMatch = qChatThreadMessage.id.eq(targetChatThreadMessageId);
-        BooleanExpression filterChain = this.addMessageNotClearedFilter(doesIdMatch, loggedInChatterParticipant, qChatThreadMessage);
+        BooleanExpression filterChain = RepositoryHelper.addMessageNotClearedFilter(doesIdMatch, loggedInChatterParticipant, qChatThreadMessage);
 
         try {
             ChatThreadMessage foundChatThreadMessage = this.queryFactory
@@ -72,7 +73,7 @@ public class ChatThreadMessageRepository {
         QChatThreadMessage qChatThreadMessage = QChatThreadMessage.chatThreadMessage;
 
         BooleanExpression isInTargetChatThread = qChatThreadMessage.chatThread.id.eq(targetChatThread.getId());
-        BooleanExpression filterChain = this.addMessageNotClearedFilter(isInTargetChatThread, loggedInChatterParticipant, qChatThreadMessage);
+        BooleanExpression filterChain = RepositoryHelper.addMessageNotClearedFilter(isInTargetChatThread, loggedInChatterParticipant, qChatThreadMessage);
 
         try {
             List<ChatThreadMessage> retrievedChatThreadMessages = this.queryFactory
@@ -100,9 +101,9 @@ public class ChatThreadMessageRepository {
         BooleanExpression isInTargetChatThread = qChatThreadMessage.chatThread.id.eq(targetChatThread.getId());
         BooleanExpression isReceivedByLoggedInChatter = qChatThreadMessage.senderChatThreadParticipant.id.ne(loggedInChatThreadParticipant.getId());
         BooleanExpression filterChain =
-            this.addMessageNotClearedFilter(isInTargetChatThread.and(isReceivedByLoggedInChatter), loggedInChatThreadParticipant, qChatThreadMessage);
+            RepositoryHelper.addMessageNotClearedFilter(isInTargetChatThread.and(isReceivedByLoggedInChatter), loggedInChatThreadParticipant, qChatThreadMessage);
         filterChain =
-            this.addAfterLastSeenMessageByLoggedInChatter(filterChain, loggedInChatThreadParticipant, qChatThreadMessage);
+            RepositoryHelper.addAfterLastSeenMessageByLoggedInChatter(filterChain, loggedInChatThreadParticipant, qChatThreadMessage);
 
         try {
             Long numberOfUnseenChatThreadMessages = this.queryFactory
@@ -119,24 +120,5 @@ public class ChatThreadMessageRepository {
                 loggedInChatThreadParticipant.getChatter().getId(), targetChatThread.getId(), FormattingTool.stringifyException(e)));
             throw new DatabaseException();
         }
-    }
-
-    private BooleanExpression addMessageNotClearedFilter(BooleanExpression filterChain, ChatThreadParticipant loggedInChatterParticipant, QChatThreadMessage qChatThreadMessage) {
-        if (loggedInChatterParticipant.getClearedChatThreadHistoryAt() == null) {
-            return filterChain;
-        }
-
-        BooleanExpression isMessageNotCleared = qChatThreadMessage.messageRegisteredAt.after(loggedInChatterParticipant.getClearedChatThreadHistoryAt());
-        return filterChain.and(isMessageNotCleared);
-    }
-
-    private BooleanExpression addAfterLastSeenMessageByLoggedInChatter(BooleanExpression filterChain, ChatThreadParticipant loggedInChatterParticipant, QChatThreadMessage qChatThreadMessage) {
-        if (loggedInChatterParticipant.getLastSeenChatThreadMessage() == null) {
-            return filterChain;
-        }
-
-        BooleanExpression isAfterLastSeenMessageByLoggedInChatter =
-            qChatThreadMessage.messageRegisteredAt.after(loggedInChatterParticipant.getLastSeenChatThreadMessage().getMessageRegisteredAt());
-        return filterChain.and(isAfterLastSeenMessageByLoggedInChatter);
     }
 }
