@@ -1,6 +1,8 @@
 package com.ditto_chat.ditto_chat_server.repositories;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -11,19 +13,32 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import com.ditto_chat.ditto_chat_server.Constants;
+import com.ditto_chat.ditto_chat_server.dtos.RawChatThreadOverviewDto;
 import com.ditto_chat.ditto_chat_server.entities.ChatThread;
 import com.ditto_chat.ditto_chat_server.entities.ChatThreadMessage;
+import com.ditto_chat.ditto_chat_server.entities.ChatThreadParticipant;
 import com.ditto_chat.ditto_chat_server.entities.Chatter;
+import com.ditto_chat.ditto_chat_server.entities.QAccountImage;
 import com.ditto_chat.ditto_chat_server.entities.QChatThread;
+import com.ditto_chat.ditto_chat_server.entities.QChatThreadMessage;
 import com.ditto_chat.ditto_chat_server.entities.QChatThreadParticipant;
 import com.ditto_chat.ditto_chat_server.exceptions.DatabaseException;
 import com.ditto_chat.ditto_chat_server.utils.FormattingTool;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.DateTimeExpression;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 @Repository
 public class ChatThreadRepository {
+    @Autowired
+    private ChatThreadMessageRepository chatThreadMessageRepository;
     @Autowired
     private Session hibernateSession;
     @Autowired
@@ -68,6 +83,76 @@ public class ChatThreadRepository {
         } catch (Exception e) {
             logger.error(String.format("An exception occurred while retrieving ChatThread with id=%s for Chatter with id=%s. Exception=[%s]",
                 chatThreadId, loggedInChatter.getId(), FormattingTool.stringifyException(e)));
+            throw new DatabaseException();
+        }
+    }
+
+    public List<RawChatThreadOverviewDto> retrieveChattersChatThreadPages(String chatterNameSearchFilter, Integer pageNumber, Boolean isInitialRetrieval, Boolean isPolling, UUID loggedInChatterId) {
+        QChatThread qChatThread = QChatThread.chatThread;
+        QChatThreadParticipant loggedInChatterParticipantAlias = new QChatThreadParticipant("loggedInChatterParticipant");
+        QChatThreadParticipant peerChatterParticipantAlias = new QChatThreadParticipant("peerChatterParticipant");
+        QAccountImage peerAccountImageAlias = new QAccountImage("peerAccountImage");
+        QChatThreadMessage unseenChatThreadMessagesAlias = new QChatThreadMessage("unseenChatThreadMessages");
+
+        Integer chatThreadsPagesOffset = isInitialRetrieval == true || isPolling == true
+            ? 0 : pageNumber.intValue() * Constants.NUMBER_OF_ITEMS_PER_PAGE;
+        Integer chatThreadsPagesLimit = isInitialRetrieval == true || isPolling == true
+            ? (pageNumber.intValue() + 1) * Constants.NUMBER_OF_ITEMS_PER_PAGE : Constants.NUMBER_OF_ITEMS_PER_PAGE;
+
+        StringExpression peerChatterFullName =
+            peerChatterParticipantAlias.chatter.name.concat(" ").concat(peerChatterParticipantAlias.chatter.surname);
+        BooleanExpression doesChatThreadPeerMatchSearchFilter = peerChatterFullName.containsIgnoreCase(chatterNameSearchFilter);
+        BooleanExpression isLoggedInChatterChatThreadParticipant = loggedInChatterParticipantAlias.chatter.id.eq(loggedInChatterId);
+        BooleanExpression isPeerAccountImageCurrentlyActive = peerAccountImageAlias.replacedAt.isNull();
+
+        BooleanExpression filterChain = doesChatThreadPeerMatchSearchFilter
+            .and(isLoggedInChatterChatThreadParticipant)
+            .and(isPeerAccountImageCurrentlyActive);
+
+        chatThreadsPagesLimit += 1; // NOTE: Limit is 1 more than the Page Size. Used later in calculations to indicate whether the page is the last page
+
+        try {
+            List<Tuple> retrievedChatThreadPages = this.queryFactory
+                .select(
+                    qChatThread,
+                    loggedInChatterParticipantAlias, peerChatterParticipantAlias, peerAccountImageAlias
+                )
+                .from(qChatThread)
+                .join(loggedInChatterParticipantAlias).on(qChatThread.id.eq(loggedInChatterParticipantAlias.chatThread.id))
+                .join(peerChatterParticipantAlias).on(qChatThread.id.eq(peerChatterParticipantAlias.chatThread.id))
+                .leftJoin(peerAccountImageAlias).on(peerChatterParticipantAlias.chatter.id.eq(peerAccountImageAlias.chatter.id))
+                .leftJoin(unseenChatThreadMessagesAlias).on(qChatThread.id.eq(unseenChatThreadMessagesAlias.chatThread.id))
+                .groupBy(qChatThread.id, loggedInChatterParticipantAlias.id, peerChatterParticipantAlias.id, peerAccountImageAlias.id)
+                .where(filterChain)
+                .orderBy(new OrderSpecifier<>(Order.DESC, this.getLatestChatThreadActivityTimestamp(qChatThread, loggedInChatterParticipantAlias)))
+                .offset(chatThreadsPagesOffset)
+                .limit(chatThreadsPagesLimit)
+                .fetch();
+
+            List<RawChatThreadOverviewDto> rawChatThreadOverviewDtos = new LinkedList<>();
+            for (Tuple chatThreadPageTuple: retrievedChatThreadPages) {
+                ChatThread retrievedChatThread = chatThreadPageTuple.get(qChatThread);
+                ChatThreadParticipant loggedInChatterParticipant = chatThreadPageTuple.get(loggedInChatterParticipantAlias);
+                Integer numberOfUnseenChatThreadMessagesByLoggedInChatterParticipant =
+                    this.chatThreadMessageRepository.countUnseenChatThreadMessagesByChatter(retrievedChatThread, loggedInChatterParticipant);
+
+                RawChatThreadOverviewDto rawChatThreadOverviewDto = new RawChatThreadOverviewDto(
+                    retrievedChatThread,
+                    numberOfUnseenChatThreadMessagesByLoggedInChatterParticipant,
+                    loggedInChatterParticipant,
+                    chatThreadPageTuple.get(peerChatterParticipantAlias),
+                    chatThreadPageTuple.get(peerAccountImageAlias)
+                );
+
+                rawChatThreadOverviewDtos.add(rawChatThreadOverviewDto);
+            }
+
+            logger.info(String.format("%d ChatThreads have been retrieved for LoggedInChatter with id=%s, and chatterNameSearchFilter=%s, pageNumber=%s, isInitialRetrieval=%s, isPolling=%s.",
+                rawChatThreadOverviewDtos.size(), loggedInChatterId, chatterNameSearchFilter, pageNumber, isInitialRetrieval, isPolling));
+	    	return rawChatThreadOverviewDtos;
+        } catch (Exception e) {
+            logger.error(String.format("An exception occurred while retrieving ChatThreads for LoggedInChatter with id=%s, and chatterNameSearchFilter=%s, pageNumber=%s, isInitialRetrieval=%s, isPolling=%s. Exception=[%s]",
+                loggedInChatterId, chatterNameSearchFilter, pageNumber, isInitialRetrieval, isPolling, FormattingTool.stringifyException(e)));
             throw new DatabaseException();
         }
     }
@@ -149,5 +234,17 @@ public class ChatThreadRepository {
             qChatThread.lastChatThreadMessage.messageRegisteredAt.before(newLastChatThreadMessage.getMessageRegisteredAt());
         
         return filterChain.and(isCurrentBeforeNewLastChatThreadMessage);
+    }
+
+    private Expression<Timestamp> getLatestChatThreadActivityTimestamp(QChatThread qChatThread, QChatThreadParticipant qLoggedInChatThreadParticipant) {
+        DateTimeExpression<Timestamp> chatThreadLastMessageTimestamp =
+            qChatThread.lastChatThreadMessage.messageRegisteredAt.coalesce(qChatThread.createdAt);
+        DateTimeExpression<Timestamp> chatThreadHistoryClearedAtTimestamp =
+            qLoggedInChatThreadParticipant.clearedChatThreadHistoryAt.coalesce(qChatThread.createdAt);
+
+        Expression<Timestamp> latestChatThreadActivityTimestamp = new CaseBuilder()
+            .when(chatThreadLastMessageTimestamp.after(chatThreadHistoryClearedAtTimestamp)).then(chatThreadLastMessageTimestamp)
+            .otherwise(chatThreadHistoryClearedAtTimestamp);
+        return latestChatThreadActivityTimestamp;
     }
 }
