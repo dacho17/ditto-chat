@@ -12,6 +12,14 @@ public class ChatValidator extends GeneralValidator{
 			throwValidationException(String.format("MessageContent validation has failed in validateChatThreadMessageForm for messageContent=%s and isAttachmentSent=%s.",
 				chatThreadMessageForm.getMessageContent(), isAttachmentSent));
 		}
+
+        if (isAttachmentSent == true) {
+            boolean isS3ObjectKeyValid = AwsValidator.validateS3ObjectKey(chatThreadMessageForm.getAttachedFileS3ObjectKey());
+            if (isS3ObjectKeyValid == false) {
+                throwValidationException(String.format("s3ObjectKey validation has failed in validateChatThreadMessageForm for s3ObjectKey=%s and isAttachmentSent=%s.",
+                    chatThreadMessageForm.getAttachedFileS3ObjectKey(), isAttachmentSent));
+            }
+        }
     }
 
     private static boolean isChatThreadMessageContentValid(String chatThreadMessageContent, boolean isAttachmentSent) {

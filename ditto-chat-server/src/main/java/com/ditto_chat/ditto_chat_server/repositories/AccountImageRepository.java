@@ -14,6 +14,7 @@ import com.ditto_chat.ditto_chat_server.entities.Chatter;
 import com.ditto_chat.ditto_chat_server.entities.QAccountImage;
 import com.ditto_chat.ditto_chat_server.exceptions.DatabaseException;
 import com.ditto_chat.ditto_chat_server.utils.FormattingTool;
+import com.ditto_chat.ditto_chat_server.utils.TimeTool;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -85,6 +86,29 @@ public class AccountImageRepository {
         } catch (Exception e) {
             logger.error(String.format("An exception occurred while retrieving Account Images for the list of Chatters. Exception=[%s]",
                 FormattingTool.stringifyException(e)));
+            throw new DatabaseException();
+        }
+    }
+
+    public void setReplacedAtOfCurrentAccountImageForChatter(Chatter chatter) {
+        QAccountImage qAccountImage = QAccountImage.accountImage;
+
+        BooleanExpression isAccountImageChatters = qAccountImage.chatter.id.eq(chatter.getId());
+        BooleanExpression isAccountImageCurrent = qAccountImage.replacedAt.isNotNull();
+        BooleanExpression filterChain = isAccountImageChatters.and(isAccountImageCurrent);
+
+        try {
+            long numberOfUpdatedEntries = this.queryFactory
+                .update(qAccountImage)
+                .where(filterChain)
+                .set(qAccountImage.replacedAt, TimeTool.getCurrentTimestamp())
+                .execute();
+
+            logger.info(String.format("%d current Account Images for Chatter with id=%s, have been Replaced.", numberOfUpdatedEntries, chatter.getId()));
+	    	return;
+        } catch (Exception e) {
+            logger.error(String.format("Exception occurred while attempting to update replacedAt of Chatter's (with id=%s) current Account Image. Exception=[%s]",
+                chatter.getId(), FormattingTool.stringifyException(e)));
             throw new DatabaseException();
         }
     }

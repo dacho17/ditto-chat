@@ -23,7 +23,6 @@ import com.ditto_chat.ditto_chat_server.entities.ChatThread;
 import com.ditto_chat.ditto_chat_server.entities.ChatThreadMessage;
 import com.ditto_chat.ditto_chat_server.entities.ChatThreadParticipant;
 import com.ditto_chat.ditto_chat_server.entities.Chatter;
-import com.ditto_chat.ditto_chat_server.entities.UploadFileIntent;
 import com.ditto_chat.ditto_chat_server.entities.UploadedFile;
 import com.ditto_chat.ditto_chat_server.exceptions.BadRequestException;
 import com.ditto_chat.ditto_chat_server.exceptions.InvalidSystemStateException;
@@ -35,39 +34,33 @@ import com.ditto_chat.ditto_chat_server.repositories.ChatThreadMessageRepository
 import com.ditto_chat.ditto_chat_server.repositories.ChatThreadParticipantRepository;
 import com.ditto_chat.ditto_chat_server.repositories.ChatThreadRepository;
 import com.ditto_chat.ditto_chat_server.repositories.ChatterRepository;
-import com.ditto_chat.ditto_chat_server.repositories.UploadFileIntentRepository;
-import com.ditto_chat.ditto_chat_server.repositories.UploadedFileRepository;
-import com.ditto_chat.ditto_chat_server.utils.TimeTool;
 
 @Service
 public class ChatService {
-    private ChatterRepository chatterRepository;
-    private ChatThreadRepository chatThreadRepository;
-    private AccountImageRepository accountImageRepository;
-    private ChatThreadMessageRepository chatThreadMessageRepository;
-    private ChatThreadParticipantRepository chatThreadParticipantRepository;
-    private UploadFileIntentRepository uploadFileIntentRepository;
-    private UploadedFileRepository uploadedFileRepository;
-    private Session hibernateSession;
+    private final AwsService awsService;
+    private final ChatterRepository chatterRepository;
+    private final ChatThreadRepository chatThreadRepository;
+    private final AccountImageRepository accountImageRepository;
+    private final ChatThreadMessageRepository chatThreadMessageRepository;
+    private final ChatThreadParticipantRepository chatThreadParticipantRepository;
+    private final Session hibernateSession;
     private final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
     public ChatService(
+        AwsService awsService,
         ChatterRepository chatterRepository,
         ChatThreadRepository chatThreadRepository,
         AccountImageRepository accountImageRepository,
         ChatThreadMessageRepository chatThreadMessageRepository,
         ChatThreadParticipantRepository chatThreadParticipantRepository,
-        UploadFileIntentRepository uploadFileIntentRepository,
-        UploadedFileRepository uploadedFileRepository,
         Session hibernateSession
     ) {
+        this.awsService = awsService;
         this.chatterRepository = chatterRepository;
         this.chatThreadRepository = chatThreadRepository;
         this.accountImageRepository = accountImageRepository;
         this.chatThreadMessageRepository = chatThreadMessageRepository;
         this.chatThreadParticipantRepository = chatThreadParticipantRepository;
-        this.uploadFileIntentRepository = uploadFileIntentRepository;
-        this.uploadedFileRepository = uploadedFileRepository;
         this.hibernateSession = hibernateSession;
     }
 
@@ -232,7 +225,7 @@ public class ChatService {
 
         boolean isAttachmentSent = newChatThreadMessageForm.isAttachmentSent();
         UploadedFile newChatThreadMessagePriorlyUploadedFile = isAttachmentSent == true
-            ? this.retrieveAttachedUploadedFile(newChatThreadMessageForm.getAttachedFileS3ObjectKey(), loggedInChatter)
+            ? this.awsService.retrievePreUploadedFile(newChatThreadMessageForm.getAttachedFileS3ObjectKey(), loggedInChatter)
             : null;
 
         ChatThreadMessage newChatThreadMessage =
@@ -263,39 +256,6 @@ public class ChatService {
         dbTransaction.commit();
 
         return new ChatThreadHistoryClearedDto(newClearedChatThreadHistoryAtTimestamp);
-    }
-
-    private UploadedFile retrieveAttachedUploadedFile(String attachedUploadedFileS3ObjectKey, Chatter loggedInChatter) {
-        UploadFileIntent attachedUploadFileIntent = this.uploadFileIntentRepository.retrieveByS3ObjectKey(attachedUploadedFileS3ObjectKey);
-        if (attachedUploadFileIntent == null) {
-            logger.error(String.format("Chatter with id=%s attempted to attach a File with s3ObjectKey=%s, but UploadFileIntent does not exsit for the the s3ObjectKey.", loggedInChatter.getId(), attachedUploadedFileS3ObjectKey));
-            throw new BadRequestException();
-        }
-
-        UploadedFile attachedUploadedFile = null;
-        final int NUMBER_OF_ALLOWED_UPLOADED_FILE_RETREIVAL_REATTEMPTS = 2;
-        final int UPLOADED_FILE_RETREIVAL_REATTEMPT_DELAY_IN_SECONDS = 1;
-        for (int i = 0; i < NUMBER_OF_ALLOWED_UPLOADED_FILE_RETREIVAL_REATTEMPTS; i++) {
-            attachedUploadedFile =
-                this.uploadedFileRepository.retrieveByS3ObjectKey(attachedUploadedFileS3ObjectKey);
-            if (attachedUploadedFile == null) {
-                int failedRetrievalAttemptNumber = i + 1;
-                logger.warn(String.format("Chatter with id=%s attempted to attach a File with s3ObjectKey=%s, but UploadedFile has not been registered yet!  Attempt %d/%d failed.", loggedInChatter.getId(), attachedUploadedFileS3ObjectKey, failedRetrievalAttemptNumber, NUMBER_OF_ALLOWED_UPLOADED_FILE_RETREIVAL_REATTEMPTS));
-
-                if (failedRetrievalAttemptNumber != NUMBER_OF_ALLOWED_UPLOADED_FILE_RETREIVAL_REATTEMPTS) {
-                    TimeTool.delaySeconds(UPLOADED_FILE_RETREIVAL_REATTEMPT_DELAY_IN_SECONDS);
-                }
-            } else {
-                break;
-            }
-        }
-
-        if (attachedUploadedFile == null) {
-            logger.error(String.format("Chatter with id=%s attempted to attach a File with s3ObjectKey=%s maximum number of Times, but UploadedFile has not been registered yet! Shared File will not be registered.", loggedInChatter.getId(), attachedUploadedFileS3ObjectKey));
-            throw new InvalidSystemStateException();
-        }
-
-        return attachedUploadedFile;
     }
 
     private ChatThread retrieveChattersChatThreadHelper(UUID requestedChatThreadId, Chatter loggedInChatter) {

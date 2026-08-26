@@ -57,6 +57,13 @@ public class AwsValidator extends GeneralValidator {
 		}
     }
 
+    public static boolean validateS3ObjectKey(String s3ObjectKey) {
+        return s3ObjectKey != null
+            && AwsValidator.MINIMUM_FILE_NAME_LENGTH <= s3ObjectKey.trim().length()
+            && s3ObjectKey.trim().length() <= AwsValidator.MAXIMUM_S3_OBJECT_KEY_LENGTH
+        ;
+    }
+
     private static boolean validateFileName(String fileName) {
         return fileName != null
             && AwsValidator.MINIMUM_FILE_NAME_LENGTH <= fileName.trim().length()
@@ -66,13 +73,6 @@ public class AwsValidator extends GeneralValidator {
 
     private static boolean validateFileSize(Integer fileSize) {
         return fileSize != null && 0 < fileSize && fileSize <= AwsValidator.MAXIMUM_FILE_SIZE_IN_BYTES;
-    }
-
-    private static boolean validateS3ObjectKey(String s3ObjectKey) {
-        return s3ObjectKey != null
-            && AwsValidator.MINIMUM_FILE_NAME_LENGTH <= s3ObjectKey.trim().length()
-            && s3ObjectKey.trim().length() <= AwsValidator.MAXIMUM_S3_OBJECT_KEY_LENGTH
-        ;
     }
 
     private static boolean validateUploadEventId(String uploadEventId) {
