@@ -38,6 +38,13 @@
 		</dependency>
 
 		<dependency>
+			<!-- Enables using junit and Spring Test Classes (e.g. MockMvc), which enables Running Unit and Integration Tests -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
 			<!-- Enables usage of JPA and Hibernate -->
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -92,6 +99,15 @@
 			<!-- classifier jakarta is added here to resolve Plugin Error which occurs without it -->
 		</dependency>
 
+		<!-- Importing only used AWS SDK Modules per suggestion at https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/get-started.html -->
+		<!-- Use the latest version available -->
+		<dependency>
+			<!-- Used to generate S3Presigned Urls in S3 Helper -->
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+			<version>2.47.4</version>
+		</dependency>
+
 		<!-- <dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
@@ -126,12 +142,6 @@
 			<artifactId>spring-boot-starter-session-data-redis-test</artifactId>
 			<scope>test</scope>
 		</dependency> -->
-		
-		<!-- <dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webmvc-test</artifactId>
-			<scope>test</scope>
-		</dependency> -->
 
 		<!-- NOTE: needed to run migrations on application start -->
 		<!-- <dependency>
@@ -145,14 +155,6 @@
 			<artifactId>micrometer-registry-prometheus</artifactId>
 			<version>1.17.0-RC1</version>
 		</dependency> -->
-
-		<!-- Importing only used AWS SDK Modules per suggestion at https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/get-started.html -->
-		<!-- <dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>s3</artifactId>
-			<version>2.47.4</version> -->
-			<!-- Use the latest version available -->
-		<!-- </dependency> -->
 	</dependencies>
 
 	<build>
@@ -199,9 +201,9 @@
 				<artifactId>flyway-maven-plugin</artifactId>
 				<version>12.10.0</version>
 				<configuration>
-					<url>jdbc:mysql://ditto-chat-db-server:3306/ditto_chat_db</url>
-					<user>ditto_chat_server</user>
-					<password>ditto_chat_server_pasZword</password>
+					<url>${env.DITTO_CHAT_DATABASE_URL}</url>
+					<user>${env.DITTO_CHAT_MYSQL_USER}</user>
+					<password>${env.DITTO_CHAT_MYSQL_USER_TEST_PASSWORD}</password>
 					<locations>
 						<location>classpath:db/migration</location>
 					</locations>

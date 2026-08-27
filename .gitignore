@@ -1,3 +1,6 @@
+ditto-chat-server/target
+ditto-chat-server/test-reports
+
 # Logs
 logs
 *.log

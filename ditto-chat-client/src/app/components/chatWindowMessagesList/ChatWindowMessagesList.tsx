@@ -12,7 +12,7 @@ import { ChatThreadMessageStatus } from "../../enums/ChatThreadMessageStatus";
 import CONSTANTS from "../../../Constants";
 import "./ChatWindowMessagesList.css";
 
-const START_THE_CHAT_INDICATOR_TEXT = "No message history. Be the first one to message the tenant";
+const START_THE_CHAT_INDICATOR_TEXT = "No message history. Be the first one to message the chatter";
 const CHAT_STARTED_INDICATOR_TEXT = "Conversation started";
 
 interface Props {

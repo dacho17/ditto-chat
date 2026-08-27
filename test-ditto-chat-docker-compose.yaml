@@ -1,0 +1,63 @@
+# docker compose .yaml file used for running unit and integration tests on ditto-chat-server
+services:
+  test-ditto-chat-db-server:
+    container_name: test-ditto-chat-db-server
+    image: mysql:8.0.44
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysql_test_root_paszsword
+      - MYSQL_DATABASE=ditto_chat_db
+      - MYSQL_USER=ditto_chat_server
+      - MYSQL_PASSWORD=ditto_chat_server_pasZword
+      # MYSQL_USER connecting from any host is granted all privileges to MYSQL_DATABASE
+    healthcheck:
+      test: mysqladmin ping --host=localhost --user=ditto_chat_db --password=ditto_chat_server_pasZword
+      start_period: 20s
+      start_interval: 5s
+      interval: 5s
+      timeout: 2s
+      retries: 5
+  test-ditto-chat-redis-server:
+    container_name: test-ditto-chat-redis-server
+    image: redis:8.4
+    healthcheck:
+      test: redis-cli ping
+      start_period: 15s
+      start_interval: 4s
+      interval: 3s
+      timeout: 1s
+      retries: 3
+  test-ditto-chat-server:
+    container_name: test-ditto-chat-server
+    image: test-ditto-chat-server
+    build:
+      context: ./ditto-chat-server
+      dockerfile: ditto-chat-server.Dockerfile
+      args:
+        WORKING_DIRECTORY: /app
+        RUN_DATABASE_MIGRATIONS: true
+        PACKAGE_SERVICE_INTO_JAR: false
+    entrypoint: "./ditto-chat-server-entrypoint.sh test"
+    environment:
+      - DITTO_CHAT_SERVER_HTTP_PORT=8080
+      - DITTO_CHAT_DATABASE_URL=jdbc:mysql://test-ditto-chat-db-server:3306/ditto_chat_db
+      - DITTO_CHAT_MYSQL_USER=ditto_chat_server
+      - DITTO_CHAT_MYSQL_USER_TEST_PASSWORD=ditto_chat_server_pasZword
+      - DITTO_CHAT_REDIS_HOST=test-ditto-chat-redis-server
+      - DITTO_CHAT_REDIS_PORT=6379
+      - DITTO_CHAT_CLIENT_DOMAIN=localhost:5432
+      - DITTO_CHAT_MAIL_HOST=smtp.gmail.com
+      - DITTO_CHAT_MAIL_PORT=587
+      - DITTO_CHAT_MAIL_USERNAME=dailymnemonics
+      - DITTO_CHAT_MAIL_PASSWORD=lgxadwoispethzgh
+    volumes:
+      - ./ditto-chat-server/test-reports:/app/target/surefire-reports
+      - ./ditto-chat-server/logs:/app/logs
+      - ditto-chat-server-maven-repository-volume:/root/.m2/repository
+    depends_on:
+      test-ditto-chat-db-server:
+        condition: service_healthy
+      test-ditto-chat-redis-server:
+        condition: service_healthy
+volumes:
+  ditto-chat-server-maven-repository-volume:
+    name: ditto-chat-server-maven-repository-volume

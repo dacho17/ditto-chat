@@ -1,0 +1,6 @@
+logs
+target
+test-reports
+
+.env.development
+.env.production

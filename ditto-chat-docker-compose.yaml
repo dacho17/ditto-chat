@@ -1,0 +1,88 @@
+services:
+  ditto-chat-db-server:
+    container_name: ditto-chat-db-server
+    image: mysql:8.0.44
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysql_test_root_paszsword
+      - MYSQL_DATABASE=ditto_chat_db
+      - MYSQL_USER=ditto_chat_server
+      - MYSQL_PASSWORD=ditto_chat_server_pasZword
+      # MYSQL_USER connecting from any host is granted all privileges to MYSQL_DATABASE
+    ports:
+      - 3333:3306
+    volumes:
+      - ditto-chat-db-volume:/var/lib/mysql
+    healthcheck:
+      test: mysqladmin ping --host=localhost --user=ditto_chat_db --password=ditto_chat_server_pasZword
+      start_period: 20s
+      start_interval: 5s
+      interval: 5s
+      timeout: 2s
+      retries: 5
+  ditto-chat-redis-server:
+    container_name: ditto-chat-redis-server
+    image: redis:8.4
+    ports:
+      - 6333:6379
+    volumes:
+      - ditto-chat-redis-volume:/data
+    healthcheck:
+      test: redis-cli ping
+      start_period: 15s
+      start_interval: 4s
+      interval: 3s
+      timeout: 1s
+      retries: 3
+  ditto-chat-server:
+    container_name: ditto-chat-server
+    image: ditto-chat-server
+    build:
+      context: ./ditto-chat-server
+      dockerfile: ditto-chat-server.Dockerfile
+      args:
+        WORKING_DIRECTORY: /app
+        PACKAGE_SERVICE_INTO_JAR: false
+      tags:
+        - "ditto-chat-server:latest"
+    # Running the following Command enables connecting Debugger through TCP Socket, once the Server is Ran
+        # Documentation at: https://docs.oracle.com/en/java/javase/17/docs/specs/jpda/conninv.html
+    entrypoint: "./ditto-chat-server-entrypoint.sh serve"
+    environment:
+      - DITTO_CHAT_SERVER_HTTP_PORT=8080
+      - DITTO_CHAT_DATABASE_URL=jdbc:mysql://ditto-chat-db-server:3306/ditto_chat_db
+      - DITTO_CHAT_MYSQL_USER=ditto_chat_server
+      - DITTO_CHAT_MYSQL_USER_TEST_PASSWORD=ditto_chat_server_pasZword
+      - DITTO_CHAT_REDIS_HOST=ditto-chat-redis-server
+      - DITTO_CHAT_REDIS_PORT=6379
+      - DITTO_CHAT_CLIENT_DOMAIN=localhost:5432
+      - DITTO_CHAT_MAIL_HOST=smtp.gmail.com
+      - DITTO_CHAT_MAIL_PORT=587
+      - DITTO_CHAT_MAIL_USERNAME=dailymnemonics
+      - DITTO_CHAT_MAIL_PASSWORD=lgxadwoispethzgh
+    ports:
+      - 8888:8080
+      - 5555:5005
+    volumes:
+      - ./ditto-chat-server/src:/app/src
+      - ./ditto-chat-server/pom.xml:/app/pom.xml
+      - ./ditto-chat-server/logs:/app/logs
+      - ditto-chat-server-maven-repository-volume:/root/.m2/repository
+    healthcheck:
+      test: curl http://localhost:8080/actuator/prometheus
+      start_period: 240s
+      start_interval: 10s
+      interval: 5s
+      timeout: 1s
+      retries: 5
+    depends_on:
+      ditto-chat-db-server:
+        condition: service_healthy
+      ditto-chat-redis-server:
+        condition: service_healthy
+volumes:
+  ditto-chat-db-volume:
+    name: ditto-chat-db-volume
+  ditto-chat-redis-volume:
+    name: ditto-chat-redis-volume
+  ditto-chat-server-maven-repository-volume:
+    name: ditto-chat-server-maven-repository-volume
