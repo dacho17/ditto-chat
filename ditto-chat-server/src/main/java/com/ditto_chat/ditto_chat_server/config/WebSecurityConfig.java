@@ -87,7 +87,7 @@ public class WebSecurityConfig {
 				.requestMatchers(HttpMethod.POST, Constants.RESET_PASSWORD_URL).permitAll()
 				.anyRequest().authenticated()
 			)
-			.logout(logout -> logout	// TODO-logout: logout needs to be allowed only for tenants with the active session
+			.logout(logout -> logout	// TODO-logout: logout needs to be allowed only for chatters with the active session
 				.logoutUrl(Constants.LOGOUT_URL)
 				.invalidateHttpSession(true)
 				.deleteCookies("SESSION")

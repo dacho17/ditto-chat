@@ -22,11 +22,11 @@ public class EmailSenderService {
     @Value("${spring.mail.username}")
     private String EMAIL_SENDER_USERNAME;
     @Value("${client.domain}")
-    private String BOOKING_CLIENT_DOMAIN;
+    private String DITTO_CHAT_CLIENT_DOMAIN;
 
     private final Logger logger = LoggerFactory.getLogger(EmailSenderService.class);
     private final String EMAIL_SUBJECT = "Password Reset Request";
-    private final String EMAIL_CONTENT = "You have requested a password reset.\n\nAccess the following link to reset your password:\n%s/tenant/reset-password?passwordResetToken=%s\n\nThe link will be active for the next 30 minutes.";
+    private final String EMAIL_CONTENT = "You have requested a password reset.\n\nAccess the following link to reset your password:\n%s/reset-password?passwordResetToken=%s\n\nThe link will be active for the next 30 minutes.";
  
     public Timestamp sendEmail(EmailDto emailDtoToSend) {
         try {
@@ -51,9 +51,9 @@ public class EmailSenderService {
     }
 
     public EmailDto generatePasswordResetEmail(String email, String passwordResetTokenHash) {
-        String httpsBookingClientUrl = "https://" + this.BOOKING_CLIENT_DOMAIN;
+        String httpsChatClientUrl = "https://" + this.DITTO_CHAT_CLIENT_DOMAIN;
 
-        String emailContent = String.format(this.EMAIL_CONTENT, httpsBookingClientUrl, passwordResetTokenHash);
+        String emailContent = String.format(this.EMAIL_CONTENT, httpsChatClientUrl, passwordResetTokenHash);
         return new EmailDto(email, this.EMAIL_SUBJECT, emailContent);
     }
 }

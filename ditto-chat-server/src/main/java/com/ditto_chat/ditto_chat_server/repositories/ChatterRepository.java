@@ -229,6 +229,8 @@ public class ChatterRepository {
                 .update(qChatter)
                 .where(doesMatchEntryId)
                 .set(qChatter.password, newPassword)
+                .setNull(qChatter.passwordResetTokenHash)
+                .setNull(qChatter.passwordResetValidUntil)
                 .execute();
 
             if (numberOfUpdatedEntries != 1) {
