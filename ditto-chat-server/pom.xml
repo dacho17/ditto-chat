@@ -183,17 +183,19 @@
 				<!-- <groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin> -->
-			<!-- <plugin> -->
-				<!-- Plugin used during mvn test. Enables generating surefire Test Reports -->
+			<plugin>
+				<!-- Plugin used during mvn test. Enables generating surefire Test Reports, and Connecting Debugger during Test Execution -->
 				<!-- Documentation at: https://maven.apache.org/surefire/maven-surefire-plugin/index.html -->
-				<!-- <groupId>org.apache.maven.plugins</groupId>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.5.5</version>
-				<configuration> -->
+				<configuration>
 					<!-- Documentation at: https://maven.apache.org/surefire/maven-surefire-report-plugin/report-mojo.html -->
-					<!-- <outputDirectory>${project.basedir}/surefire-test-reports</outputDirectory>
+					<forkCount>1</forkCount>
+					<reuseForks>false</reuseForks>
+					<argLine>-agentlib:jdwp=transport=dt_socket,suspend=y,server=y,address=*:5005,allow=*</argLine>
 				</configuration>
-			</plugin> -->
+			</plugin>
 			<plugin>
 				<!-- Documentation at: https://documentation.red-gate.com/fd/maven-goal-277579365.html -->
 				<!-- Plugin used to run and rollback migrations within Pipeline -->

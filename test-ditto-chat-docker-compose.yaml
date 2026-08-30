@@ -49,6 +49,8 @@ services:
       - DITTO_CHAT_MAIL_PORT=587
       - DITTO_CHAT_MAIL_USERNAME=dailymnemonics
       - DITTO_CHAT_MAIL_PASSWORD=lgxadwoispethzgh
+    ports:
+      - 5555:5005
     volumes:
       - ./ditto-chat-server/test-reports:/app/target/surefire-reports
       - ./ditto-chat-server/logs:/app/logs
