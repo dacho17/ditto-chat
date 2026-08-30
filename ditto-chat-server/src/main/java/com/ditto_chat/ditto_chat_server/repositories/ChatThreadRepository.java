@@ -100,10 +100,12 @@ public class ChatThreadRepository {
             peerChatterParticipantAlias.chatter.name.concat(" ").concat(peerChatterParticipantAlias.chatter.surname);
         BooleanExpression doesChatThreadPeerMatchSearchFilter = peerChatterFullName.containsIgnoreCase(chatterNameSearchFilter);
         BooleanExpression isLoggedInChatterChatThreadParticipant = loggedInChatterParticipantAlias.chatter.id.eq(loggedInChatterId);
+        BooleanExpression isNotLoggedInChatterPeerChatThreadParticipant = peerChatterParticipantAlias.chatter.id.ne(loggedInChatterId);
         BooleanExpression isPeerAccountImageCurrentlyActive = peerAccountImageAlias.replacedAt.isNull();
 
         BooleanExpression filterChain = doesChatThreadPeerMatchSearchFilter
             .and(isLoggedInChatterChatThreadParticipant)
+            .and(isNotLoggedInChatterPeerChatThreadParticipant)
             .and(isPeerAccountImageCurrentlyActive);
 
         chatThreadsPagesLimit += 1; // NOTE: Limit is 1 more than the Page Size. Used later in calculations to indicate whether the page is the last page
@@ -154,23 +156,27 @@ public class ChatThreadRepository {
         }
     }
 
-    public Map<String, ChatThread> retrieveChatThreadsBetweenChatterAndPeerChatters(UUID chatterId, List<Chatter> peerChatters) {
+    public Map<String, ChatThread> retrieveChatThreadsBetweenChatterAndPeerChatters(UUID loggedInChatterId, List<Chatter> peerChatters) {
         QChatThread qChatThread = QChatThread.chatThread;
-        QChatThreadParticipant chatterParticipantAlias = new QChatThreadParticipant("chatterParticipant");
+        QChatThreadParticipant loggedInChatterParticipantAlias = new QChatThreadParticipant("loggedInChatterParticipant");
         QChatThreadParticipant peerChatterParticipantAlias = new QChatThreadParticipant("peerChatterParticipant");
 
         List<UUID> peerChatterIds = peerChatters.stream().map(chatter -> chatter.getId()).toList();
 
         BooleanExpression isNonGroupChatThread = qChatThread.isGroupChatThread.isFalse();
-        BooleanExpression isChatterChatThreadParticipant = chatterParticipantAlias.chatter.id.eq(chatterId);
+        BooleanExpression isLoggedInChatterChatThreadParticipant = loggedInChatterParticipantAlias.chatter.id.eq(loggedInChatterId);
+        BooleanExpression isNotLoggedInChatterPeerChatThreadParticipant = peerChatterParticipantAlias.chatter.id.ne(loggedInChatterId);
         BooleanExpression isPeerChatterChatThreadParticipant = peerChatterParticipantAlias.chatter.id.in(peerChatterIds);
-        BooleanExpression filterChain = isNonGroupChatThread.and(isChatterChatThreadParticipant).and(isPeerChatterChatThreadParticipant);
+        BooleanExpression filterChain = isNonGroupChatThread
+            .and(isLoggedInChatterChatThreadParticipant)
+            .and(isNotLoggedInChatterPeerChatThreadParticipant)
+            .and(isPeerChatterChatThreadParticipant);
 
         try {
             List<Tuple> retrievedChatThreadChatterIdTuples = this.queryFactory
                 .select(qChatThread, peerChatterParticipantAlias.chatter.id)
                 .from(qChatThread)
-                .join(chatterParticipantAlias).on(qChatThread.id.eq(chatterParticipantAlias.chatThread.id))
+                .join(loggedInChatterParticipantAlias).on(qChatThread.id.eq(loggedInChatterParticipantAlias.chatThread.id))
                 .join(peerChatterParticipantAlias).on(qChatThread.id.eq(peerChatterParticipantAlias.chatThread.id))
                 .where(filterChain)
                 .fetch();
@@ -185,11 +191,11 @@ public class ChatThreadRepository {
             }
 
             logger.info(String.format("%d/%d ChatThreads have been retrieved between the Chatter with id=%s, and the target Peer Chatters",
-                peerChatterChatThreadsWithLoggedInChatter.size(), peerChatters.size(), chatterId));
+                peerChatterChatThreadsWithLoggedInChatter.size(), peerChatters.size(), loggedInChatterId));
 	    	return peerChatterChatThreadsWithLoggedInChatter;
         } catch (Exception e) {
             logger.error(String.format("An exception occurred while retrieving ChatThreads between the Chatter with id=%s and their Peer Chatters. Exception=[%s]",
-                chatterId, FormattingTool.stringifyException(e)));
+                loggedInChatterId, FormattingTool.stringifyException(e)));
             throw new DatabaseException();
         }
     }

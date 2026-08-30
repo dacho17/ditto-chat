@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
-import { requestAccountImageUploadUrl, setIsChatterImageBeingUploaded, uploadAccountImageToS3 } from "../../store/AccountSlice";
-import { setIsLoadingChatterOverview, setNewLoggedInChatterImageUrl } from "../../store/AuthSlice";
+import { newAccountImage, setIsChatterImageBeingUploaded } from "../../store/AccountSlice";
+import { setIsLoadingChatterOverview } from "../../store/AuthSlice";
+import { newUploadFileIntent, uploadFileToS3Bucket } from "../../store/AwsSlice";
 import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
 import PageWithSideMenu from "../pageWithSideMenu/PageWithSideMenu";
@@ -16,9 +17,10 @@ import Mapper from "../../helpers/Mapper";
 import Validator, { VALID_ACCOUNT_IMAGE_FILE_TYPES } from "../../helpers/Validator";
 import ChatterOverview from "../../classes/ChatterOverview";
 import UploadFileIntent from "../../classes/UploadFileIntent";
+import AccountImageForm from "../../classes/AccountImageForm";
+import { FilePurpose } from "../../enums/FilePurpose";
 import CONSTANTS from "../../../Constants";
 import "./AccountPage.css";
-import DummyImageUrl from '../../../assets/david-chat-image.jpg';
 
 const PAGE_NAME_TEXT = "Account";
 const CHANGE_IMAGE_TEXT = "Change Image";
@@ -41,7 +43,7 @@ export default function AccountPage() {
             return;
         }
 
-        const fileMetadata = new UploadFileIntent(fileName, Mapper.inputFileTypeToSharedFileType(inputFileType), fileSize);
+        const fileMetadata = new UploadFileIntent(fileName, Mapper.inputFileTypeToSharedFileType(inputFileType), fileSize, FilePurpose.ACCOUNT_IMAGE);
 
         dispatch(setIsChatterImageBeingUploaded(true));
         await sendTryToUploadChatterImage(async () => {
@@ -53,13 +55,13 @@ export default function AccountPage() {
                 (document.getElementById("account-details-image-id") as HTMLImageElement).src = imageUrl;
             }
 
-            const s3UploadUrl = await dispatch(requestAccountImageUploadUrl({ uploadFileIntent: fileMetadata })).unwrap();
-            const awsS3UploadFileResponse = await dispatch(uploadAccountImageToS3(
+            const s3UploadUrl = await dispatch(newUploadFileIntent({ uploadFileIntentForm: fileMetadata })).unwrap();
+            const awsS3UploadFileResponse = await dispatch(uploadFileToS3Bucket(
                 { s3PreSignedUploadUrl: s3UploadUrl, fileContentStream: fileContentStream }
             )).unwrap();
-            
-            dispatch(setNewLoggedInChatterImageUrl({ newLoggedInChatterImageUrl: DummyImageUrl })); // TODO-download: set the URL on which the Image can be Retrived, ADditionally, consider moving this Call to the Slice 
 
+            const newAccountImageForm = new AccountImageForm(s3UploadUrl.getS3ObjectKey());
+            await dispatch(newAccountImage({ newAccountImageForm: newAccountImageForm }));
             return null;
         }, () => dispatch(setIsChatterImageBeingUploaded(false)));
     }

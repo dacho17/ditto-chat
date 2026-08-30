@@ -1,6 +1,6 @@
 export enum SharedFileType {
-    PNG = "png",
-    JPEG = "jpeg",
-    TXT = "txt",
-    PDF = "pdf"
+    PNG = "PNG",
+    JPEG = "JPEG",
+    TXT = "TXT",
+    PDF = "PDF"
 }

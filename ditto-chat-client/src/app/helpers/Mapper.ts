@@ -57,7 +57,7 @@ export default class Mapper {
     public static sharedFileFromDto(sharedFileDto: SharedFileDto): SharedFile {
         return new SharedFile(
             sharedFileDto.fileName,
-            sharedFileDto.fileType,
+            sharedFileDto.sharedFileType,
             sharedFileDto.fileUrl,
             TimeHelper.dateStringToTimestamp(sharedFileDto.fileSharedAt),
             sharedFileDto.fileSharedByChatterId
@@ -67,7 +67,7 @@ export default class Mapper {
     public static chatThreadFromDto(chatThreadDto: ChatThreadDto, loggedInChatterId: string): ChatThread {
         return new ChatThread(
             Mapper.chatThreadOverviewFromDto(chatThreadDto.chatThreadOverview),
-            chatThreadDto.chatThreadMessages.map(chatThreadMessageDto => Mapper.chatThreadMessageFromDto(chatThreadMessageDto, loggedInChatterId))
+            chatThreadDto.chatThreadMessages.pagedList.map(chatThreadMessageDto => Mapper.chatThreadMessageFromDto(chatThreadMessageDto, loggedInChatterId))
         );
     }
 
@@ -86,6 +86,7 @@ export default class Mapper {
 
     public static s3PreSignedUrlFromDto(s3PreSignedUrlDto: S3PreSignedUrlDto): S3PreSignedUrl {
         return new S3PreSignedUrl(
+            s3PreSignedUrlDto.s3ObjectKey,
             s3PreSignedUrlDto.url,
             TimeHelper.dateStringToTimestamp(s3PreSignedUrlDto.expiresAt)
         );

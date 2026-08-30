@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import ViteHelper from "../helpers/ViteHelper";
 
 export default class AxiosClient {
     private client: AxiosInstance | null = null;
@@ -7,13 +8,14 @@ export default class AxiosClient {
     };
 
     protected constructor(serverDomain: string | null) {
-        const baseServerUrl = serverDomain !== null ? `https://${serverDomain}` : null;
+        const httpProtocolPrefix = this.getHttpProtocolPrefix();
+        const baseServerUrl = serverDomain !== null ? `${httpProtocolPrefix}://${serverDomain}` : null;
         this.client = axios.create({
             baseURL: baseServerUrl,
         });
 
         this.client.interceptors.response.use((response: AxiosResponse) => {
-            console.log(`Successful Response Received, with Message : ${response.data.message}`);
+            console.log(`Successful Response Received from the Server. Response: ${JSON.stringify(response)}`);
 
             return response;
         }, (err: AxiosError) => {
@@ -42,5 +44,9 @@ export default class AxiosClient {
             headers: AxiosClient.DEFAULT_REQUEST_HEADERS,
             ...config
         });
+    }
+
+    private getHttpProtocolPrefix(): string {
+        return ViteHelper.isDevEnvironment() ? "http" : "https";
     }
 }

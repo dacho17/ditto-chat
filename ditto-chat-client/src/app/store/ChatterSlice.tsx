@@ -26,7 +26,7 @@ const initialState: ChatterState = {
     chatter: null,
     isLoadingChatter: true,
     currentSharedFilesListPage: 0,
-    isLastSharedFilesListPage: false,
+    isLastSharedFilesListPage: true,
     isLoadingOlderSharedFiles: false,
 
     chatterSharedFileInOverlay: null,
@@ -79,9 +79,10 @@ export const getChatter = createAsyncThunk<Chatter, { chatterId: string }, { rej
     "chatter/getChatter",
     async ({ chatterId }, thunkAPI) => {
         try {
-            const res = await ChatClient.getChatClient().getChatter(chatterId);
-            const retrievedChatter = Mapper.chatterFromDto(res.data);
-            const isSharedFileLastPage = res.data.sharedFiles.isLastPage;
+            const responseBody = await ChatClient.getChatClient().getChatter(chatterId);
+            const retrievedChatter = Mapper.chatterFromDto(responseBody.data);
+            const isSharedFileLastPage = responseBody.data.sharedFiles.isLastPage;
+            SliceHelper.handleResponseBody(responseBody, thunkAPI);
 
             thunkAPI.dispatch(setChatter(retrievedChatter));
             thunkAPI.dispatch(setIsLastSharedFilesListPage(isSharedFileLastPage));
@@ -108,10 +109,18 @@ export const getSharedFiles = createAsyncThunk<SharedFile[], { chatterId: string
             queryParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, currentSharedFilesListPage.toString());
             
             // checks if there is an entry already in Cache, and if yes, use the Cached object and do not send the request to the server!
+            let { pagedList, isLastPage } = { pagedList: null, isLastPage: null };
             const cacheResponse = retrieveSharedFilesFromCache(currentSharedFilesListPage, thunkAPI);            
-            const { pagedList, isLastPage } = cacheResponse !== null
-                ? { pagedList: cacheResponse.previouslyCachedSharedFiles, isLastPage: cacheResponse.previouslyCachedIsLastPage }
-                : (await ChatClient.getChatClient().getSharedFiles(chatterId, queryParams)).data;
+            if (cacheResponse === null) {
+                const responseBody = await ChatClient.getChatClient().getSharedFiles(chatterId, queryParams);
+                SliceHelper.handleResponseBody(responseBody, thunkAPI);
+
+                pagedList = responseBody.data.pagedList;
+                isLastPage = responseBody.data.isLastPage;
+            } else {
+                pagedList = cacheResponse.previouslyCachedSharedFiles;
+                isLastPage = cacheResponse.previouslyCachedIsLastPage;
+            }
 
             const sharedFiles = pagedList.map(sharedFileDto => Mapper.sharedFileFromDto(sharedFileDto));
             thunkAPI.dispatch(appendSharedFilesToList(sharedFiles));

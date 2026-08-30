@@ -27,7 +27,7 @@ const initialState: ChattersState = {
     isLoadingChatterOverviews: true,
     isFilterCurrentlyChanging: false,
     isLoadingOlderChatterOverviews: false,
-    isLastChatterOverviewListPage: false,
+    isLastChatterOverviewListPage: true,
     isCreatingNewChatThread: false,
 
     retrievedChatterOverviewsCache: []
@@ -99,12 +99,20 @@ export const getChatters = createAsyncThunk<ChatterOverview[], { chatterSearchFi
             queryParams.set(CONSTANTS.IS_INITIAL_RETRIEVAL_QUERY_PARAMETER, TypeFormatter.booleanToString(isInitialRetrieval));
 
             // checks if there is an entry already in Cache, and if yes, use the Cached object and do not send the request to the server!
+            let { pagedList, isLastPage } = { pagedList: null, isLastPage: null };
             const cacheResponse =
                 retrieveChatterOverviewsFromCache(chatterSearchFilter, TypeFormatter.stringToInt(currentPageNumber), isInitialRetrieval, thunkAPI);
-            
-            const { pagedList, isLastPage } = cacheResponse !== null
-                ? { pagedList: cacheResponse.previouslyCachedChatterOverviews, isLastPage: cacheResponse.previouslyCachedIsLastPage }
-                : (await ChatClient.getChatClient().getChatters(queryParams)).data;
+            if (cacheResponse === null) {
+                const responseBody = await ChatClient.getChatClient().getChatters(queryParams);
+                SliceHelper.handleResponseBody(responseBody, thunkAPI);
+
+                pagedList = responseBody.data.pagedList;
+                isLastPage = responseBody.data.isLastPage;
+            } else {
+                pagedList = cacheResponse.previouslyCachedChatterOverviews;
+                isLastPage = cacheResponse.previouslyCachedIsLastPage;
+            }
+
             const chatterOverviews = pagedList.map(chatterOverviewDto => Mapper.chatterOverviewFromDto(chatterOverviewDto));
 
             if (isInitialRetrieval === true) {

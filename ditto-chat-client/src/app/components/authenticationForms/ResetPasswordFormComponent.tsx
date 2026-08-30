@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { resetPassword, setIsCurrentlyAuthenticating } from "../../store/AuthSlice";
@@ -20,8 +20,7 @@ export default function ResetPasswordFormComponent() {
     const dispatch = useAppDispatch();
     const [sendTryToSubmitResetPassword, _] = useTryToSendRequest<{ redirectUrl: string }>();
 
-    const [searchParams, __] = useSearchParams();
-    const passwordResetToken = searchParams.get(CONSTANTS.PASSWORD_RESET_TOKEN_QUERY_PARAMETER);
+    const { passwordResetToken } = useParams();
 
     const [chatterPassword, setChatterPassword] = useState<GenFormInputState>(INITIAL_GEN_FORM_INPUT_STATE);
     const [chatterRepeatedPassword, setChatterRepeatedPassword] = useState<GenFormInputState>(INITIAL_GEN_FORM_INPUT_STATE);

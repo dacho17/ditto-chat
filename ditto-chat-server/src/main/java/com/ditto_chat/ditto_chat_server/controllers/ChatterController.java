@@ -21,20 +21,26 @@ import com.ditto_chat.ditto_chat_server.dtos.ResponseBody;
 import com.ditto_chat.ditto_chat_server.dtos.ResponsePagedListDto;
 import com.ditto_chat.ditto_chat_server.dtos.SharedFileDto;
 import com.ditto_chat.ditto_chat_server.helpers.EntityPaginationHelper;
+import com.ditto_chat.ditto_chat_server.helpers.auth.Authenticator;
 import com.ditto_chat.ditto_chat_server.helpers.auth.ChatterUserDetails;
 import com.ditto_chat.ditto_chat_server.services.ChatterService;
 import com.ditto_chat.ditto_chat_server.validators.RequestUrlValidator;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping(value = "/chatter", produces = { "application/json" })
 public class ChatterController extends GeneralController {
     @Autowired
     private ChatterService chatterService;
+    @Autowired
+    private Authenticator chatterAuthenticator;
 	private final Logger logger = LoggerFactory.getLogger(ChatterController.class);
 
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("/{chatterId}")
     public ResponseEntity<ResponseBody<ChatterDto>> getChatter(
+        HttpServletRequest request,
         @PathVariable UUID chatterId,
         @AuthenticationPrincipal ChatterUserDetails loggedInChatterUserDetails
     ) throws Exception {
@@ -46,12 +52,17 @@ public class ChatterController extends GeneralController {
         logger.info(String.format("GET /chatter/%s - endpoint accessed - returning response.", chatterId));
 		return ResponseEntity
 			.status(HttpStatus.OK)
-			.body(new ResponseBody<ChatterDto>(null, retrievedChatterDto));
+			.body(new ResponseBody<ChatterDto>(
+                null,
+                retrievedChatterDto,
+                this.chatterAuthenticator.getSessionExpiresAt(request)
+            ));
     }
 
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping("/{chatterId}/shared-files")
     public ResponseEntity<?> getSharedFiles(
+        HttpServletRequest request,
         @PathVariable UUID chatterId,
         @RequestParam(required = true) Integer pageNumber,
         @AuthenticationPrincipal ChatterUserDetails loggedInChatterUserDetails
@@ -63,15 +74,24 @@ public class ChatterController extends GeneralController {
         final boolean isInitialRetrieval = pageNumber == 0;
         ResponsePagedListDto<SharedFileDto> retrievedSharedFileDtosPage =
             this.chatterService.getPeerSharedFilesPage(chatterId, pageNumber, loggedInChatterUserDetails.getId());
-        if (EntityPaginationHelper.doesEntityPageExist(retrievedSharedFileDtosPage.getPageList(), pageNumber, isInitialRetrieval) == false) {
+        if (EntityPaginationHelper.doesEntityPageExist(retrievedSharedFileDtosPage.getPagedList(), pageNumber, isInitialRetrieval) == false) {
 			logger.warn(String.format("Chatter with id=%s requested SharedFile Page which does not exist for between them and PeerChatter with id=%s. The non-existent pageNumber=%d.", loggedInChatterUserDetails.getId(), chatterId, pageNumber));
 			String redirectUrl = String.format("%s/%s", Constants.CHATTER_URL, chatterId);
-			return generateRedirectResponse(HttpStatus.NOT_FOUND, Constants.PAGE_NOT_FOUND_ERROR_MESSAGE, redirectUrl);
+			return generateRedirectResponse(
+                HttpStatus.NOT_FOUND,
+                Constants.PAGE_NOT_FOUND_ERROR_MESSAGE,
+                redirectUrl,
+                this.chatterAuthenticator.getSessionExpiresAt(request)
+            );
 		}
 
         logger.info(String.format("GET /chatter/%s/shared-files?pageNumber=%d - endpoint accessed - returning response.", chatterId, pageNumber));
 		return ResponseEntity
 			.status(HttpStatus.OK)
-			.body(new ResponseBody<ResponsePagedListDto<SharedFileDto>>(null, retrievedSharedFileDtosPage));
+			.body(new ResponseBody<ResponsePagedListDto<SharedFileDto>>(
+                null,
+                retrievedSharedFileDtosPage,
+                this.chatterAuthenticator.getSessionExpiresAt(request)
+            ));
     }
 }

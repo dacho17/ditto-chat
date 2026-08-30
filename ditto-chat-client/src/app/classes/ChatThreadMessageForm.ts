@@ -1,29 +1,27 @@
-import SharedFile from "./SharedFile";
-
 export default class ChatThreadMessageForm {
-    private message: string;
-    private attachedFile: SharedFile | null;
-    private chatMessageClientRef: string;  // NOTE: sent to service, but used only on client
-    private isMessageResent: boolean;
+    private messageContent: string;
+    private attachedFileS3ObjectKey: string | null;
+    private chatMessageClientRef: string;   // NOTE: sent to service, but used only on client
+    private isMessageResent: boolean;       // NOTE: sent to service, but used only on client
 
     public constructor(
-        message: string,
-        attachedFile: SharedFile | null,
+        messageContent: string,
+        attachedFileS3ObjectKey: string | null,
         chatMessageClientRef: string,
         isMessageResent: boolean
     ) {
-        this.message = message;
-        this.attachedFile = attachedFile;
+        this.messageContent = messageContent;
+        this.attachedFileS3ObjectKey = attachedFileS3ObjectKey;
         this.chatMessageClientRef = chatMessageClientRef;
         this.isMessageResent = isMessageResent;
     }
 
-    public getMessage(): string {
-        return this.message;
+    public getMessageContent(): string {
+        return this.messageContent;
     }
 
-    public getAttachedFile(): SharedFile | null {
-        return this.attachedFile;
+    public getAttachedFileS3ObjectKey(): string | null {
+        return this.attachedFileS3ObjectKey;
     }
 
     public getChatMessageClientRef(): string {

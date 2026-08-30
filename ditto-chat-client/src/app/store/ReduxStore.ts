@@ -4,6 +4,7 @@ import { DeviceTypeSlice } from "./DeviceTypeSlice";
 import { AuthSlice } from "./AuthSlice";
 import { UrlHistorySlice } from "./UrlHistorySlice";
 import { HomeSlice } from "./HomeSlice";
+import { AwsSlice } from "./AwsSlice";
 import { AccountSlice } from "./AccountSlice";
 import { ChattersSlice } from "./ChattersSlice";
 import { ChatSlice } from "./ChatSlice";
@@ -15,6 +16,7 @@ export const reduxStore = configureStore({
         authSlice: AuthSlice.reducer,
         urlHistorySlice: UrlHistorySlice.reducer,
         homeSlice: HomeSlice.reducer,
+        awsSlice: AwsSlice.reducer,
         accountSlice: AccountSlice.reducer,
         chattersSlice: ChattersSlice.reducer,
         chatSlice: ChatSlice.reducer,

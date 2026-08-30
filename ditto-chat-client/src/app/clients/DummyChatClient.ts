@@ -10,6 +10,8 @@ import LoginForm from "../classes/LoginForm";
 import ForgotPasswordForm from "../classes/ForgotPasswordForm";
 import ResetPasswordForm from "../classes/ResetPasswordForm";
 import S3PreSignedUrl from "../classes/S3PreSignedUrl";
+import AccountImageForm from "../classes/AccountImageForm";
+import AccountImageDto from "../interfaces/AccountImageDto";
 import PagedListDto from "../interfaces/PagedListDto";
 import LoginDto from "../interfaces/LoginDto";
 import ChatterOverviewDto from "../interfaces/ChatterOverviewDto";
@@ -25,8 +27,8 @@ import CONSTANTS from "../../Constants";
 const DUMMY_ACCOUNT_REGISTRATION_SUCCESS_MESSAGE = "You have registered successfully.";
 const DUMMY_LOGIN_SUCCESS_MESSAGE = "You are logged in.";
 const DUMMY_LOGOUT_SUCCESS_MESSAGE = "You are logged out.";
-const DUMMY_ACCOUNT_FILE_UPLOAD_STARTED_MESSAGE = "File Upload Started.";
 const DUMMY_ACCOUNT_FILE_UPLOAD_SUCCESS_MESSAGE = "Your File has been Uploaded!";
+const DUMMY_NEW_ACCOUNT_IMAGE_SET_SUCCESS_MESSAGE = "You updated your account image";
 
 export default class DummyChatClient implements ChatClientInterface, AwsClientInterface {
     private static dummyChatClientSingletonReference: DummyChatClient | null = null;
@@ -139,25 +141,36 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
         });
     }
 
-    public async requestFileUploadUrl(uploadFileIntent: UploadFileIntent): ChatServerResponse<S3PreSignedUrlDto> {
-        console.log(`Received requestFileUploadUrl Request with UploadFileIntent: ${JSON.stringify(uploadFileIntent)}`);
-
-        const dummyS3PreSignedUrl = this.dummyChatService.generateDummyS3PreSignedUrl();
+    public async newUploadFileIntent(uploadFileIntentForm: UploadFileIntent): ChatServerResponse<S3PreSignedUrlDto> {
+        console.log(`Received newUploadFileIntent Request with UploadFileIntent: ${JSON.stringify(uploadFileIntentForm)}`);
+        
+        const dummyS3PreSignedUrl = this.dummyChatService.addNewUploadFileIntent(uploadFileIntentForm);
         console.log(`Responding with S3PreSignedUrlDto: ${JSON.stringify(dummyS3PreSignedUrl)}`);
         return Promise.resolve({
-            message: DUMMY_ACCOUNT_FILE_UPLOAD_STARTED_MESSAGE,
+            message: DUMMY_NEW_ACCOUNT_IMAGE_SET_SUCCESS_MESSAGE,
             data: dummyS3PreSignedUrl
         });
     }
 
-    public async uploadFileToS3(s3PreSignedUploadUrl: S3PreSignedUrl, fileContentStream: ReadableStream): Promise<S3UploadFileResponseDto> {
+    public async uploadFileToS3Bucket(s3PreSignedUploadUrl: S3PreSignedUrl, fileContentStream: ReadableStream): Promise<S3UploadFileResponseDto> {
         console.log(`Received uploadFileToS3 Request with S3PreSignedUrl: ${JSON.stringify(s3PreSignedUploadUrl)}`);
 
-        const dummyS3UploadResponse = this.dummyChatService.generateDummyS3UploadFileResponse();
+        const dummyS3UploadResponse = this.dummyChatService.addNewUploadedFile(s3PreSignedUploadUrl, fileContentStream);
         console.log(`Respdnding with S3UploadFileResponseDto: ${JSON.stringify(dummyS3UploadResponse)}`);
         return Promise.resolve({
             message: DUMMY_ACCOUNT_FILE_UPLOAD_SUCCESS_MESSAGE,
             data: dummyS3UploadResponse
+        });
+    }
+
+    public async newAccountImage(newAccountImageForm: AccountImageForm): ChatServerResponse<AccountImageDto> {
+        console.log(`Received newAccountImage Request with AccountImageForm: ${JSON.stringify(newAccountImageForm)}`);
+        
+        const dummyAccountImageDtoResponse = this.dummyChatService.updateChattersAccountImage(newAccountImageForm);
+        console.log(`Responding with AccountImageDto: ${JSON.stringify(dummyAccountImageDtoResponse)}`);
+        return Promise.resolve({
+            message: DUMMY_NEW_ACCOUNT_IMAGE_SET_SUCCESS_MESSAGE,
+            data: dummyAccountImageDtoResponse
         });
     }
 
@@ -275,8 +288,8 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
         });
     }
 
-    public async postChatThread(chatterId: string): ChatServerResponse<ChatThreadDto> {
-        console.log(`Received postChatThread Request with chatterId: ${chatterId}`);
+    public async newChatThread(chatterId: string): ChatServerResponse<ChatThreadDto> {
+        console.log(`Received newChatThread Request with chatterId: ${chatterId}`);
 
         const newDummyChatThread = this.dummyChatService.addNewDummyChatThread(chatterId);
 
@@ -292,10 +305,13 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
 
         const foundChatThread = this.dummyChatService.getDummyChatThreads()
             .find((chatThreadDto) => chatThreadDto.chatThreadOverview.id === chatThreadId);
-        const sortedChatThreadMessages = DummyChatService.sortChatThreadMessageDtoList(foundChatThread.chatThreadMessages);
+        const sortedChatThreadMessages = DummyChatService.sortChatThreadMessageDtoList(foundChatThread.chatThreadMessages.pagedList);
 
         const responseData = structuredClone(foundChatThread);
-        responseData.chatThreadMessages = sortedChatThreadMessages.slice(0, CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE);
+        responseData.chatThreadMessages = {
+           pagedList: sortedChatThreadMessages.slice(0, CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE),
+           isLastPage: sortedChatThreadMessages.length <= CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE
+        };
         
         console.log(`Responding with ChatThreadDto: ${JSON.stringify(responseData)}`);
         return Promise.resolve({
@@ -312,7 +328,7 @@ export default class DummyChatClient implements ChatClientInterface, AwsClientIn
         const foundChatThread = this.dummyChatService.getDummyChatThreads()
             .find((chatThreadDto) => chatThreadDto.chatThreadOverview.id === chatThreadId);
 
-        const sortedChatThreadMessages = DummyChatService.sortChatThreadMessageDtoList(foundChatThread.chatThreadMessages);
+        const sortedChatThreadMessages = DummyChatService.sortChatThreadMessageDtoList(foundChatThread.chatThreadMessages.pagedList);
         const sortedChatThreadMessagesPage =
             sortedChatThreadMessages.slice(pageNumber * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE, (pageNumber + 1) * CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE);
 

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
 import { setChatterOverviewsList, setIsChattersFilterCurrentlyChanging, setIsCreatingNewChatThread, setIsLastChatterOverviewListPage, setIsLoadingChatterOverviews, setIsLoadingOlderChatterOverviews } from "../../store/ChattersSlice";
-import { postChatThread } from "../../store/ChatSlice";
+import { newChatThread } from "../../store/ChatSlice";
 import { setDidClickBrowserNavigationButton } from "../../store/UrlHistorySlice";
 import useUrlHistoryNavigate from "../../hooks/UseUrlHistoryNavigate";
 import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
@@ -24,6 +24,7 @@ import CONSTANTS from "../../../Constants";
 import "./ChattersPage.css";
 
 const SEARCH_INPUT_PLACEHOLDER_VALUE = "Search Chatters";
+const NO_REGISTERED_CHATTERS_INDICATOR_MESSAGE = "No Chatters have registered yet to the application";
 
 export default function ChattersPage() {
     const { chatterOverviewList, isLastChatterOverviewListPage, isLoadingChatterOverviews, isFilterCurrentlyChanging } = useAppSelector(state => state.chattersSlice);
@@ -33,7 +34,7 @@ export default function ChattersPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const [sendTryToGetChatters, didUnhandledServerErrorOccur] = useTryToSendRequest<null>();
     const [sendTryToGetMoreChatters, _] = useTryToSendRequest<null>();
-    const [sendTryToPostChatThread, __] = useTryToSendRequest<ChatThread>();
+    const [sendTryToNewChatThread, __] = useTryToSendRequest<ChatThread>();
     const { addUrlToHistory, navigateBack } = useUrlHistoryNavigate();
     const navigate = useNavigate();
     
@@ -51,16 +52,16 @@ export default function ChattersPage() {
         await SliceHelper.tryToGetChatters(searchParams, false, sendTryToGetMoreChatters, setIsLoadingOlderChatterOverviews, dispatch);
     }
 
-    async function tryToPostChatThread(selectedChatterId: string): Promise<ChatThread | null> {
+    async function tryToNewChatThread(selectedChatterId: string): Promise<ChatThread | null> {
         if (selectedChatterId === null) {
             toast.error(CONSTANTS.INCOMPLETE_REQUEST_CLIENT_MESSAGE);
             return null;
         }
 
-        const newlyCreatedChatThread = await sendTryToPostChatThread(async () => {
+        const newlyCreatedChatThread = await sendTryToNewChatThread(async () => {
             dispatch(setIsCreatingNewChatThread(true));
             
-            const createdChatThread = await dispatch(postChatThread({ chatterId: selectedChatterId})).unwrap();
+            const createdChatThread = await dispatch(newChatThread({ chatterId: selectedChatterId})).unwrap();
             return createdChatThread;
         }, () => dispatch(setIsCreatingNewChatThread(false)));
 
@@ -108,7 +109,7 @@ export default function ChattersPage() {
     async function onClickingChatter(chatterOverview: ChatterOverview): Promise<void> {
         let redirectChatThreadId = chatterOverview.getChatThreadId();
         if (redirectChatThreadId === null) {
-            const newChatThread = await tryToPostChatThread(chatterOverview.getId());
+            const newChatThread = await tryToNewChatThread(chatterOverview.getId());
             if (newChatThread !== null) {
                 redirectChatThreadId = newChatThread.getOverview().getId();
             }
@@ -123,6 +124,12 @@ export default function ChattersPage() {
         if (isFilterCurrentlyChanging === true) {
             return <div className="chatters-page-content-loading-spinner-container">
                 <LoadingSpinner />
+            </div>
+        }
+
+        if (chatterOverviewList.length === 0) {
+            return <div className="chatter-buttons-container">
+                <div className="bold-text margin-top-3">{NO_REGISTERED_CHATTERS_INDICATOR_MESSAGE}</div>
             </div>
         }
 

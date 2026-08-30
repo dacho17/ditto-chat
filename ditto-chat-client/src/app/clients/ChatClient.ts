@@ -8,6 +8,8 @@ import ForgotPasswordForm from "../classes/ForgotPasswordForm";
 import ResetPasswordForm from "../classes/ResetPasswordForm";
 import UploadFileIntent from "../classes/UploadFileIntent";
 import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
+import AccountImageForm from "../classes/AccountImageForm";
+import AccountImageDto from "../interfaces/AccountImageDto";
 import PagedListDto from "../interfaces/PagedListDto";
 import LoginDto from "../interfaces/LoginDto";
 import ChatterOverviewDto from "../interfaces/ChatterOverviewDto";
@@ -21,15 +23,15 @@ import CONSTANTS from "../../Constants";
 
 export default class ChatClient extends AxiosClient implements ChatClientInterface {
     private static chatClientSingletonReference: ChatClient | null = null;
-    private static CHAT_SERVER_DOMAIN: string = "localhost";
-    private static CHAT_SERVER_PORT: number = 8080;
+    private static CHAT_SERVER_DOMAIN: string = ViteHelper.getDittoChatServerDomain();
+    private static CHAT_SERVER_PORT: string = ViteHelper.getDittoChatServerPort();
     
     private constructor () {
         super(`${ChatClient.CHAT_SERVER_DOMAIN}:${ChatClient.CHAT_SERVER_PORT}`);
     }
 
     public static getChatClient(): ChatClientInterface {
-        if (ViteHelper.isDevEnvironment() === true) {
+        if (ViteHelper.isUsingDummyService() === true) {
             return DummyChatClient.getDummyChatClient();
         } else {
            if (ChatClient.chatClientSingletonReference === null) {
@@ -62,8 +64,8 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
         return axiosResponse.data;
     }
 
-    public async login(loginForm: LoginForm): ChatServerResponse<LoginDto> {
-        const axiosResponse = await this.sendPostRequest<ChatServerResponse<LoginDto>>(
+    public async login(loginForm: LoginForm): ChatServerResponse<LoginDto | { redirectUrl: string }> {
+        const axiosResponse = await this.sendPostRequest<ChatServerResponse<LoginDto | { redirectUrl: string }>>(
             `${CONSTANTS.LOGIN_URL}`,
             loginForm
         );
@@ -107,6 +109,22 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
         return axiosResponse.data;
     }
 
+    public async newUploadFileIntent(uploadFileIntentForm: UploadFileIntent): ChatServerResponse<S3PreSignedUrlDto> {
+       const axiosResponse = await this.sendPostRequest<ChatServerResponse<S3PreSignedUrlDto>>(
+            `${CONSTANTS.AWS_URL}${CONSTANTS.UPLOAD_FILE_INTENT_URL}`,
+            uploadFileIntentForm
+        );
+        return axiosResponse.data;
+    }
+
+    public async newAccountImage(newAccountImageForm: AccountImageForm): ChatServerResponse<AccountImageDto> {
+       const axiosResponse = await this.sendPostRequest<ChatServerResponse<AccountImageDto>>(
+            `${CONSTANTS.ACCOUNT_URL}${CONSTANTS.NEW_ACCOUNT_IMAGE_URL}`,
+            newAccountImageForm
+        );
+        return axiosResponse.data;
+    }
+
     public async getChatThreads(queryParams: URLSearchParams): ChatServerResponse<PagedListDto<ChatThreadOverviewDto>> {
         const axiosResponse = await this.sendGetRequest<ChatServerResponse<PagedListDto<ChatThreadOverviewDto>>>(
             `${CONSTANTS.HOME_URL}`,
@@ -123,15 +141,7 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
         return axiosResponse.data;
     }
 
-    public async requestFileUploadUrl(uploadFileIntent: UploadFileIntent): ChatServerResponse<S3PreSignedUrlDto> {
-        const axiosResponse = await this.sendPostRequest<ChatServerResponse<S3PreSignedUrlDto>>(
-            `${CONSTANTS.ACCOUNT_URL}${CONSTANTS.REQUEST_UPLOAD_FILE_URL}`,
-            uploadFileIntent
-        );
-        return axiosResponse.data;
-    }
-
-    public async postChatThread(chatterId: string): ChatServerResponse<ChatThreadDto> {
+    public async newChatThread(chatterId: string): ChatServerResponse<ChatThreadDto> {
         const axiosResponse = await this.sendPostRequest<ChatServerResponse<ChatThreadDto>>(
             `${CONSTANTS.CHAT_URL}/${chatterId}`
         );
@@ -169,7 +179,7 @@ export default class ChatClient extends AxiosClient implements ChatClientInterfa
     }
 
     public async clearChatThreadHistory(chatThreadId: string): ChatServerResponse<{ chatThreadHistoryClearedAt: string }> {
-        const axiosResponse = await this.sendGetRequest<ChatServerResponse<{ chatThreadHistoryClearedAt: string }>>(
+        const axiosResponse = await this.sendPostRequest<ChatServerResponse<{ chatThreadHistoryClearedAt: string }>>(
             `${CONSTANTS.CHAT_URL}/${chatThreadId}${CONSTANTS.CLEAR_CHAT_HISTORY_URL}`
         );
         return axiosResponse.data;

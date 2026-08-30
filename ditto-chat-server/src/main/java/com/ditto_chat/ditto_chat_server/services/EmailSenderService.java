@@ -26,7 +26,7 @@ public class EmailSenderService {
 
     private final Logger logger = LoggerFactory.getLogger(EmailSenderService.class);
     private final String EMAIL_SUBJECT = "Password Reset Request";
-    private final String EMAIL_CONTENT = "You have requested a password reset.\n\nAccess the following link to reset your password:\n%s/reset-password?passwordResetToken=%s\n\nThe link will be active for the next 30 minutes.";
+    private final String EMAIL_CONTENT = "You have requested a password reset.\n\nAccess the following link to reset your password:\n%s/reset-password/%s\n\nThe link will be active for the next 30 minutes.";
  
     public Timestamp sendEmail(EmailDto emailDtoToSend) {
         try {

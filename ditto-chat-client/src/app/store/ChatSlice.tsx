@@ -8,17 +8,13 @@ import { AsyncThunkRejectType, RootState } from "./ReduxStore";
 import { updateChatThreadOverviewFromList } from "./HomeSlice";
 import { ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
-import AwsClient from "../clients/AwsClient";
 import SliceHelper from "../helpers/SliceHelper";
 import TimeHelper from "../helpers/TimeHelper";
 import Mapper from "../helpers/Mapper";
 import ChatThread from "../classes/ChatThread";
 import ChatThreadMessageForm from "../classes/ChatThreadMessageForm";
 import ChatThreadMessage from "../classes/ChatThreadMessage";
-import UploadFileIntent from "../classes/UploadFileIntent";
 import SharedFile from "../classes/SharedFile";
-import S3PreSignedUrl from "../classes/S3PreSignedUrl";
-import S3UploadFileResponseDto from "../interfaces/S3UploadFileResponseDto";
 import { ChatThreadMessageStatus } from "../enums/ChatThreadMessageStatus";
 import CONSTANTS from "../../Constants";
 
@@ -38,7 +34,7 @@ const initialState: ChatState = {
     chatThread: null,
     isLoadingChatThread: true,
     currentChatMessagesListPage: 0,
-    isLastChatMessagesListPage: false,
+    isLastChatMessagesListPage: true,
     isLoadingOlderMessages: false,
     currentChatMessageInput: "",
 
@@ -155,9 +151,11 @@ export const pollActiveChatThread = createAsyncThunk<ChatThread, { chatThreadId:
 
         try {
             const responseBody = await ChatClient.getChatClient().getChatThread(chatThreadId);
+            const isLastChatThreadMessagesPage = responseBody.data.chatThreadMessages.isLastPage;
             const chatThread = Mapper.chatThreadFromDto(responseBody.data, chatterOverview.getId());
+            SliceHelper.handleResponseBody(responseBody, thunkAPI);
 
-            thunkAPI.dispatch(registerPolledActiveChatThread(chatThread));
+            thunkAPI.dispatch(registerPolledActiveChatThread({ chatThread: chatThread, isLastChatThreadMessagesPage: isLastChatThreadMessagesPage}));
 
             return thunkAPI.fulfillWithValue(chatThread);
         } catch (err: any) {
@@ -167,14 +165,15 @@ export const pollActiveChatThread = createAsyncThunk<ChatThread, { chatThreadId:
     }
 );
 
-export const postChatThread = createAsyncThunk<ChatThread, { chatterId: string }, { rejectValue: AsyncThunkRejectType }>(
-    "chat/postChatThread",
+export const newChatThread = createAsyncThunk<ChatThread, { chatterId: string }, { rejectValue: AsyncThunkRejectType }>(
+    "chat/newChatThread",
     async ({ chatterId }, thunkAPI) => {
         const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
 
         try {
-            const res = await ChatClient.getChatClient().postChatThread(chatterId);
-            const createdChatThread = Mapper.chatThreadFromDto(res.data, chatterOverview.getId());
+            const responseBody = await ChatClient.getChatClient().newChatThread(chatterId);
+            const createdChatThread = Mapper.chatThreadFromDto(responseBody.data, chatterOverview.getId());
+            SliceHelper.handleResponseBody(responseBody, thunkAPI);
 
             return thunkAPI.fulfillWithValue(createdChatThread);
         } catch (err: any) {
@@ -190,13 +189,12 @@ export const getChatThread = createAsyncThunk<ChatThread, { chatThreadId: string
         const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
 
         try {
-            const res = await ChatClient.getChatClient().getChatThread(chatThreadId);
-            const chatThread = Mapper.chatThreadFromDto(res.data, chatterOverview.getId());
+            const responseBody = await ChatClient.getChatClient().getChatThread(chatThreadId);
+            const isLastChatThreadMessagesPage = responseBody.data.chatThreadMessages.isLastPage;
+            const chatThread = Mapper.chatThreadFromDto(responseBody.data, chatterOverview.getId());
+            SliceHelper.handleResponseBody(responseBody, thunkAPI);
 
-            thunkAPI.dispatch(setChatThread(chatThread));
-            if (chatThread.getMessages().length < CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE) {
-                thunkAPI.dispatch(setIsLastChatMessagesListPage(true));
-            }
+            thunkAPI.dispatch(setChatThread({ chatThread: chatThread, isLastChatThreadMessagesPage: isLastChatThreadMessagesPage }));
 
             return thunkAPI.fulfillWithValue(chatThread);
         } catch (err: any) {
@@ -216,10 +214,11 @@ export const getChatThreadMessages = createAsyncThunk<ChatThreadMessage[], { cha
             const queryParams = new URLSearchParams();
             queryParams.set(CONSTANTS.PAGE_NUMBER_QUERY_PARAMETER, currentChatMessagesListPage.toString());
             
-            const res = await ChatClient.getChatClient().getChatThreadMessages(chatThreadId, queryParams);
-            const { pagedList, isLastPage } = res.data;
+            const responseBody = await ChatClient.getChatClient().getChatThreadMessages(chatThreadId, queryParams);
+            const { pagedList, isLastPage } = responseBody.data;
             const pagedChatThreadMessages = pagedList.map(chatThreadMessageDto => Mapper.chatThreadMessageFromDto(chatThreadMessageDto, chatterOverview.getId()));
 
+            SliceHelper.handleResponseBody(responseBody, thunkAPI);
             thunkAPI.dispatch(appendChatThreadMessagesToList(pagedChatThreadMessages));
             thunkAPI.dispatch(setIsLastChatMessagesListPage(isLastPage));
 
@@ -237,9 +236,10 @@ export const updateLastSeenChatThreadMessage = createAsyncThunk<void, { chatThre
         const { chatterOverview } = (thunkAPI.getState() as RootState).authSlice;
 
         try {
-            const res = await ChatClient.getChatClient().updateLastSeenChatThreadMessage(chatThreadId, chatThreadMessageId);
-            const newLastSeenChatThreadMessageDto = res.data;
+            const responseBody = await ChatClient.getChatClient().updateLastSeenChatThreadMessage(chatThreadId, chatThreadMessageId);
+            const newLastSeenChatThreadMessageDto = responseBody.data;
             const newLastSeenChatThreadMessage = Mapper.chatThreadMessageFromDto(newLastSeenChatThreadMessageDto, chatterOverview.getId());
+            SliceHelper.handleResponseBody(responseBody, thunkAPI);
 
             thunkAPI.dispatch(updateSeenChatThreadMessages(newLastSeenChatThreadMessage));
             const { chatThread } = (thunkAPI.getState() as RootState).chatSlice;    // I expect this assignment to contain chatThread updated by updateSeenChatThreadMessages Call!
@@ -264,27 +264,25 @@ export const sendChatThreadMessage = createAsyncThunk<ChatThreadMessage, { chatT
                 newChatThreadMessageStatus: ChatThreadMessageStatus.SENDING
             }));
         } else {
-            const isMessageWithAttachedFile = chatThreadMessageForm.getAttachedFile() !== null;
+            const isMessageWithAttachedFile = chatThreadMessageForm.getAttachedFileS3ObjectKey() !== null;
             if (isMessageWithAttachedFile === false) {
                 const newChatThreadMessage = ChatThreadMessage.createNewChatThreadMessage(
                     chatThreadMessageForm.getChatMessageClientRef(),
-                    chatterOverview.getId(), chatThreadMessageForm.getMessage(), null, TimeHelper.getCurrentTimestamp(), false
+                    chatterOverview.getId(), chatThreadMessageForm.getMessageContent(), null, TimeHelper.getCurrentTimestamp(), false, null
                 );
                 
                 thunkAPI.dispatch(appendChatThreadMessagesToList([newChatThreadMessage]));
-            } else {    // message carries an attachedFile and is already within ChatThreadMessagesList
-                thunkAPI.dispatch(attachFileToSendingChatThreadMessage({
-                    chatThreadMessageClientRef: chatThreadMessageForm.getChatMessageClientRef(),
-                    attachedFile: chatThreadMessageForm.getAttachedFile()
-                }));
+            } else {
+                // Do nothing. message is already within ChatThreadMessagesList with isAttachingFile set to true
             }
         }
 
         thunkAPI.dispatch(setCurrentChatMessageInput(initialState.currentChatMessageInput));
 
         try {
-            const res = await ChatClient.getChatClient().sendChatThreadMessage(chatThreadId, chatThreadMessageForm);
-            const sentChatThreadMessage = Mapper.chatThreadMessageFromDto(res.data, chatterOverview.getId());
+            const responseBody = await ChatClient.getChatClient().sendChatThreadMessage(chatThreadId, chatThreadMessageForm);
+            const sentChatThreadMessage = Mapper.chatThreadMessageFromDto(responseBody.data, chatterOverview.getId());
+            SliceHelper.handleResponseBody(responseBody, thunkAPI);
 
             sentChatThreadMessage.setClientRef(chatThreadMessageForm.getChatMessageClientRef());    // attaching clientRef to the server Response, so the message in Sending State can be referenced in the Reducers
             thunkAPI.dispatch(registerSentChatThreadMessage(sentChatThreadMessage));
@@ -309,7 +307,7 @@ export const clearChatThreadHistory = createAsyncThunk<void, { chatThreadId: str
     async ({ chatThreadId }, thunkAPI) => {
         try {
             const responseBody = await ChatClient.getChatClient().clearChatThreadHistory(chatThreadId);
-            SliceHelper.toastSuccessResponseMessage(responseBody);
+            SliceHelper.handleResponseBody(responseBody, thunkAPI);
             const { chatThreadHistoryClearedAt } = responseBody.data;
             const chatThreadHistoryClearedAtTimestamp = TimeHelper.dateStringToTimestamp(chatThreadHistoryClearedAt);
 
@@ -325,43 +323,13 @@ export const clearChatThreadHistory = createAsyncThunk<void, { chatThreadId: str
     }
 );
 
-export const requestChatThreadMessageAttachedFileUploadUrl = createAsyncThunk<S3PreSignedUrl, { uploadFileIntent: UploadFileIntent }, { rejectValue: AsyncThunkRejectType }>(
-    "account/requestChatThreadMessageAttachedFileUploadUrl",
-    async ({ uploadFileIntent } , thunkAPI) => {
-        try {
-            const responseBody = await ChatClient.getChatClient().requestFileUploadUrl(uploadFileIntent);
-            const S3PreSignedUrl = Mapper.s3PreSignedUrlFromDto(responseBody.data);
-
-            return thunkAPI.fulfillWithValue(S3PreSignedUrl);
-        } catch (err: any) {
-            const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
-            return thunkAPI.rejectWithValue(redirectUrlOrNull);
-        }
-    }
-);
-
-// https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#API_PutObject_RequestSyntax
-export const uploadChatThreadMessageAttachedFileToS3 = createAsyncThunk<S3UploadFileResponseDto, { s3PreSignedUploadUrl: S3PreSignedUrl, fileContentStream: ReadableStream }, { rejectValue: AsyncThunkRejectType }>(
-    "account/uploadChatThreadMessageAttachedFileToS3",
-    async ({ s3PreSignedUploadUrl, fileContentStream } , thunkAPI) => {
-        try {
-            const res = await AwsClient.getAwsClient().uploadFileToS3(s3PreSignedUploadUrl, fileContentStream);
-
-            return thunkAPI.fulfillWithValue(res);
-        } catch (err: any) {
-            // TODO-aws: possibly AWS Sends special Error Types Back on S3 Image Upload. I may not be able to use ChatClientResponseErrorBody. Look into this!
-            const redirectUrlOrNull = SliceHelper.handleAxiosErrorResponse(err as AxiosResponse<ChatServerResponseErrorBody>, thunkAPI);
-            return thunkAPI.rejectWithValue(redirectUrlOrNull);
-        }
-    }
-);
-
 export const ChatSlice = createSlice({
     name: "chat",
     initialState,
     reducers: {
-        setChatThread: (state, action: { payload: ChatThread }) => {
-            state.chatThread = action.payload;
+        setChatThread: (state, action: { payload: { chatThread: ChatThread, isLastChatThreadMessagesPage: boolean } }) => {
+            state.chatThread = action.payload.chatThread;
+            state.isLastChatMessagesListPage = action.payload.isLastChatThreadMessagesPage;
         },
         setIsLoadingChatThread: (state, action: { payload: boolean }) => {
             state.isLoadingChatThread = action.payload;
@@ -443,21 +411,22 @@ export const ChatSlice = createSlice({
 
             state.chatThread = updatedChatThread;
         },
-        registerPolledActiveChatThread: (state, action: { payload: ChatThread }) => {
-            if (state.chatThread === null || state.chatThread.getOverview().getId() !== action.payload.getOverview().getId()) {
+        registerPolledActiveChatThread: (state, action: { payload: { chatThread: ChatThread, isLastChatThreadMessagesPage: boolean } }) => {
+            const activeChatThread = action.payload.chatThread;
+            if (state.chatThread === null || state.chatThread.getOverview().getId() !== activeChatThread.getOverview().getId()) {
                 // if polled chatThread is no longer stored in state, return
                 return;
             }
 
-            const unseenMessagesFromServer = action.payload.getMessages();
+            const unseenMessagesFromServer = activeChatThread.getMessages();
             const mergedChatThreadMessages = mergeChatThreadMessages(state.chatThread.getMessages(), unseenMessagesFromServer);
             const sortedChatThreadMessages = sortChatThreadMessages(mergedChatThreadMessages);
 
             const commonLastSeenByPeerMessageId = getCommonLastSeenMessageId(
-                sortedChatThreadMessages, state.chatThread.getOverview().getLastSeenByPeerMessageId(), action.payload.getOverview().getLastSeenByPeerMessageId()
+                sortedChatThreadMessages, state.chatThread.getOverview().getLastSeenByPeerMessageId(), activeChatThread.getOverview().getLastSeenByPeerMessageId()
             );
             const commonLastSeenByChatterMessageId = getCommonLastSeenMessageId(
-                sortedChatThreadMessages, state.chatThread.getOverview().getLastSeenByChatterMessageId(), action.payload.getOverview().getLastSeenByChatterMessageId()
+                sortedChatThreadMessages, state.chatThread.getOverview().getLastSeenByChatterMessageId(), activeChatThread.getOverview().getLastSeenByChatterMessageId()
             );
             const lastRegisteredChatThreadMessage = getLastRegisteredChatThreadMessage(sortedChatThreadMessages);
             const { updatedIsSeenChatThreadMessageList, numberOfUnseenMessages }
@@ -473,6 +442,7 @@ export const ChatSlice = createSlice({
             updatedChatThread.getOverview().setNumberOfUnseenMessages(numberOfUnseenMessages);
 
             state.chatThread = updatedChatThread;
+            state.isLastChatMessagesListPage = action.payload.isLastChatThreadMessagesPage;
         },
         updateSeenChatThreadMessages: (state, action: { payload: ChatThreadMessage }) => {
             const newLastSeenChatThreadMessage = action.payload;

@@ -20,7 +20,7 @@ RUN rm "./${MAVEN_ARCHIVE}"
 ENV MAVEN_HOME="/usr/apache-maven-${MAVEN_VERSION}"
 ENV PATH="${PATH}:${MAVEN_HOME}/bin"
 
-RUN apk del curl
+# RUN apk del curl      NOTE: not deleting curl since it is used in healthcheck
 RUN apk del tar
 RUN apk del gzip
 

@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosResponse } from "axios";
 import { AsyncThunkRejectType, RootState } from "./ReduxStore";
-import { registerPolledActiveChatThread, setChatThread, setIsLastChatMessagesListPage } from "./ChatSlice";
+import { registerPolledActiveChatThread, setChatThread } from "./ChatSlice";
 import { ChatServerResponseBody, ChatServerResponseErrorBody } from "../clients/ChatClientInterface";
 import ChatClient from "../clients/ChatClient";
 import SliceHelper from "../helpers/SliceHelper";
@@ -30,7 +30,7 @@ const initialState: HomeState = {
     isInitialLoadFinished: false,
     isFilterCurrentlyChanging: false,
     isLoadingOlderChatThreads: false,
-    isLastChatThreadListPage: false,
+    isLastChatThreadListPage: true,
 
     isActiveChatThreadPanelExpanded: false
 };
@@ -105,6 +105,7 @@ export const getChatThreadsOnHomePage = createAsyncThunk<ChatThreadOverview[], {
                 chatThreadsResponse = await ChatClient.getChatClient().getChatThreads(queryParams);
             }
 
+            SliceHelper.handleResponseBody(chatThreadsResponse, thunkAPI);
             const selectedChatThreadFromServer = selectedChatThreadResponse !== null
                 ? Mapper.chatThreadFromDto(selectedChatThreadResponse.data, chatterOverview.getId())
                 : null;
@@ -112,13 +113,11 @@ export const getChatThreadsOnHomePage = createAsyncThunk<ChatThreadOverview[], {
             const chatThreadOverviews = pagedList.map(chatThreadOverviewDto => Mapper.chatThreadOverviewFromDto(chatThreadOverviewDto));
 
             if (selectedChatThreadFromServer !== null) {
+                const isLastSelectedChatThreadMessagesPage = selectedChatThreadResponse.data.chatThreadMessages.isLastPage;
                 if (isInitialRetrieval === true) {
-                    thunkAPI.dispatch(setChatThread(selectedChatThreadFromServer));
-                    if (selectedChatThreadFromServer.getMessages().length < CONSTANTS.NUMBER_OF_ITEMS_PER_PAGE) {
-                        thunkAPI.dispatch(setIsLastChatMessagesListPage(true));
-                    }
+                    thunkAPI.dispatch(setChatThread({ chatThread: selectedChatThreadFromServer, isLastChatThreadMessagesPage: isLastSelectedChatThreadMessagesPage }));
                 } else if (isPolling === true) {
-                    thunkAPI.dispatch(registerPolledActiveChatThread(selectedChatThreadFromServer));
+                    thunkAPI.dispatch(registerPolledActiveChatThread({ chatThread: selectedChatThreadFromServer, isLastChatThreadMessagesPage: isLastSelectedChatThreadMessagesPage}));
                 } else {
                     // not an initial Retrieval nor Polling. Case of retrieving older ChatThreads on Non-Mobile Page (tryGetOlderChatThreads Call)
                     // do nothing on selectedChatThread

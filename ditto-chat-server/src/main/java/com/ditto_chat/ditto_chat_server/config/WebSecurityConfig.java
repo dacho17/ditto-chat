@@ -1,5 +1,7 @@
 package com.ditto_chat.ditto_chat_server.config;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,13 +19,15 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.ditto_chat.ditto_chat_server.Constants;
 import com.ditto_chat.ditto_chat_server.helpers.auth.ChatterAccessDeniedHandler;
 import com.ditto_chat.ditto_chat_server.helpers.auth.ChatterAuthEntryPoint;
+import com.ditto_chat.ditto_chat_server.helpers.auth.ChatterLogoutSuccessHandler;
 import com.ditto_chat.ditto_chat_server.utils.CryptoTool;
-
-import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableMethodSecurity
@@ -32,6 +36,8 @@ public class WebSecurityConfig {
 	private ChatterAuthEntryPoint chatterAuthenticationHandler;
 	@Autowired
 	private ChatterAccessDeniedHandler chatterAuthorizationHandler;
+	@Autowired
+	private ChatterLogoutSuccessHandler chatterLogoutSuccessHandler;
 
 	@Value("${client.domain}")
     private String DITTO_CHAT_CLIENT_DOMAIN;
@@ -45,8 +51,8 @@ public class WebSecurityConfig {
 		return authProvider;
     }
 
-	/*
 	@Bean
+	@Scope("singleton")
     public CorsConfigurationSource corsConfigurationSource() {
 		String httpDittoChatClientOrigin = "http://" + DITTO_CHAT_CLIENT_DOMAIN;
 		String httpsDittoChatClientOrigin = "https://" + DITTO_CHAT_CLIENT_DOMAIN;
@@ -62,7 +68,6 @@ public class WebSecurityConfig {
 
         return source;
     }
-	*/
 
 	@Bean
     @Scope("singleton")
@@ -76,6 +81,7 @@ public class WebSecurityConfig {
 			.exceptionHandling(t -> t.authenticationEntryPoint(chatterAuthenticationHandler))
 			.exceptionHandling(t -> t.accessDeniedHandler(chatterAuthorizationHandler))
 			.authenticationManager(chatterAuthenticationManager)
+			.sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(HttpMethod.GET, Constants.REGISTER_URL).permitAll()
 				.requestMatchers(HttpMethod.POST, Constants.REGISTER_URL).permitAll()
@@ -83,33 +89,16 @@ public class WebSecurityConfig {
 				.requestMatchers(HttpMethod.POST, Constants.LOGIN_URL).permitAll()
 				.requestMatchers(HttpMethod.GET, Constants.FORGOT_PASSWORD_URL).permitAll()
 				.requestMatchers(HttpMethod.POST, Constants.FORGOT_PASSWORD_URL).permitAll()
-				.requestMatchers(HttpMethod.GET, Constants.RESET_PASSWORD_URL).permitAll()
-				.requestMatchers(HttpMethod.POST, Constants.RESET_PASSWORD_URL).permitAll()
+				.requestMatchers(HttpMethod.GET, Constants.RESET_PASSWORD_URL + "/**").permitAll()
+				.requestMatchers(HttpMethod.POST, Constants.RESET_PASSWORD_URL + "/**").permitAll()
 				.anyRequest().authenticated()
 			)
-			.logout(logout -> logout	// TODO-logout: logout needs to be allowed only for chatters with the active session
+			.logout(logout -> logout
 				.logoutUrl(Constants.LOGOUT_URL)
 				.invalidateHttpSession(true)
 				.deleteCookies("SESSION")
 				.clearAuthentication(true)
-				.logoutSuccessHandler((request, response, authentication) -> {
-					response.setStatus(HttpServletResponse.SC_OK);
-					// TODO-logout: this Handler can be Implemented in a separate class an send a redirectUrl in response similary as Auth Handlers do 
-				})
-			);
-
-		return http.build();
-	}
-
-	@Bean
-    @Scope("singleton")
-    @DependsOn("chatterSecurityFilterChain")
-	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		http.cors(Customizer.withDefaults())
-			.csrf(csrf -> csrf.disable())
-			.sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-			.authorizeHttpRequests(auth -> auth
-				.anyRequest().denyAll()
+				.logoutSuccessHandler((request, response, authentication) -> chatterLogoutSuccessHandler.onLogoutSuccess(request, response, authentication))
 			);
 
 		return http.build();

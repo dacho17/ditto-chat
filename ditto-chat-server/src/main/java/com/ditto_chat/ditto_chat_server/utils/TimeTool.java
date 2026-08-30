@@ -17,6 +17,13 @@ public class TimeTool {
         return new Timestamp(currentTimestampInMs + minutesToAddInMs);
     }
 
+    public static Timestamp addSecondsToTimestamp(Timestamp timestamp, int secondsToAdd) {
+        long currentTimestampInMs = timestamp.getTime();
+        long secondsToAddInMs = secondsToAdd * SECONDS_TO_MS_MULTIPLIER;
+
+        return new Timestamp(currentTimestampInMs + secondsToAddInMs);
+    }
+
     public static boolean areTimestampsEqual(Timestamp first, Timestamp second) {
         if (first == null || second == null) {
             return false;

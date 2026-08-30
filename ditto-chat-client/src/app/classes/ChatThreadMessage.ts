@@ -12,6 +12,7 @@ export default class ChatThreadMessage {
     private isMessageReceived: boolean;
     private isMessageSeen: boolean;
     private isAttachingFile: boolean;
+    private temporaryS3ObjectKey: string | null;
 
     private constructor(
         clientRef: string | null,
@@ -23,8 +24,8 @@ export default class ChatThreadMessage {
         messageTimestamp: number,
         isMessageReceived: boolean,
         isMessageSeen: boolean,
-        isAttachingFile: boolean
-
+        isAttachingFile: boolean,
+        temporaryS3ObjectKey: string | null
     ) {
         this.clientRef = clientRef;
         this.status = status;
@@ -36,6 +37,7 @@ export default class ChatThreadMessage {
         this.isMessageReceived = isMessageReceived;
         this.isMessageSeen = isMessageSeen;
         this.isAttachingFile = isAttachingFile;
+        this.temporaryS3ObjectKey = temporaryS3ObjectKey;
     }
 
     // called when mapping ChatThreadMessageDto received from the Server
@@ -49,7 +51,7 @@ export default class ChatThreadMessage {
         isMessageSeen: boolean
     ): ChatThreadMessage {
         return new ChatThreadMessage(
-            null, ChatThreadMessageStatus.CONFIRMED, id, messageSenderId, messageContent, attachedFile, messageTimestamp, isMessageReceived, isMessageSeen, false
+            null, ChatThreadMessageStatus.CONFIRMED, id, messageSenderId, messageContent, attachedFile, messageTimestamp, isMessageReceived, isMessageSeen, false, null
         );
     }
 
@@ -61,9 +63,10 @@ export default class ChatThreadMessage {
         attachedFile: SharedFile | null,
         messageTimestamp: number,
         isAttachingFile: boolean,
+        temporaryS3ObjectKey: string | null
     ): ChatThreadMessage {
         return new ChatThreadMessage(
-            clientRef, ChatThreadMessageStatus.SENDING, null, messageSenderId, messageContent, attachedFile, messageTimestamp, false, true, isAttachingFile
+            clientRef, ChatThreadMessageStatus.SENDING, null, messageSenderId, messageContent, attachedFile, messageTimestamp, false, true, isAttachingFile, temporaryS3ObjectKey
         );
     }
 
@@ -133,5 +136,9 @@ export default class ChatThreadMessage {
 
     public setIsAttachingFile(isAttachingFile: boolean): void {
         this.isAttachingFile = isAttachingFile;
+    }
+
+    public getTemporaryS3ObjectKey(): string | null {
+        return this.temporaryS3ObjectKey;
     }
 }

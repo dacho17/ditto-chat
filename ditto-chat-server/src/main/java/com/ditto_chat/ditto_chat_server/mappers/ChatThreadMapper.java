@@ -65,7 +65,7 @@ public class ChatThreadMapper {
         }
         
         String peerChatterLastSeenChatThreadMessage = null;
-        if (peerChatterParticipant.getLastSeenChatThreadMessage() != null && (loggedInChatterParticipant.getClearedChatThreadHistoryAt() == null ||
+        if (peerChatterParticipant.getLastSeenChatThreadMessage() != null && (peerChatterParticipant.getClearedChatThreadHistoryAt() == null ||
             peerChatterParticipant.getLastSeenChatThreadMessage().getMessageRegisteredAt().after(peerChatterParticipant.getClearedChatThreadHistoryAt()))
         ) {
             peerChatterLastSeenChatThreadMessage = peerChatterParticipant.getLastSeenChatThreadMessage().getId().toString();

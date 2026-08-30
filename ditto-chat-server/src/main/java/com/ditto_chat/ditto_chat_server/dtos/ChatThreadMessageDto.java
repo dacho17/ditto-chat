@@ -2,12 +2,15 @@ package com.ditto_chat.ditto_chat_server.dtos;
 
 import java.sql.Timestamp;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ChatThreadMessageDto {
     private String id;
     private String messageSenderId;
     private String messageContent;
     private SharedFileDto attachedFile;
     private Timestamp messageRegisteredAt;
+    @JsonProperty("isMessageSeen")
     private boolean isMessageSeen;
     
     public ChatThreadMessageDto(String id, String messageSenderId, String messageContent, SharedFileDto attachedFile,

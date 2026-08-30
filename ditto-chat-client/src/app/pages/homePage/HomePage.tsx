@@ -37,7 +37,6 @@ export default function HomePage() {
 
     async function tryToRetrieveInitialChatThreadsPage(queryParams: URLSearchParams, isLoadingReducer: Function): Promise<void> {
         const isChatWindowOnHomePage = currentDeviceType !== DeviceType.MOBILE_PHONE;
-        // console.log(`currentDeviceType=${currentDeviceType}`);
         let currentlySelectedChatThread = isChatWindowOnHomePage === true && chatThread !== null
             ? chatThread.getOverview() : null;
         
@@ -46,9 +45,10 @@ export default function HomePage() {
         );
 
         if (isChatWindowOnHomePage === true && chatThreadId === undefined) {
-            if (chatThreadOverviews !== null) {
-                // console.log(`NAVIGATING WHEN IT SHOULNT`)
+            if (chatThreadOverviews !== null && chatThreadOverviews.length > 0) {
                 navigate(`${CONSTANTS.HOME_URL}/${chatThreadOverviews[0].getId()}?${queryParams.toString()}`);
+            } else if (chatThreadOverviews !== null && chatThreadOverviews.length === 0) {
+                dispatch(setIsLoadingChatThread(false));
             }
         }
     }

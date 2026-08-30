@@ -9,6 +9,8 @@ import { ListType } from "../../enums/ListType";
 import { DeviceType } from "../../enums/DeviceType";
 import "./ChatWindow.css";
 
+const NO_CHAT_THREAD_SELECTED_INDICATOR_MESSAGE = "No Chat Selected to show Messages";
+
 interface Props {
     didUnhandledServerErrorOccur: boolean;
 }
@@ -20,7 +22,11 @@ export default function ChatWindow(props: Props) {
 
 	function getChatWindowContent(): React.JSX.Element {
 		if (chatThread === null) {
-			return <></>
+			return <div className="chat-window-header panel-header">
+				<div className="chat-window-header-no-chat-thread-title">
+					<div className="bold-text margin-top-3">{NO_CHAT_THREAD_SELECTED_INDICATOR_MESSAGE}</div>
+				</div>
+			</div>
 		}
 
 		return <>

@@ -1,7 +1,8 @@
 import { IoAttachOutline, IoSendOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "../../store/ReduxStore";
-import { appendChatThreadMessagesToList, requestChatThreadMessageAttachedFileUploadUrl, sendChatThreadMessage, setCurrentChatMessageInput, updateLastSeenChatThreadMessage, uploadChatThreadMessageAttachedFileToS3 } from "../../store/ChatSlice";
+import { appendChatThreadMessagesToList, sendChatThreadMessage, setCurrentChatMessageInput, updateLastSeenChatThreadMessage } from "../../store/ChatSlice";
+import { newUploadFileIntent, uploadFileToS3Bucket } from "../../store/AwsSlice";
 import useTryToSendRequest from "../../hooks/UseTryToSendRequest";
 import UploadImageButton from "../uploadImageButton/UploadImageButton";
 import EmojiPopup from "../emojiPopup/EmojiPopup";
@@ -13,9 +14,8 @@ import ChatThread from "../../classes/ChatThread";
 import ChatThreadMessageForm from "../../classes/ChatThreadMessageForm";
 import ChatThreadMessage from "../../classes/ChatThreadMessage";
 import UploadFileIntent from "../../classes/UploadFileIntent";
-import SharedFile from "../../classes/SharedFile";
+import { FilePurpose } from "../../enums/FilePurpose";
 import CONSTANTS from "../../../Constants";
-import DummyAttachedFile from '../../../assets/david-chat-image.jpg';
 import "./ChatWindowMessageInput.css";
 
 const INPUT_PLACEHOLDER_VALUE = "Message";
@@ -58,23 +58,24 @@ export default function ChatWindowMessageInput(props: Props) {
         // Adding the chatThreadMessage early, to show indication of the File being uploaded!
         const chatThreadMessageWithAttachedFile = ChatThreadMessage.createNewChatThreadMessage(
             CryptoHelper.generateUuid(),
-            chatterOverview.getId(), currentChatMessageInput, null, TimeHelper.getCurrentTimestamp(), true
+            chatterOverview.getId(), currentChatMessageInput, null, TimeHelper.getCurrentTimestamp(), true, null
         );
         dispatch(appendChatThreadMessagesToList([chatThreadMessageWithAttachedFile]));
 
         await sendTryToSendChatThreadMessage(async () => {
-            const fileMetadata = new UploadFileIntent(fileName, Mapper.inputFileTypeToSharedFileType(inputFileType), fileSize);
-            const s3UploadUrlDto = await dispatch(requestChatThreadMessageAttachedFileUploadUrl({ uploadFileIntent: fileMetadata })).unwrap();
+            const fileMetadata = new UploadFileIntent(fileName, Mapper.inputFileTypeToSharedFileType(inputFileType), fileSize, FilePurpose.MESSAGE_ATTACHMENT);
+            const s3UploadUrlDto = await dispatch(newUploadFileIntent({ uploadFileIntentForm: fileMetadata })).unwrap();
 
-            const s3UploadFileResponseDto = await dispatch(uploadChatThreadMessageAttachedFileToS3(
+            const s3UploadFileResponseDto = await dispatch(uploadFileToS3Bucket(
                 { s3PreSignedUploadUrl: s3UploadUrlDto, fileContentStream: fileContentStream }
             )).unwrap();
 
-            // TODO-attachment: set correct URL instead of dummy
-            const uploadedAttachedFile = new SharedFile(fileMetadata.getFileName(), fileMetadata.getFileType(), DummyAttachedFile, null, chatterOverview.getId());
-            // creating the Form, based on the early created chatThreadMessage. Setting uploadedAttachedFile so that the UploadedFile gets related to the ChatThreadMessage
+            // creating the Form, based on the early created chatThreadMessage
             const chatThreadMessageWithAttachedFileForm = new ChatThreadMessageForm(
-                chatThreadMessageWithAttachedFile.getMessageContent(), uploadedAttachedFile, chatThreadMessageWithAttachedFile.getClientRef(), false
+                chatThreadMessageWithAttachedFile.getMessageContent(),
+                s3UploadUrlDto.getS3ObjectKey(),
+                chatThreadMessageWithAttachedFile.getClientRef(),
+                false
             );
 
             return await dispatch(sendChatThreadMessage(

@@ -8,12 +8,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.ditto_chat.ditto_chat_server.dtos.ChatterOverviewDto;
 import com.ditto_chat.ditto_chat_server.dtos.ChatterRegistrationForm;
 import com.ditto_chat.ditto_chat_server.dtos.EmailDto;
+import com.ditto_chat.ditto_chat_server.entities.AccountImage;
 import com.ditto_chat.ditto_chat_server.entities.Chatter;
 import com.ditto_chat.ditto_chat_server.exceptions.BadRequestException;
 import com.ditto_chat.ditto_chat_server.exceptions.ResourceConflictException;
 import com.ditto_chat.ditto_chat_server.mappers.ChatterMapper;
+import com.ditto_chat.ditto_chat_server.repositories.AccountImageRepository;
 import com.ditto_chat.ditto_chat_server.repositories.ChatterRepository;
 import com.ditto_chat.ditto_chat_server.utils.CryptoTool;
 import com.ditto_chat.ditto_chat_server.utils.TimeTool;
@@ -22,6 +25,7 @@ import com.ditto_chat.ditto_chat_server.utils.TimeTool;
 public class AuthService {
     private EmailSenderService emailSenderService;
     private ChatterRepository chatterRepository;
+    private AccountImageRepository accountImageRepository;
     private Session hibernateSession;
     private final Logger logger = LoggerFactory.getLogger(AuthService.class);
     private final String EMAIL_OR_USERNAME_ALREADY_IN_USE_MESSAGE = "Please use different email or username";
@@ -30,12 +34,14 @@ public class AuthService {
     private final int MINUTES_TO_RESET_PASSWORD = 30;
 
     public AuthService(
-        ChatterRepository chatterRepository,
         EmailSenderService emailSenderService,
+        ChatterRepository chatterRepository,
+        AccountImageRepository accountImageRepository,
         Session hibernateSession
     ) {
-        this.chatterRepository = chatterRepository;
         this.emailSenderService = emailSenderService;
+        this.chatterRepository = chatterRepository;
+        this.accountImageRepository = accountImageRepository;
         this.hibernateSession = hibernateSession;
     }
 
@@ -54,7 +60,7 @@ public class AuthService {
         dbTransaction.commit();
     }
 
-    public void registerChatterLogin(String email) {
+    public ChatterOverviewDto registerChatterLogin(String email) {
         Transaction dbTransaction = this.hibernateSession.beginTransaction();
 
         Chatter foundChatter = this.chatterRepository.retrieveByEmail(email);
@@ -65,6 +71,9 @@ public class AuthService {
 
         this.chatterRepository.updateChatterLastLoginAt(foundChatter);
         dbTransaction.commit();
+
+        AccountImage loggedInChattersAccountImage = this.accountImageRepository.retrieveCurrentAccountImageForChatter(foundChatter);
+        return ChatterMapper.fromChatterToChatterOverviewDto(foundChatter, loggedInChattersAccountImage, null);
     }
 
     public void enablePasswordResetForChatter(String email) {
@@ -80,7 +89,7 @@ public class AuthService {
         Timestamp passwordResetValidUntil = this.generateDeadlineForPasswordReset();
         this.chatterRepository.updateChatterPasswordReset(foundChatter, passwordResetTokenHash, passwordResetValidUntil);
 
-        EmailDto resetPasswordEmailDto = this.emailSenderService.generatePasswordResetEmail(foundChatter.getEmail(), foundChatter.getPasswordResetTokenHash());
+        EmailDto resetPasswordEmailDto = this.emailSenderService.generatePasswordResetEmail(foundChatter.getEmail(), passwordResetTokenHash);
         this.emailSenderService.sendEmail(resetPasswordEmailDto);
 
         dbTransaction.commit();

@@ -58,7 +58,7 @@ export default function App() {
                 <Route path={CONSTANTS.REGISTER_URL} element={<AuthenticationPage authenticationActionType={AuthenticationActionType.REGISTER} />} />
                 <Route path={CONSTANTS.LOGIN_URL} element={<AuthenticationPage authenticationActionType={AuthenticationActionType.LOGIN} />} />
                 <Route path={CONSTANTS.FORGOT_PASSWORD_URL} element={<AuthenticationPage authenticationActionType={AuthenticationActionType.FORGOT_PASSWORD} />} />
-                <Route path={CONSTANTS.RESET_PASSWORD_URL} element={<AuthenticationPage authenticationActionType={AuthenticationActionType.RESET_PASSWORD} />} />
+                <Route path={`${CONSTANTS.RESET_PASSWORD_URL}/:passwordResetToken`} element={<AuthenticationPage authenticationActionType={AuthenticationActionType.RESET_PASSWORD} />} />
                 
                 <Route path={CONSTANTS.HOME_URL} element={<HomePage />} />
                 <Route path={`${CONSTANTS.HOME_URL}/:chatThreadId`} element={<HomePage />} />

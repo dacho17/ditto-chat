@@ -44,7 +44,7 @@ export default function ChatWindowMessagesList(props: Props) {
                 && chatThreadMessage.getStatus() === ChatThreadMessageStatus.FAILED_TO_SEND);
         if (failedChatMessage !== undefined) {
             const failedToSendChatThreadMessage = new ChatThreadMessageForm(
-                failedChatMessage.getMessageContent(), failedChatMessage.getAttachedFile(), failedChatMessage.getClientRef(), true
+                failedChatMessage.getMessageContent(), failedChatMessage.getTemporaryS3ObjectKey(), failedChatMessage.getClientRef(), true
             );
 
             await sendTryToResendChatMessage(async () => {

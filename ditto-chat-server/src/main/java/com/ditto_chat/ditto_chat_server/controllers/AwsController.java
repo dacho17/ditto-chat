@@ -16,20 +16,26 @@ import com.ditto_chat.ditto_chat_server.dtos.ResponseBody;
 import com.ditto_chat.ditto_chat_server.dtos.S3PreSignedUrlDto;
 import com.ditto_chat.ditto_chat_server.dtos.UploadFileIntentForm;
 import com.ditto_chat.ditto_chat_server.dtos.UploadedFileToS3NotificationDto;
+import com.ditto_chat.ditto_chat_server.helpers.auth.Authenticator;
 import com.ditto_chat.ditto_chat_server.helpers.auth.ChatterUserDetails;
 import com.ditto_chat.ditto_chat_server.services.AwsService;
 import com.ditto_chat.ditto_chat_server.validators.AwsValidator;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping(value = "/aws", produces = { "application/json" })
 public class AwsController extends GeneralController {
     @Autowired
 	private AwsService awsService;
-	private final Logger logger = LoggerFactory.getLogger(AwsController.class);
+    @Autowired
+    private Authenticator chatterAuthenticator;
+    private final Logger logger = LoggerFactory.getLogger(AwsController.class);
     
     @ResponseStatus(code = HttpStatus.CREATED)
     @PostMapping("/upload-file-intent")
     public ResponseEntity<ResponseBody<S3PreSignedUrlDto>> newUploadFileIntent(
+        HttpServletRequest request,
         @RequestBody UploadFileIntentForm uploadFileIntentForm,
         @AuthenticationPrincipal ChatterUserDetails loggedInChatterUserDetails
     ) throws Exception {
@@ -43,7 +49,11 @@ public class AwsController extends GeneralController {
 		logger.info("POST /aws/upload-file-intent - returning response.");
 		return ResponseEntity
 				.status(HttpStatus.CREATED)
-				.body(new ResponseBody<S3PreSignedUrlDto>(null, s3PreSignedUrlDto));
+				.body(new ResponseBody<S3PreSignedUrlDto>(
+                    null,
+                    s3PreSignedUrlDto,
+                    this.chatterAuthenticator.getSessionExpiresAt(request)
+                ));
     }
 
     @ResponseStatus(code = HttpStatus.CREATED)
@@ -60,6 +70,6 @@ public class AwsController extends GeneralController {
 		logger.info("POST /aws/file-uploaded-event - returning response.");
 		return ResponseEntity
 				.status(HttpStatus.CREATED)
-				.body(new ResponseBody<>(null, null));
+				.body(new ResponseBody<>(null, null, null));
     }
 }

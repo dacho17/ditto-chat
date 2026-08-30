@@ -8,13 +8,14 @@ import { clearChatState, getChatThread, setIsLoadingChatThread } from "../store/
 import { clearHomeState, getChatThreadsOnHomePage } from "../store/HomeSlice";
 import { clearAccountState } from "../store/AccountSlice";
 import { clearChattersState, getChatters } from "../store/ChattersSlice";
-import { clearAuthState, logout, refreshChatterOverview } from "../store/AuthSlice";
+import { clearAuthState, logout, setAuthSessionExpiresAtTimestamp } from "../store/AuthSlice";
 import { clearUrlHistoryState, refreshUrlHistory } from "../store/UrlHistorySlice";
+import TimeHelper from "./TimeHelper";
 import ChatThreadOverview from "../classes/ChatThreadOverview";
 import CONSTANTS from "../../Constants";
 
 export default class SliceHelper {
-    public static handleAxiosErrorResponse(axiosErrorResponse: AxiosResponse<ChatServerResponseErrorBody>, thunkAPI: GetThunkAPI<any>): AsyncThunkRejectType {
+    public static handleAxiosErrorResponse(axiosErrorResponse: AxiosResponse<ChatServerResponseErrorBody>, _: GetThunkAPI<any>): AsyncThunkRejectType {
         const errorMessageToBeDisplayed = axiosErrorResponse.data.message !== null
             ? axiosErrorResponse.data.message : CONSTANTS.UNEXPECTED_ERROR_CLIENT_MESSAGE;
         toast.error(errorMessageToBeDisplayed);
@@ -30,9 +31,17 @@ export default class SliceHelper {
         }
     }
 
-    public static toastSuccessResponseMessage(responseBody: ChatServerResponseBody<any>): void {
+    public static handleResponseBody(responseBody: ChatServerResponseBody<any>, thunkAPI: GetThunkAPI<any>): void {
         if (responseBody.message !== null) {
             toast.success(responseBody.message);
+        }
+
+        const isChatterAuthenticated = responseBody.authSessionExpiresAt !== null;
+        if (isChatterAuthenticated === true) {
+            const authSessionExpiresAtTimestamp = TimeHelper.dateStringToTimestamp(responseBody.authSessionExpiresAt);
+            thunkAPI.dispatch(setAuthSessionExpiresAtTimestamp({ authSessionExpiresAtTimestamp: authSessionExpiresAtTimestamp }));
+        } else {
+            thunkAPI.dispatch(clearAuthState());
         }
     }
 
@@ -44,7 +53,6 @@ export default class SliceHelper {
         dispatch(clearChatState());
 
         dispatch(refreshUrlHistory());
-        dispatch(refreshChatterOverview());
     }
 
     public static clearAllStates(dispatch: Function): void {

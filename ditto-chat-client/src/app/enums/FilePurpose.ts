@@ -1,0 +1,4 @@
+export enum FilePurpose {
+    ACCOUNT_IMAGE = "ACCOUNT_IMAGE",
+    MESSAGE_ATTACHMENT = "MESSAGE_ATTACHMENT"
+}

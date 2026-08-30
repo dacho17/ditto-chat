@@ -22,6 +22,7 @@ import CONSTANTS from "../../../Constants";
 import "./ChatThreadsPanel.css";
 
 const SEARCH_INPUT_PLACEHOLDER_VALUE = "Search Chats";
+const NO_ACTIVE_CHAT_THREADS_INDICATOR_MESSAGE = "You have no active Chats";
 
 interface Props {
 	isInitialChatThreadLoadFinished: boolean;
@@ -83,8 +84,9 @@ export default function ChatThreadsPanel(props: Props) {
 			? chatThread.getOverview().getId() : null;
 
 		// ChatThreadButtonList differs based on whether the Filter is currently changing or not
-		const chatThreadButtonList = isFilterCurrentlyChanging === true
-			? <> 
+		let chatThreadButtonListContent = null;
+		if (isFilterCurrentlyChanging === true) {
+			chatThreadButtonListContent = <> 
 				{/* If chatThread is Selected, show it above loading spinner while the Filter is Changing */}
 				{chatThread !== null && <ChatThreadButton
 					chatThreadOverview={chatThread.getOverview()}
@@ -93,28 +95,35 @@ export default function ChatThreadsPanel(props: Props) {
 				/>}
 				<LoadingSpinner />
 			</>
-			: <>
-				{ chatThreadList.map(chatThreadOverview => {
-					return <ChatThreadButton
-						key={chatThreadOverview.getId()}
-						chatThreadOverview={chatThreadOverview as ChatThreadOverview}
-						openChatFunction={() => NavigationHelper.navigateToChat(navigate, chatThreadOverview.getId(), activeChatThreadId, searchParams, currentDeviceType)}
-						isSelected={
-							(currentDeviceType !== DeviceType.MOBILE_PHONE)
-							&& (chatThreadOverview.getId() === activeChatThreadId)
-						}
-					/>
-				})}
-				{ isLastChatThreadListPage === false && 
-					<ShowMoreButton
-						isDirectionUpwards={false}
-						showMoreFunc={tryToGetOlderChatThreads}
-					/>
-				}
-			</>
+		} else {
+			if (chatThreadList.length > 0) {
+				chatThreadButtonListContent = <>
+					{ chatThreadList.map(chatThreadOverview => {
+						return <ChatThreadButton
+							key={chatThreadOverview.getId()}
+							chatThreadOverview={chatThreadOverview as ChatThreadOverview}
+							openChatFunction={() => NavigationHelper.navigateToChat(navigate, chatThreadOverview.getId(), activeChatThreadId, searchParams, currentDeviceType)}
+							isSelected={
+								(currentDeviceType !== DeviceType.MOBILE_PHONE)
+								&& (chatThreadOverview.getId() === activeChatThreadId)
+							}
+						/>
+					})}
+					{ isLastChatThreadListPage === false && 
+						<ShowMoreButton
+							isDirectionUpwards={false}
+							showMoreFunc={tryToGetOlderChatThreads}
+						/>
+					}
+				</>
+			} else {
+				chatThreadButtonListContent =
+					<div className="bold-text margin-top-3">{NO_ACTIVE_CHAT_THREADS_INDICATOR_MESSAGE}</div>
+			}
+		}
 
 		return <div className="chat-thread-buttons-container">
-			{chatThreadButtonList};
+			{chatThreadButtonListContent}
 		</div>
 	}
 

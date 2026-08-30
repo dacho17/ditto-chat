@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/ReduxStore";
-import { refreshChatterOverview } from "../store/AuthSlice";
+import { clearAuthState } from "../store/AuthSlice";
 import TimeHelper from "../helpers/TimeHelper";
 import CONSTANTS from "../../Constants";
 
@@ -19,11 +19,11 @@ export default function useIsAuthenticated(): void {
 	const location = useLocation();
     const navigate = useNavigate();
     
-    dispatch(refreshChatterOverview());
     const isOnPublicPage = PUBLIC_PAGES_URLS.find(pageUrl => location.pathname.includes(pageUrl)) !== undefined;
     const didSessionExpire = sessionExpiresAtTimestamp !== null && sessionExpiresAtTimestamp < TimeHelper.getCurrentTimestamp();
     useEffect(() => {
         if (isOnPublicPage === false && (chatterOverview === null || didSessionExpire === true)) {
+            dispatch(clearAuthState());
             navigate(CONSTANTS.LOGIN_URL);
             return;
         }

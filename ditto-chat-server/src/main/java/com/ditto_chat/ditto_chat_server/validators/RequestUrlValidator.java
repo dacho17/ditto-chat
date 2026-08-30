@@ -1,7 +1,7 @@
 package com.ditto_chat.ditto_chat_server.validators;
 
 public class RequestUrlValidator extends GeneralValidator {
-    private static final short MINIMUM_ALLOWED_SEARCH_FILTER_LENGTH = 2;
+    private static final short MINIMUM_ALLOWED_SEARCH_FILTER_LENGTH = 0;
     private static final short INITIAL_PAGE_NUMBER = 0;
 
     public static void validateSearchFilter(String searchFilterValue) {

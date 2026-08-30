@@ -1,5 +1,7 @@
 package com.ditto_chat.ditto_chat_server.dtos;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ChatterOverviewDto {
     private final String id;
     private final String chatterName;
@@ -7,6 +9,7 @@ public class ChatterOverviewDto {
     private final String chatterUsername;
     private final String chatterEmail;
     private final String chatterImageUrl;
+    @JsonProperty("isChatterOnline")
     private final boolean isChatterOnline;
     private final String chatThreadId;
 

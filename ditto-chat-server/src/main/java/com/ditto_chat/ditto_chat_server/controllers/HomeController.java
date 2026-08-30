@@ -17,20 +17,26 @@ import com.ditto_chat.ditto_chat_server.dtos.ChatThreadOverviewDto;
 import com.ditto_chat.ditto_chat_server.dtos.ResponseBody;
 import com.ditto_chat.ditto_chat_server.dtos.ResponsePagedListDto;
 import com.ditto_chat.ditto_chat_server.helpers.EntityPaginationHelper;
+import com.ditto_chat.ditto_chat_server.helpers.auth.Authenticator;
 import com.ditto_chat.ditto_chat_server.helpers.auth.ChatterUserDetails;
 import com.ditto_chat.ditto_chat_server.services.HomeService;
 import com.ditto_chat.ditto_chat_server.validators.RequestUrlValidator;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping(value = "/home", produces = { "application/json" })
 public class HomeController extends GeneralController {
     @Autowired
     private HomeService homeService;
+    @Autowired
+    private Authenticator chatterAuthenticator;
 	private final Logger logger = LoggerFactory.getLogger(HomeController.class);
 
 	@ResponseStatus(code = HttpStatus.OK)
 	@GetMapping("")
     public ResponseEntity<?> getChatThreads(
+        HttpServletRequest request,
         @RequestParam(required = true) String searchFilter,
         @RequestParam(required = true) Integer pageNumber,
         @RequestParam(required = true) Boolean isInitialRetrieval,
@@ -44,17 +50,26 @@ public class HomeController extends GeneralController {
 
         ResponsePagedListDto<ChatThreadOverviewDto> chatThreadOverviewDtoPages
             = this.homeService.getChatThreadsPages(searchFilter, pageNumber, isInitialRetrieval, isPolling, loggedInChatterUserDetails.getId());
-		if (EntityPaginationHelper.doesEntityPageExist(chatThreadOverviewDtoPages.getPageList(), pageNumber, isInitialRetrieval) == false) {
+		if (EntityPaginationHelper.doesEntityPageExist(chatThreadOverviewDtoPages.getPagedList(), pageNumber, isInitialRetrieval) == false) {
 			logger.warn(String.format("Chatter with id=%s requested Chatter Page which does not exist for searchFilter=%s, pageNumber=%d, isInitialRetrieval=%s, isPolling=%s",
 				loggedInChatterUserDetails.getId(), searchFilter, pageNumber, isInitialRetrieval, isPolling));
 			String redirectUrl =
                 String.format("%s?searchFilter=%s&pageNumber=%d&isInitialRetrieval=%s%isPolling=%s", Constants.HOME_URL, searchFilter, 0, true, false);
-			return generateRedirectResponse(HttpStatus.NOT_FOUND, Constants.PAGE_NOT_FOUND_ERROR_MESSAGE, redirectUrl);
+			return generateRedirectResponse(
+                HttpStatus.NOT_FOUND,
+                Constants.PAGE_NOT_FOUND_ERROR_MESSAGE,
+                redirectUrl,
+                this.chatterAuthenticator.getSessionExpiresAt(request)
+            );
 		}
 
 		logger.info(String.format("GET /home?searchFilter=%s&pageNumber=%d&isInitialRetrieval=%s&isPolling=%s - returning response.", searchFilter, pageNumber, isInitialRetrieval, isPolling));
 		return ResponseEntity
 			.status(HttpStatus.OK)
-			.body(new ResponseBody<ResponsePagedListDto<ChatThreadOverviewDto>>(null, chatThreadOverviewDtoPages));
+			.body(new ResponseBody<ResponsePagedListDto<ChatThreadOverviewDto>>(
+                null,
+                chatThreadOverviewDtoPages,
+                this.chatterAuthenticator.getSessionExpiresAt(request)
+            ));
     }
 }

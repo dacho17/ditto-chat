@@ -1,5 +1,7 @@
 package com.ditto_chat.ditto_chat_server.helpers.auth;
 
+import java.sql.Timestamp;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import com.ditto_chat.ditto_chat_server.exceptions.AuthenticationException;
 import com.ditto_chat.ditto_chat_server.utils.FormattingTool;
+import com.ditto_chat.ditto_chat_server.utils.TimeTool;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,7 +33,7 @@ public class Authenticator {
 		this.chatterAuthProvider = chatterAuthProvider;
 	}
 
-	public void createAutheticatedSessionForChatter(String email, String password, HttpServletRequest request, HttpServletResponse response) {
+	public Timestamp createAutheticatedSessionForChatter(String email, String password, HttpServletRequest request, HttpServletResponse response) {
 		try {
 			UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(email, password);
 
@@ -44,7 +47,7 @@ public class Authenticator {
 		        .saveContext(SecurityContextHolder.getContext(), request, response);
 
 			logger.info(String.format("A session has successfully been created for the Chatter with email=%s.", email));
-			return;
+			return this.getSessionExpiresAt(request);
 		} catch (UsernameNotFoundException | BadCredentialsException e) {
 			logger.warn(String.format("Chatter with email=%s attempted to log in with invalid credentials.", email));
 			throw new AuthenticationException(this.INCORRECT_CREDENTIALS_ERROR_MESSAGE);
@@ -63,5 +66,17 @@ public class Authenticator {
 		}
 
 		return true;
+	}
+
+	public Timestamp getSessionExpiresAt(HttpServletRequest request) {
+		boolean isChatterAuthenticated = this.isChatterAuthenticated();
+		if (isChatterAuthenticated == false) {	// this check is important because the Function is Called from Exception Handlers in ExceptionController where it is not explicitly set whether the Chatter accessing the Server is Authenticated
+			return null;
+		}
+
+		return TimeTool.addSecondsToTimestamp(
+			new Timestamp(request.getSession().getLastAccessedTime()),
+			request.getSession().getMaxInactiveInterval()
+		);
 	}
 }

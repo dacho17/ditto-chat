@@ -17,20 +17,26 @@ import com.ditto_chat.ditto_chat_server.dtos.ChatterOverviewDto;
 import com.ditto_chat.ditto_chat_server.dtos.ResponseBody;
 import com.ditto_chat.ditto_chat_server.dtos.ResponsePagedListDto;
 import com.ditto_chat.ditto_chat_server.helpers.EntityPaginationHelper;
+import com.ditto_chat.ditto_chat_server.helpers.auth.Authenticator;
 import com.ditto_chat.ditto_chat_server.helpers.auth.ChatterUserDetails;
 import com.ditto_chat.ditto_chat_server.services.ChattersService;
 import com.ditto_chat.ditto_chat_server.validators.RequestUrlValidator;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping(value = "", produces = { "application/json" })
 public class ChattersController extends GeneralController {
     @Autowired
     private ChattersService chattersService;
+    @Autowired
+    private Authenticator chatterAuthenticator;
 	private final Logger logger = LoggerFactory.getLogger(ChattersController.class);
 
 	@ResponseStatus(code = HttpStatus.OK)
 	@GetMapping("/chatters")
 	public ResponseEntity<?> getChatters(
+        HttpServletRequest request,
         @RequestParam(required = true) String searchFilter, @RequestParam(required = true) Integer pageNumber, @RequestParam(required = true) Boolean isInitialRetrieval,
 		@AuthenticationPrincipal ChatterUserDetails chatterUserDetails
     ) throws Exception {
@@ -41,17 +47,26 @@ public class ChattersController extends GeneralController {
 
         ResponsePagedListDto<ChatterOverviewDto> chatterOverviewPages
             = this.chattersService.getChattersPages(searchFilter, pageNumber, isInitialRetrieval, chatterUserDetails.getId());
-		if (EntityPaginationHelper.doesEntityPageExist(chatterOverviewPages.getPageList(), pageNumber, isInitialRetrieval) == false) {
+		if (EntityPaginationHelper.doesEntityPageExist(chatterOverviewPages.getPagedList(), pageNumber, isInitialRetrieval) == false) {
 			logger.warn(String.format("Chatter with id=%s requested Chatter Page which does not exist for searchFilter=%s, pageNumber=%d, isInitialRetrieval=%s",
 				chatterUserDetails.getId(), searchFilter, pageNumber, isInitialRetrieval));
 			String redirectUrl = String.format("%s?searchFilter=%s&pageNumber=%d&isInitialRetrieval=%s", Constants.CHATTERS_URL, searchFilter, 0, true);
-			return generateRedirectResponse(HttpStatus.NOT_FOUND, Constants.PAGE_NOT_FOUND_ERROR_MESSAGE, redirectUrl);
+			return generateRedirectResponse(
+				HttpStatus.NOT_FOUND,
+				Constants.PAGE_NOT_FOUND_ERROR_MESSAGE,
+				redirectUrl,
+                this.chatterAuthenticator.getSessionExpiresAt(request)
+			);
 		}
 
 		logger.info(String.format("GET /chatters?searchFilter=%s&pageNumber=%d&isInitialRetrieval=%s - returning response.", searchFilter, pageNumber,
 			isInitialRetrieval));
 		return ResponseEntity
 			.status(HttpStatus.OK)
-			.body(new ResponseBody<ResponsePagedListDto<ChatterOverviewDto>>(null, chatterOverviewPages));
+			.body(new ResponseBody<ResponsePagedListDto<ChatterOverviewDto>>(
+				null,
+				chatterOverviewPages,
+				this.chatterAuthenticator.getSessionExpiresAt(request)
+			));
 	}
 }
