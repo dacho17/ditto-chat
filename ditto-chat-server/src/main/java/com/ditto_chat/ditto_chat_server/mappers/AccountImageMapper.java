@@ -16,6 +16,6 @@ public class AccountImageMapper {
     }
 
     public static AccountImageDto fromAccountImageToAccountImageDto(AccountImage accountImage) {
-        return new AccountImageDto("TODO/" + accountImage.getUploadedFile().getS3ObjectKey());
+        return new AccountImageDto("TODO-aws/" + accountImage.getUploadedFile().getS3ObjectKey());
     }
 }

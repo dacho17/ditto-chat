@@ -13,7 +13,7 @@ public class SharedFileMapper {
         return new SharedFileDto(
             uploadedSharedFile.getFileName(),
             UploadedFileType.getUploadedFileType(uploadedSharedFile.getFileType()),
-            "TODO",
+            "TODO-aws",
             uploadedSharedFile.getUploadedAt(),
             senderChatterId.toString()
         );

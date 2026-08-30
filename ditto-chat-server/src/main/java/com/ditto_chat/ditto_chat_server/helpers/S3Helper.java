@@ -2,7 +2,7 @@
     // https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html
     // https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html
 // Client Accessing a presigned URL, temporary uses IAM Principal which generated the URL
-// TODO: catch: make sure credentials of the issuer do not expire before presigned url expiration! if they do url expires at the same time as the credentials.
+// TODO-aws: catch: make sure credentials of the issuer do not expire before presigned url expiration! if they do url expires at the same time as the credentials.
 
 package com.ditto_chat.ditto_chat_server.helpers;
 

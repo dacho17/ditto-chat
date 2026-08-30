@@ -3,8 +3,6 @@ package com.ditto_chat.ditto_chat_server.dtos;
 public class ChatThreadMessageForm {
     private String messageContent;
     private String attachedFileS3ObjectKey;
-    // private String chatMessageClientRef; // TODO: I think this is unnecessary on the Server!?
-    // private isMessageResent: boolean;    // TODO: I think this is unnecessary on the Server!?
     
     public ChatThreadMessageForm(String messageContent, String attachedFileS3ObjectKey) {
         this.messageContent = messageContent;

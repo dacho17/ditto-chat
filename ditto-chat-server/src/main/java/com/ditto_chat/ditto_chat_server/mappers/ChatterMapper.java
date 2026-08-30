@@ -23,7 +23,7 @@ public class ChatterMapper {
         return new ChatterOverviewDto(chatter.getId().toString(),
             chatter.getName(), chatter.getSurname(),
             chatter.getUsername(), chatter.getEmail(),
-            accountImage != null ? accountImage.getUploadedFile().getFileName() : null, // TODO: this value must be corrected! 
+            accountImage != null ? accountImage.getUploadedFile().getFileName() : null, // TODO-aws: this value must be corrected! 
             false,
             chatThreadWithLoggedInChatter != null ? chatThreadWithLoggedInChatter.getId().toString() : null
         );

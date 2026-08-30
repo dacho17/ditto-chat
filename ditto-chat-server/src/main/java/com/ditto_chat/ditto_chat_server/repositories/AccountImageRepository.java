@@ -78,7 +78,6 @@ public class AccountImageRepository {
             List<AccountImage> retrievedAccountImages = this.queryFactory
                 .selectFrom(qAccountImage)
                 .where(filterChain)
-                // .join().on(qRoomTypeDailyAvailability.roomType.id.eq(qRoomType.id)) TODO: confirm that UploadedImage is retrieved automatically (EAGERLY). If yes this line can be deleted!
                 .fetch();
 
             logger.info(String.format("%d/%d AccountImages have been retrieved for the target Chatters", retrievedAccountImages.size(), chatters.size()));
