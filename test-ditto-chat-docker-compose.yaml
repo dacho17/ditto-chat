@@ -44,7 +44,7 @@ services:
       - DITTO_CHAT_MYSQL_USER_TEST_PASSWORD=ditto_chat_server_pasZword
       - DITTO_CHAT_REDIS_HOST=test-ditto-chat-redis-server
       - DITTO_CHAT_REDIS_PORT=6379
-      - DITTO_CHAT_CLIENT_DOMAIN=localhost:5432
+      - DITTO_CHAT_CLIENT_DOMAIN=localhost:5173
       - DITTO_CHAT_MAIL_HOST=smtp.gmail.com
       - DITTO_CHAT_MAIL_PORT=587
       - DITTO_CHAT_MAIL_USERNAME=dailymnemonics

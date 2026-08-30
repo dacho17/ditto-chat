@@ -110,7 +110,7 @@ export const getSharedFiles = createAsyncThunk<SharedFile[], { chatterId: string
             
             // checks if there is an entry already in Cache, and if yes, use the Cached object and do not send the request to the server!
             let { pagedList, isLastPage } = { pagedList: null, isLastPage: null };
-            const cacheResponse = retrieveSharedFilesFromCache(currentSharedFilesListPage, thunkAPI);            
+            const cacheResponse = retrieveSharedFilesFromCache(currentSharedFilesListPage, thunkAPI);
             if (cacheResponse === null) {
                 const responseBody = await ChatClient.getChatClient().getSharedFiles(chatterId, queryParams);
                 SliceHelper.handleResponseBody(responseBody, thunkAPI);

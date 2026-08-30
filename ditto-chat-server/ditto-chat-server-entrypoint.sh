@@ -6,6 +6,9 @@ entrypoint() {
         run_migrations
 
         echo "Running Ditto Chat Server..." >&1
+
+        # Running the following Command enables connecting Debugger through TCP Socket, once the Server is Ran
+            # Documentation at: https://docs.oracle.com/en/java/javase/17/docs/specs/jpda/conninv.html
         mvn spring-boot:run -Dspring-boot.run.jvmArguments='-agentlib:jdwp=transport=dt_socket,suspend=n,server=y,address=*:5005,allow=*'
     elif [ $ENTYPOINT_CALL_MODE = "test" ]; then
         run_migrations
