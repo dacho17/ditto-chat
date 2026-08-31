@@ -1,7 +1,7 @@
 .back-header {
-    --back-button-container-width: 10%;
-    --content-container-width: 90%;
-    --horizontal-padding: 6%;
+    --back-button-container-width: 5%;
+    --content-container-width: 95%;
+    --horizontal-padding: 2%;
 
     display: flex;
     flex-direction: row;
@@ -30,4 +30,12 @@
     width: var(--content-container-width);
     height: 100%;
     padding-left: 10px;
+}
+
+@media (max-width: 1024px) {
+	.back-header {
+        --back-button-container-width: 10%;
+        --content-container-width: 90%;
+        --horizontal-padding: 6%;
+	}
 }

@@ -1,6 +1,7 @@
 .chat-thread-button {
 	--chatter-image-container-width: 20%;
 	--summary-width: 80%;
+	--chat-thread-button-summary-unread-messages-background-color: var(--ditto-pink);
 
 	display: flex;
 	flex-direction: row;
@@ -16,16 +17,19 @@
 
     &:hover {
         background-color: var(--ditto-pink);
+		--chat-thread-button-summary-unread-messages-background-color: var(--ditto-purple);
     }
+	&.selected {
+        background-color: var(--ditto-pink);
+		--chat-thread-button-summary-unread-messages-background-color: var(--ditto-purple);
+	}
+
 	&:hover span {
         color: var(--text-main);
     }
-
-	&.selected {
-        background-color: var(--ditto-pink);
+	&.selected span {
+        color: var(--text-main);
 	}
-	/* &:hover .chat-thread-button-summary-unread-messages {
-	} */
 }
 .chat-thread-button-chatter-image-container {
 	display: flex;
@@ -66,7 +70,7 @@
     width: var(--component-size);
     border-radius: var(--component-size);
 
-	background-color: var(--ditto-pink);
+	background-color: var(--chat-thread-button-summary-unread-messages-background-color);
 
 	color: var(--text-main);
 	font-size: var(--regular-font-size);

@@ -7,7 +7,7 @@
     box-sizing: border-box;
     width: 72px;
     height: 72px;
-    border: var(--divider-border-style);
+    border: none;
     border-radius: 72px;
 
     background-color: inherit; /* var(--dark-background); */

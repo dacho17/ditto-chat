@@ -42,7 +42,7 @@
 	height: var(--buttons-container-height);
 }
 
-.chat-thread-buttons-container {
+#chat-thread-buttons-container {
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-start;

@@ -2,7 +2,7 @@
     --border-radius: 12px;
     --field-width: 70%;
     --additions-width: 15%;
-    --send-button-container: 15%;
+    --send-button-container-width: 15%;
 
     display: flex;
     flex-direction: row;
@@ -48,7 +48,7 @@
 .chat-window-message-input-send-button-container {
     box-sizing: border-box;
     height: 100%;
-    width: var(--send-button-container);
+    width: var(--send-button-container-width);
     padding-top: 0.5%;
     padding-bottom: 0.5%;
     padding-right: 0.5%;
@@ -77,8 +77,15 @@
     }
 }
 
+@media (max-width: 450px) {
+    .chat-window-message-input {
+        --field-width: 50%;
+        --additions-width: 30%;
+        --send-button-container: 20%;
+    }
+}
 
-@media (max-width: 720px) {
+@media (min-width: 451px) and (max-width: 720px) {
     .chat-window-message-input {
         --field-width: 60%;
         --additions-width: 20%;

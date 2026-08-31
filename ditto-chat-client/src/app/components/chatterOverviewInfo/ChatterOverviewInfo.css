@@ -1,12 +1,13 @@
 .chatter-overview-info {
-	--chatter-icon-container-width: 20%;
-	--chatter-summary-width: 80%;
+	--chatter-icon-container-width: 15%;
+	--chatter-summary-width: 85%;
 
 	display: flex;
 	flex-direction: row;
 	justify-content: flex-start;
 	align-items: center;
 
+	box-sizing: border-box;
     width: 100%;
     height: 100%;
 }
@@ -20,6 +21,7 @@
 	box-sizing: border-box;
 	height: 100%;
 	width: var(--chatter-icon-container-width);
+	padding-left: 5%;
 }
 
 .chatter-overview-info-chatter-summary {
@@ -28,8 +30,10 @@
 	justify-content: center;
 	align-items: flex-start;
 
+	box-sizing: border-box;
 	height: 100%;
     width: var(--chatter-summary-width);
+	padding-left: 5%;
 }
 .chatter-overview-info-name {
 	display: flex;
@@ -60,5 +64,12 @@
 
 	&.offline {
 		background-color: var(--ditto-pink);
+	}
+}
+
+@media (max-width: 1024px) {
+	.chatter-overview-info {
+		--chatter-icon-container-width: 20%;
+		--chatter-summary-width: 80%;
 	}
 }

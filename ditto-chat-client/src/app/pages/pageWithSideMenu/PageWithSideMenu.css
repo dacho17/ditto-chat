@@ -33,7 +33,7 @@
 
 @media (min-width: 721px) and (max-width: 1024px) {
     .page-with-side-menu {
-        --side-menu-container-width: 12%;
-        --page-with-side-menu-main-page-container-width: 88%;
+        --side-menu-container-width: 8%;
+        --page-with-side-menu-main-page-container-width: 92%;
     }
 }

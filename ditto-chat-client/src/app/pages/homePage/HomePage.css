@@ -1,8 +1,8 @@
 .home-page {
-	--chat-thread-panel-container-width: 20%;
-	--chat-window-container-width: 50%;
-	--active-chat-thread-panel-container-width: 30%;
-	--chat-window-container-expanded-width: 80%;
+	--chat-thread-panel-container-width: 30%;
+	--chat-window-container-width: 45%;
+	--active-chat-thread-panel-container-width: 25%;
+	--chat-window-container-expanded-width: 70%;
 
 	display: flex;
 	flex-direction: row;
@@ -50,8 +50,8 @@
 
 @media (min-width: 721px) and (max-width: 1024px) {
 	.home-page {
-		--chat-thread-panel-container-width: 30%;
-		--chat-window-container-expanded-width: 70%;
+		--chat-thread-panel-container-width: 40%;
+		--chat-window-container-expanded-width: 60%;
 	}
 
 	.active-chat-thread-panel-container {

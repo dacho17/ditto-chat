@@ -122,7 +122,7 @@ export default function ChatThreadsPanel(props: Props) {
 			}
 		}
 
-		return <div className="chat-thread-buttons-container">
+		return <div id="chat-thread-buttons-container">
 			{chatThreadButtonListContent}
 		</div>
 	}
